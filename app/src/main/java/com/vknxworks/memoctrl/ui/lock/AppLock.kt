@@ -180,8 +180,7 @@ object AppLock {
                     override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
                         authenticating = false
                         val cancelled = errorCode == BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED ||
-                            errorCode == BiometricPrompt.BIOMETRIC_ERROR_CANCELED ||
-                            errorCode == BiometricPrompt.BIOMETRIC_ERROR_NEGATIVE_BUTTON
+                            errorCode == BiometricPrompt.BIOMETRIC_ERROR_CANCELED
                         onError(if (cancelled) null else errString.toString())
                     }
                 },
