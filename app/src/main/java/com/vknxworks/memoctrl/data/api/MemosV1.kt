@@ -114,6 +114,24 @@ private data class V1UpdateMemo(
 @Serializable
 data class V1Profile(val version: String = "")
 
+@Serializable
+private data class V1PasswordCredentials(val username: String, val password: String)
+
+@Serializable
+private data class V1SignIn(val passwordCredentials: V1PasswordCredentials)
+
+@Serializable
+private data class V1SignInResponse(val user: V1User? = null, val accessToken: String? = null)
+
+@Serializable
+private data class V1CreateToken(val description: String, val expiresInDays: Int = 0)
+
+@Serializable
+private data class V1TokenInfo(val name: String? = null)
+
+@Serializable
+private data class V1CreateTokenResponse(val personalAccessToken: V1TokenInfo? = null, val token: String? = null)
+
 class MemosV1(
     override val host: String,
     private val http: OkHttpClient,
@@ -308,6 +326,45 @@ class MemosV1(
 
     override fun memoUrl(remoteId: String): String =
         base.newBuilder().addPathSegments(nameOf(remoteId)).build().toString()
+
+    override suspend fun createTokenWithPassword(username: String, password: String, description: String): IssuedToken {
+        val signIn = http.fetchJson(
+            Request.Builder().url(base.path("api/v1/auth/signin").build())
+                .header("Accept", "application/json")
+                .post(jsonBody(ApiJson.encodeToString(V1SignIn.serializer(), V1SignIn(V1PasswordCredentials(username, password)))))
+                .build(),
+            V1SignInResponse.serializer(),
+        )
+        val session = signIn.accessToken?.takeIf { it.isNotBlank() } ?: throw ApiException("The server didn't sign you in.")
+        val user = signIn.user ?: throw ApiException("The server didn't sign you in.")
+        try {
+            val created = http.fetchJson(
+                Request.Builder()
+                    .url(base.path("api/v1").addPathSegments(user.name).addPathSegment("personalAccessTokens").build())
+                    .header("Authorization", "Bearer $session")
+                    .header("Accept", "application/json")
+                    .post(jsonBody(ApiJson.encodeToString(V1CreateToken.serializer(), V1CreateToken(description))))
+                    .build(),
+                V1CreateTokenResponse.serializer(),
+            )
+            val token = created.token?.takeIf { it.isNotBlank() } ?: throw ApiException("The server didn't make an access token.")
+            return IssuedToken(token, created.personalAccessToken?.name)
+        } finally {
+            // The short sign-in session isn't needed anymore: the app uses its own token from now on.
+            runCatching {
+                http.fetchText(
+                    Request.Builder().url(base.path("api/v1/auth/signout").build())
+                        .header("Authorization", "Bearer $session")
+                        .post(jsonBody("{}"))
+                        .build(),
+                )
+            }
+        }
+    }
+
+    override suspend fun revokeToken(tokenId: String) {
+        http.fetchText(request(base.path("api/v1").addPathSegments(tokenId).build()).delete().build())
+    }
 
     companion object {
         private const val PAGE_SIZE = 200

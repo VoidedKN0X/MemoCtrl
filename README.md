@@ -25,6 +25,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Share to MemoCtrl** from any app, a **New memo** launcher shortcut, and **Memos** and **Memory** home screen widgets
 - **App lock** with fingerprint, face or screen lock
 - **Client certificates** (mutual TLS) for servers behind a proxy that asks for one
+- **Sign in with your password** (MemoCtrl makes its own access token and never keeps the password) or an access token
 - **Several servers and accounts**
 
 ## Planned
@@ -58,23 +59,25 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 
 ## Getting started
 
-1. In Memos, make an access token: **Settings > My account > Access tokens**. Pick one that never expires.
-2. In MemoCtrl, enter your Memos address, e.g. `https://memos.example.com`, and the token.
+1. Enter your Memos address, e.g. `https://memos.example.com`.
+2. Sign in with your Memos username and password. MemoCtrl asks your server for an access token of its own and never keeps your password.
 3. Tap **New memo** and write something.
+
+Accounts that sign in with SSO can use **Access token** instead: make one in Memos under **Settings > My account > Access tokens** (one that never expires) and paste it in.
 
 Settings, the archive, attachments, accounts and sign out are behind your profile picture at the top right.
 
 ## Tips and troubleshooting
 
 - **Plain HTTP** works, but the app warns you first because your token would be sent unencrypted.
-- **"Your access token no longer works"**: the token expired or was deleted in Memos. Sign out, make a new token and sign in again.
+- **"Your access token no longer works"**: the token expired or was deleted in Memos. Sign out and sign in again.
 - **Changes waiting to sync** keep a cloud icon on the memo; tap the sync button at the top to try again.
 - **Location** needs Memos 0.27 or newer, and uses the phone's GPS only.
 - **Pictures from other websites** in memos show as a link until you turn on **Settings > Load pictures from other websites**.
 
 ## Privacy
 
-**Telemetry-free.** MemoCtrl has no analytics, crash reporting, usage stats or tracking of any kind. It only talks to your own Memos server. Your access token is stored encrypted on the phone and is only sent to that server.
+**Telemetry-free.** MemoCtrl has no analytics, crash reporting, usage stats or tracking of any kind. It only talks to your own Memos server. Your password is never stored; the app's access token is stored encrypted on the phone and is only sent to that server.
 
 ## Build from source
 

@@ -68,7 +68,19 @@ interface MemosRemote {
 
     /** Address of a memo on the server's own website, to share. */
     fun memoUrl(remoteId: String): String
+
+    /**
+     * Signs in once with a username and password and has the server make a never-expiring access
+     * token for this app. The password is used for this one sign-in only and never kept.
+     */
+    suspend fun createTokenWithPassword(username: String, password: String, description: String): IssuedToken
+
+    /** Revokes an access token this app made, when signing out. */
+    suspend fun revokeToken(tokenId: String)
 }
+
+/** An access token the server made for the app. [id] is what revokes it later. */
+data class IssuedToken(val token: String, val id: String?)
 
 /** Streams a file as the body of a request without reading it into memory first. */
 class InputStreamRequestBody(
