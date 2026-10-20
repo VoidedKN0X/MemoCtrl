@@ -25,6 +25,12 @@ The app lock now works the same way as in every other Ctrl app, with the stronge
 - **Fingerprint unlock can't be faked**: the fingerprint has to unlock a key in the phone's secure hardware, so a tampered "success" on a rooted phone doesn't open the app. Adding a new fingerprint turns fingerprint unlock off until you turn it on again with your PIN.
 - **Forgot your PIN?** The lock screen offers to sign out of every account and delete the memos, pictures and drafts kept on the phone. Because the PIN encrypts your login, there's no way around it. Everything on your Memos server stays.
 
+## v0.1.5 (2026-10-21)
+
+### Security
+
+- **Trips out of the app no longer skip the lock if you stay away.** Taking a photo, picking pictures or files, sharing or opening an attachment still doesn't count as leaving the app, but if you don't come back within 5 minutes (or your "Lock again" time, if that's longer), MemoCtrl locks anyway. Before, such a trip never locked, however long you were gone.
+
 ## v0.1.4 (2026-10-21)
 
 ### Fixed
