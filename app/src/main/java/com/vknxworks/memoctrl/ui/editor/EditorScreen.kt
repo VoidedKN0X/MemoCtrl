@@ -59,6 +59,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -213,6 +214,9 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
 
     fun toast(msg: String) = Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
 
+    /** Where unsaved changes to an existing memo are kept when the app lock closes the editor. */
+    val editDraftKey = memoId?.let { "$accountKey|edit:$it" }
+
     /** An existing memo with nothing changed: autosave must not write it back (it may be older than the phone's copy). */
     fun untouchedExisting(): Boolean {
         val base = model.baseline ?: return false
@@ -309,6 +313,21 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
         close()
     }
 
+    // The app lock closes the editor; keep what was typed so it's there after unlocking.
+    // (Autosave already wrote it.)
+    val latestText by rememberUpdatedState(text)
+    val latestLocation by rememberUpdatedState(location)
+    DisposableEffect(Unit) {
+        val hook = {
+            if (!autosave && !exiting && hasChanges()) {
+                val d = Draft(latestText.text, latestLocation)
+                c.appScope.launch { c.settings.saveDraft(editDraftKey ?: accountKey, d) }
+            }
+        }
+        AppLock.saveBeforeLock = hook
+        onDispose { if (AppLock.saveBeforeLock === hook) AppLock.saveBeforeLock = null }
+    }
+
     // ---------- Pickers ----------
 
     fun uploadAll(uris: List<Uri>) {
@@ -364,11 +383,21 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                     model.baseline = row
                     model.resources.clear()
                     model.resources.addAll(row.resources)
+                    location = row.location
                     if (!restored) {
                         text = TextFieldValue(row.content, TextRange(row.content.length))
                         visibility = row.visibility
+                        // Changes kept when the app lock closed this editor last time.
+                        if (editDraftKey != null) {
+                            val kept = c.settings.draft(editDraftKey)
+                            if (kept.content.isNotEmpty()) {
+                                text = TextFieldValue(kept.content, TextRange(kept.content.length))
+                                location = kept.location
+                                c.settings.clearDraft(editDraftKey)
+                                toast("Restored your unsaved changes")
+                            }
+                        }
                     }
-                    location = row.location
                 }
                 fromShare -> {
                     val share = c.pendingAction.value as? PendingAction.Share

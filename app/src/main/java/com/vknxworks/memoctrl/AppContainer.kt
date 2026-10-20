@@ -2,6 +2,7 @@ package com.vknxworks.memoctrl
 
 import android.content.Context
 import android.net.Uri
+import com.vknxworks.memoctrl.data.api.NO_SESSION_AUTH
 import com.vknxworks.memoctrl.data.auth.SessionManager
 import com.vknxworks.memoctrl.data.auth.SyncCheck
 import com.vknxworks.memoctrl.data.db.MemoDatabase
@@ -61,7 +62,10 @@ class AppContainer(val context: Context) {
                 // Pictures and attachments of private memos need the token too. It is only ever added
                 // for the signed-in server's own address.
                 val session = sessions.active.value
-                if (session != null && request.header("Authorization") == null && sameOrigin(request.url, session.account.host)) {
+                val anonymous = request.header(NO_SESSION_AUTH) != null
+                if (anonymous) request = request.newBuilder().removeHeader(NO_SESSION_AUTH).build()
+                // Sign-in and server checks never get another account's token, even on the same server.
+                if (!anonymous && session != null && request.header("Authorization") == null && sameOrigin(request.url, session.account.host)) {
                     request = request.newBuilder().header("Authorization", "Bearer ${session.token}").build()
                 }
                 chain.proceed(request)

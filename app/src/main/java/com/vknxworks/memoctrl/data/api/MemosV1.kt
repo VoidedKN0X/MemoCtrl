@@ -145,6 +145,7 @@ class MemosV1(
 
     private fun request(url: HttpUrl): Request.Builder = Request.Builder().url(url).apply {
         if (!accessToken.isNullOrBlank()) header("Authorization", "Bearer $accessToken")
+        else header(NO_SESSION_AUTH, "1")
         header("Accept", "application/json")
     }
 
@@ -329,7 +330,7 @@ class MemosV1(
 
     override suspend fun createTokenWithPassword(username: String, password: String, description: String): IssuedToken {
         val signIn = http.fetchJson(
-            Request.Builder().url(base.path("api/v1/auth/signin").build())
+            Request.Builder().url(base.path("api/v1/auth/signin").build()).header(NO_SESSION_AUTH, "1")
                 .header("Accept", "application/json")
                 .post(jsonBody(ApiJson.encodeToString(V1SignIn.serializer(), V1SignIn(V1PasswordCredentials(username, password)))))
                 .build(),

@@ -91,6 +91,9 @@ object AppLock {
     /** Set by the app: wipes the vault key and closes the session. */
     var onLocked: () -> Unit = {}
 
+    /** Set by an open editor: keeps unsaved text before locking closes it. */
+    var saveBeforeLock: (() -> Unit)? = null
+
     private var authenticating = false
     private var backgroundAt = 0L
     private var expectReturnAt = 0L
@@ -128,6 +131,7 @@ object AppLock {
         unlocked = false
         lockCount++
         request = null
+        saveBeforeLock?.let { runCatching(it) }
         onLocked()
     }
 
@@ -190,6 +194,12 @@ object AppLock {
             onError(e.message ?: "Couldn't show the fingerprint prompt")
         }
     }
+
+    fun legacyAvailable(context: Context): Boolean = runCatching {
+        context.getSystemService(BiometricManager::class.java)?.canAuthenticate(
+            BiometricManager.Authenticators.BIOMETRIC_WEAK or BiometricManager.Authenticators.DEVICE_CREDENTIAL,
+        ) == BiometricManager.BIOMETRIC_SUCCESS
+    }.getOrDefault(false)
 
     /**
      * The phone's own screen lock. Only used once, by people updating from the old app lock, to prove
@@ -303,7 +313,11 @@ private fun LegacyLockedScreen() {
         val activity = context.findActivity() ?: return
         AppLock.legacyAuthenticate(activity) { error = it }
     }
-    LaunchedEffect(AppLock.lockCount) { unlock() }
+    LaunchedEffect(AppLock.lockCount) {
+        // No screen lock or fingerprint on the phone any more: there's nothing to confirm with, and
+        // anyone holding the phone could already open it, so go straight to choosing a PIN.
+        if (!AppLock.legacyAvailable(context)) AppLock.markUnlocked() else unlock()
+    }
     LockFrame(
         title = "MemoCtrl is locked",
         message = "Unlock with your fingerprint, face or screen lock one last time, then choose an app PIN.",
