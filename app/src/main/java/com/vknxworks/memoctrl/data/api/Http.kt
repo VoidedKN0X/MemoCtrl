@@ -132,3 +132,9 @@ fun com.vknxworks.memoctrl.data.model.MemoVisibility.toApi(): ApiVisibility = wh
     com.vknxworks.memoctrl.data.model.MemoVisibility.PUBLIC -> ApiVisibility.PUBLIC
     com.vknxworks.memoctrl.data.model.MemoVisibility.SPACE -> ApiVisibility.SPACE
 }
+
+/**
+ * Marks a request that must not get the signed-in account's token added (sign-in, server checks).
+ * The app's interceptor removes it before the request is sent.
+ */
+const val NO_SESSION_AUTH = "X-MemoCtrl-No-Session-Auth"

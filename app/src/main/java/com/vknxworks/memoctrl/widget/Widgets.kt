@@ -65,7 +65,7 @@ object Widgets {
             val memoryIds = manager.getAppWidgetIds(ComponentName(app, MemoryWidgetProvider::class.java))
             if (memosIds.isEmpty() && memoryIds.isEmpty()) return@launch
             memosIds.forEach { runCatching { manager.updateAppWidget(it, buildMemos(app, it)) } }
-            memoryIds.forEach { runCatching { manager.updateAppWidget(it, buildMemory(app)) } }
+            memoryIds.forEach { runCatching { manager.updateAppWidget(it, buildMemory(app, it)) } }
         }
     }
 
@@ -75,7 +75,7 @@ object Widgets {
             try {
                 val manager = AppWidgetManager.getInstance(app)
                 ids.forEach { id ->
-                    runCatching { manager.updateAppWidget(id, if (memory) buildMemory(app) else buildMemos(app, id)) }
+                    runCatching { manager.updateAppWidget(id, if (memory) buildMemory(app, id) else buildMemos(app, id)) }
                 }
             } finally {
                 onDone()
@@ -213,7 +213,7 @@ object Widgets {
         return views
     }
 
-    private suspend fun buildMemory(context: Context): RemoteViews {
+    private suspend fun buildMemory(context: Context, widgetId: Int): RemoteViews {
         val snap = snapshot(context)
         val views = RemoteViews(context.packageName, R.layout.widget_memory)
         val memo = if (snap.signedIn && !snap.locked) snap.memos.randomOrNull() else null
@@ -236,7 +236,7 @@ object Widgets {
             else -> {
                 views.setTextViewText(R.id.memory_date, relative(memo))
                 views.setTextViewText(R.id.memory_content, plain(memo.content).take(600))
-                views.setOnClickPendingIntent(R.id.widget_root, memoIntent(context, memo.identifier, snap.openInEditor, 2))
+                views.setOnClickPendingIntent(R.id.widget_root, memoIntent(context, memo.identifier, snap.openInEditor, 200_000 + widgetId))
             }
         }
         return views

@@ -25,6 +25,15 @@ The app lock now works the same way as in every other Ctrl app, with the stronge
 - **Fingerprint unlock can't be faked**: the fingerprint has to unlock a key in the phone's secure hardware, so a tampered "success" on a rooted phone doesn't open the app. Adding a new fingerprint turns fingerprint unlock off until you turn it on again with your PIN.
 - **Forgot your PIN?** The lock screen offers to sign out of every account and delete the memos, pictures and drafts kept on the phone. Because the PIN encrypts your login, there's no way around it. Everything on your Memos server stays.
 
+## v0.1.4 (2026-10-21)
+
+### Fixed
+
+- **Adding a second account on the same server no longer sends the first account's access token.** Signing in and checking a server never get another account's token attached, even when it's the same server.
+- **Unsaved changes aren't lost when the app locks.** If the lock closes the editor while you're writing, a new memo is kept as your draft, and changes to an existing memo come back the next time you edit it ("Restored your unsaved changes"). With autosave on, everything was already saved.
+- **Each Memory widget opens its own memo.** With more than one Memory widget, tapping any of them used to open the memo shown on the last one that refreshed.
+- **Updating from the old app lock no longer gets stuck** on a phone that has no screen lock or fingerprint any more: MemoCtrl goes straight to choosing an app PIN.
+
 ## v0.1.2 (2026-10-21)
 
 ### New
