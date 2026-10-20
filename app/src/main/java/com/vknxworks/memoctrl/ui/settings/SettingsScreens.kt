@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Save
+import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.outlined.Badge
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,6 +48,7 @@ import com.vknxworks.memoctrl.container
 import com.vknxworks.memoctrl.data.net.ClientCertificate
 import com.vknxworks.memoctrl.data.settings.AppSettings
 import com.vknxworks.memoctrl.data.settings.EditGesture
+import com.vknxworks.memoctrl.data.settings.LockTimeout
 import com.vknxworks.memoctrl.data.settings.ThemeChoice
 import com.vknxworks.memoctrl.ui.components.ConfirmDialog
 import com.vknxworks.memoctrl.ui.components.Group
@@ -117,7 +119,7 @@ fun SettingsScreen() {
             ) {
                 GroupSwitch(
                     "App lock",
-                    if (lockAvailable || s.appLock) "Ask for your fingerprint, face or screen lock when opening MemoCtrl, and after a minute away. The recent-apps screen hides your memos."
+                    if (lockAvailable || s.appLock) "Ask for your fingerprint, face or screen lock when opening MemoCtrl. The recent-apps screen and widgets hide your memos."
                     else "Set up a fingerprint, face or screen lock on this phone first",
                     s.appLock,
                     icon = Icons.Outlined.Lock,
@@ -132,6 +134,14 @@ fun SettingsScreen() {
                             if (error == null) update { it.copy(appLock = true) }
                         }
                     }
+                }
+                if (s.appLock) {
+                    GroupChoice(
+                        "Lock again",
+                        LockTimeout.entries.map { it to it.label },
+                        s.lockTimeout,
+                        icon = Icons.Outlined.Timer,
+                    ) { v -> update { it.copy(lockTimeout = v) } }
                 }
                 GroupSwitch(
                     "Load pictures from other websites",

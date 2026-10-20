@@ -4,6 +4,17 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.1.2 (2026-10-21)
+
+### New
+
+- **Choose when the app lock asks again.** With the app lock on, **Settings > Privacy and security > Lock again** sets how long MemoCtrl can be in the background before it asks for your fingerprint, face or screen lock again: as soon as you leave the app, after 1 minute (the default, as before), 5 minutes, 15 minutes or 1 hour away, or only when the app restarts.
+
+### Changed
+
+- **Taking a photo, picking pictures or files, sharing a memo and opening an attachment no longer count as leaving the app.** Coming back from the camera, gallery, file picker, share sheet or the app that opened a file doesn't ask you to unlock again, even with "As soon as you leave the app". Going to the home screen or another app yourself still does.
+- **App lock description** in Settings now also mentions that the widgets hide your memos while the lock is on.
+
 ## v0.1.1 (2026-10-21)
 
 ### New

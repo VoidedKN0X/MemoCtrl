@@ -47,10 +47,9 @@ import com.vknxworks.memoctrl.ui.components.PillButton
 
 /**
  * App lock: asks for a fingerprint, face or the screen lock when the app opens, and again after it
- * spent a minute or more in the background.
+ * spent the chosen time in the background (or only after a restart).
  */
 object AppLock {
-    private const val TIMEOUT_MS = 60_000L
     private const val AUTHENTICATORS = BiometricManager.Authenticators.BIOMETRIC_WEAK or BiometricManager.Authenticators.DEVICE_CREDENTIAL
 
     var unlocked by mutableStateOf(false)
@@ -62,15 +61,33 @@ object AppLock {
 
     private var authenticating = false
     private var backgroundAt = 0L
+    private var expectReturnAt = 0L
 
-    fun onBackground() {
-        if (!authenticating) backgroundAt = SystemClock.elapsedRealtime()
+    /**
+     * The app itself is opening another app (camera, gallery, file picker, share sheet, a file to
+     * view). That trip doesn't count as leaving, so you don't have to unlock again when you come back.
+     */
+    fun expectReturn() {
+        expectReturnAt = SystemClock.elapsedRealtime()
     }
 
-    fun onForeground(enabled: Boolean) {
+    fun onBackground() {
+        if (authenticating) return
+        // Only right after the app opened something itself; leaving later still counts.
+        if (expectReturnAt > 0 && SystemClock.elapsedRealtime() - expectReturnAt < 5_000) {
+            expectReturnAt = 0L
+            backgroundAt = 0L
+            return
+        }
+        backgroundAt = SystemClock.elapsedRealtime()
+    }
+
+    fun onForeground(enabled: Boolean, timeoutMillis: Long) {
         val since = backgroundAt
         backgroundAt = 0L
-        if (enabled && unlocked && since > 0 && SystemClock.elapsedRealtime() - since >= TIMEOUT_MS) lock()
+        expectReturnAt = 0L
+        if (!enabled || !unlocked || since <= 0 || timeoutMillis < 0) return
+        if (SystemClock.elapsedRealtime() - since >= timeoutMillis) lock()
     }
 
     fun lock() {

@@ -27,6 +27,16 @@ enum class EditGesture(val label: String) {
     LONG("Long-press"),
 }
 
+/** When the app lock asks again after you leave the app. */
+enum class LockTimeout(val label: String, val millis: Long) {
+    IMMEDIATELY("As soon as you leave the app", 0L),
+    MINUTE_1("After 1 minute away", 60_000L),
+    MINUTES_5("After 5 minutes away", 5 * 60_000L),
+    MINUTES_15("After 15 minutes away", 15 * 60_000L),
+    HOUR_1("After 1 hour away", 60 * 60_000L),
+    RESTART("Only when the app restarts", -1L),
+}
+
 data class AppSettings(
     val theme: ThemeChoice = ThemeChoice.SYSTEM,
     val dynamicColor: Boolean = false,
@@ -35,6 +45,7 @@ data class AppSettings(
     val autosave: Boolean = false,
     val searchIncludesArchived: Boolean = false,
     val appLock: Boolean = false,
+    val lockTimeout: LockTimeout = LockTimeout.MINUTE_1,
     /** Load pictures that memos link from other websites. Off: they show as a link instead. */
     val externalImages: Boolean = false,
 )
@@ -50,6 +61,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val autosave = booleanPreferencesKey("autosave")
         val searchArchived = booleanPreferencesKey("search_includes_archived")
         val appLock = booleanPreferencesKey("app_lock")
+        val lockTimeout = stringPreferencesKey("lock_timeout")
         val externalImages = booleanPreferencesKey("external_images")
     }
 
@@ -67,6 +79,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         autosave = this[K.autosave] ?: false,
         searchIncludesArchived = this[K.searchArchived] ?: false,
         appLock = this[K.appLock] ?: false,
+        lockTimeout = enumOr(this[K.lockTimeout], LockTimeout.MINUTE_1),
         externalImages = this[K.externalImages] ?: false,
     )
 
@@ -79,6 +92,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             p[K.autosave] = s.autosave
             p[K.searchArchived] = s.searchIncludesArchived
             p[K.appLock] = s.appLock
+            p[K.lockTimeout] = s.lockTimeout.name
             p[K.externalImages] = s.externalImages
         }
     }

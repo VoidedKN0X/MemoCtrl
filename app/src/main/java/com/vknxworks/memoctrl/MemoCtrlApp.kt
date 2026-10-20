@@ -19,7 +19,8 @@ class MemoCtrlApp : Application(), SingletonImageLoader.Factory {
         container = AppContainer(this)
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
-                AppLock.onForeground(container.settings.settings.value.appLock)
+                val s = container.settings.settings.value
+                AppLock.onForeground(s.appLock, s.lockTimeout.millis)
                 container.syncInBackground()
             }
 

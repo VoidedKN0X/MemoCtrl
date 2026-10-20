@@ -101,6 +101,7 @@ import com.vknxworks.memoctrl.ui.components.ChoiceSheet
 import com.vknxworks.memoctrl.ui.components.ImageGrid
 import com.vknxworks.memoctrl.ui.components.LocationRow
 import com.vknxworks.memoctrl.ui.components.friendlyMessage
+import com.vknxworks.memoctrl.ui.lock.AppLock
 import com.vknxworks.memoctrl.ui.memos.icon
 import com.vknxworks.memoctrl.ui.memos.label
 import com.vknxworks.memoctrl.ui.nav.EditorRoute
@@ -341,6 +342,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
             val file = File(dir, "IMG_${System.currentTimeMillis()}.jpg")
             val uri = FileProvider.getUriForFile(context, context.packageName + ".files", file)
             model.cameraUri = uri
+            AppLock.expectReturn()
             takePhoto.launch(uri)
         } catch (e: ActivityNotFoundException) {
             toast("No camera app found")
@@ -524,10 +526,14 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                 }
                 ToolButton(Icons.Outlined.CheckBox, "Task") { text = toggleTask(text) }
                 ToolButton(Icons.Outlined.Image, "Add pictures") {
+                    AppLock.expectReturn()
                     pickImages.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 }
                 ToolButton(Icons.Outlined.PhotoCamera, "Take a photo") { launchCamera() }
-                ToolButton(Icons.Outlined.Attachment, "Attach a file") { pickFile.launch(arrayOf("*/*")) }
+                ToolButton(Icons.Outlined.Attachment, "Attach a file") {
+                    AppLock.expectReturn()
+                    pickFile.launch(arrayOf("*/*"))
+                }
                 if (s.remote.supportsLocation) ToolButton(Icons.Outlined.LocationOn, "Location") { showLocation = true }
             }
             TextButton(onClick = { showVisibility = true }) {
