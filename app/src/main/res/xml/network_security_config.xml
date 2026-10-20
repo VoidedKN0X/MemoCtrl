@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The server address is typed by the user, so cleartext can't be limited to a fixed domain here.
+     Plain HTTP stays possible at the platform level because many Memos servers run on a home
+     network, but the app enforces it in code (CleartextPolicy): HTTP is only used for a server the
+     user explicitly chose after an "unencrypted" warning.
+     User-installed CAs are trusted so servers behind a private CA / reverse proxy work. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>

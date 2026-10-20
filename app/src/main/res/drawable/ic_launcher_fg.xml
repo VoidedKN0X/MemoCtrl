@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Memo key: lines of a note on a keycap face. 108dp adaptive canvas, art inside the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Keycap body -->
+    <path
+        android:fillColor="#FF2B3038"
+        android:pathData="M37,31 H71 A13,13 0 0 1 84,44 V65 A13,13 0 0 1 71,78 H37 A13,13 0 0 1 24,65 V44 A13,13 0 0 1 37,31 Z" />
+    <!-- Key face -->
+    <path
+        android:fillColor="#FF1A1D23"
+        android:strokeColor="#FFF4C76B"
+        android:strokeWidth="3"
+        android:pathData="M37,32 H71 A9,9 0 0 1 80,41 V57 A9,9 0 0 1 71,66 H37 A9,9 0 0 1 28,57 V41 A9,9 0 0 1 37,32 Z" />
+    <!-- Lines of the note -->
+    <path
+        android:strokeColor="#FFF4C76B"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M39,41 H69 M39,49 H69 M39,57 H57" />
+    <!-- Bar on the front of the key -->
+    <path
+        android:strokeColor="#FF5A616C"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"
+        android:pathData="M47,72.5 H61" />
+</vector>
