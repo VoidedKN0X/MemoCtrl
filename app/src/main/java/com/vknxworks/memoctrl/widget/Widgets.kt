@@ -89,6 +89,8 @@ object Widgets {
         scope.launch {
             try {
                 val c = app.container
+                // With the app lock on, the widget doesn't sync: the login stays encrypted until you unlock.
+                if (c.settings.stored.first().appLock) return@launch
                 withTimeoutOrNull(5_000) { c.sessions.ready.first { it } }
                 val session = c.sessions.active.value
                 if (session != null) {
@@ -107,8 +109,10 @@ object Widgets {
 
     private suspend fun snapshot(context: Context): Snapshot {
         val c = context.container
-        withTimeoutOrNull(5_000) { c.sessions.ready.first { it } }
         val settings = c.settings.stored.first()
+        // Locked: nothing to show, and the login can't be read anyway.
+        if (settings.appLock) return Snapshot(emptyList(), true, c.sessions.accounts.value.isNotEmpty() || c.vault.enabled, false)
+        withTimeoutOrNull(5_000) { c.sessions.ready.first { it } }
         val session = c.sessions.active.value ?: return Snapshot(emptyList(), settings.appLock, false, false)
         val memos = if (settings.appLock) emptyList() else runCatching { session.repo.listMemos() }.getOrDefault(emptyList())
         return Snapshot(memos, settings.appLock, true, settings.editGesture == EditGesture.SINGLE)

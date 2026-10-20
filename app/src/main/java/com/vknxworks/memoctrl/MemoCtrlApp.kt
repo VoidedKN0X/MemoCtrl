@@ -17,15 +17,17 @@ class MemoCtrlApp : Application(), SingletonImageLoader.Factory {
     override fun onCreate() {
         super.onCreate()
         container = AppContainer(this)
+        AppLock.onLocked = { container.onLocked() }
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
                 val s = container.settings.settings.value
-                AppLock.onForeground(s.appLock, s.lockTimeout.millis)
+                AppLock.onForeground(s.appLock || container.vault.enabled, s.lockTimeout.millis)
                 container.syncInBackground()
             }
 
             override fun onStop(owner: LifecycleOwner) {
-                AppLock.onBackground()
+                val s = container.settings.settings.value
+                AppLock.onBackground(s.appLock || container.vault.enabled, s.lockTimeout.millis)
             }
         })
     }

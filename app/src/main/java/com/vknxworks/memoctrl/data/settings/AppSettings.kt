@@ -45,7 +45,7 @@ data class AppSettings(
     val autosave: Boolean = false,
     val searchIncludesArchived: Boolean = false,
     val appLock: Boolean = false,
-    val lockTimeout: LockTimeout = LockTimeout.MINUTE_1,
+    val lockTimeout: LockTimeout = LockTimeout.IMMEDIATELY,
     /** Load pictures that memos link from other websites. Off: they show as a link instead. */
     val externalImages: Boolean = false,
 )
@@ -79,7 +79,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         autosave = this[K.autosave] ?: false,
         searchIncludesArchived = this[K.searchArchived] ?: false,
         appLock = this[K.appLock] ?: false,
-        lockTimeout = enumOr(this[K.lockTimeout], LockTimeout.MINUTE_1),
+        lockTimeout = enumOr(this[K.lockTimeout], LockTimeout.IMMEDIATELY),
         externalImages = this[K.externalImages] ?: false,
     )
 
