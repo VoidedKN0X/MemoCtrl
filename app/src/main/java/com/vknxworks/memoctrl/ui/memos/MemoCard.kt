@@ -278,6 +278,7 @@ fun shareText(context: Context, text: String) {
         type = "text/plain"
         putExtra(Intent.EXTRA_TEXT, text)
     }
+    com.vknxworks.memoctrl.ui.lock.AppLock.expectReturn()
     runCatching { context.startActivity(Intent.createChooser(send, null)) }
 }
 

@@ -52,6 +52,7 @@ import com.vknxworks.memoctrl.data.api.await
 import com.vknxworks.memoctrl.data.files.FileStorage
 import com.vknxworks.memoctrl.data.model.MemoLocation
 import com.vknxworks.memoctrl.data.model.ResourceEntity
+import com.vknxworks.memoctrl.ui.lock.AppLock
 import com.vknxworks.memoctrl.ui.media.ImageViewer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -235,6 +236,7 @@ suspend fun openAttachment(context: Context, c: AppContainer, resource: Resource
         clipData = ClipData.newUri(context.contentResolver, resource.filename.ifBlank { "attachment" }, uri)
     }
     try {
+        AppLock.expectReturn()
         context.startActivity(Intent.createChooser(intent, null).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
     } catch (_: ActivityNotFoundException) {
         Toast.makeText(context, "No app can open this file", Toast.LENGTH_SHORT).show()
@@ -255,5 +257,6 @@ suspend fun shareAttachment(context: Context, c: AppContainer, resource: Resourc
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         clipData = ClipData.newUri(context.contentResolver, resource.filename.ifBlank { "attachment" }, uri)
     }
+    AppLock.expectReturn()
     runCatching { context.startActivity(Intent.createChooser(intent, null)) }
 }
