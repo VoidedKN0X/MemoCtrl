@@ -4,6 +4,21 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.1.1 (2026-10-21)
+
+### New
+
+- **Sign in with your username and password.** The sign-in screen now has two options: **Password** (the default) and **Access token**. With a password, MemoCtrl signs in once and asks your server to make an access token just for the app, named after your phone (for example "MemoCtrl on OPPO …"); from then on it only uses that token. Works with Memos 0.21 and 0.27 to 0.31. **Access token** is still there for accounts that sign in with SSO, or if you'd rather make the token yourself.
+
+### Security
+
+- **Your password is never kept.** It's only sent to your server for that one sign-in, held in memory while the sign-in screen is open, and never written to the phone. The short sign-in session is ended right after the app's token is made.
+- **Signing out revokes the app's token.** For accounts signed in with a password, signing out (from the You page or **Servers and accounts**) also deletes MemoCtrl's access token on your server, when the server can be reached. You can also see and revoke it yourself in Memos under **Settings > My account > Access tokens**.
+
+### Changed
+
+- **README**: Getting started describes signing in with your username and password, with the access token as the alternative.
+
 ## v0.1.0 (2026-10-20)
 
 The first release of MemoCtrl: a client for your self-hosted Memos server, in the Ctrl series design.

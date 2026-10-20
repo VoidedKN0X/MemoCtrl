@@ -65,7 +65,10 @@ suspend fun Call.await(): Response = suspendCancellableCoroutine { cont ->
  * Runs [request] and returns the body text. Error answers become [ApiException] with the server's
  * own message when it sent one.
  */
-suspend fun OkHttpClient.fetchText(request: Request): String {
+suspend fun OkHttpClient.fetchText(request: Request): String = fetchWithHeaders(request).first
+
+/** Like [fetchText], and also hands back the answer's headers (for sign-in cookies). */
+suspend fun OkHttpClient.fetchWithHeaders(request: Request): Pair<String, okhttp3.Headers> {
     newCall(request).await().use { response ->
         val text = response.body?.string().orEmpty()
         if (!response.isSuccessful) {
@@ -75,7 +78,7 @@ suspend fun OkHttpClient.fetchText(request: Request): String {
                 ?: "Server answered ${response.code}${response.message.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()}"
             throw ApiException(message, response.code)
         }
-        return text
+        return text to response.headers
     }
 }
 

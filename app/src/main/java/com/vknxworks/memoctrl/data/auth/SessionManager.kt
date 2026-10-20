@@ -56,6 +56,8 @@ data class Account(
     val serverVersion: String? = null,
     /** Server versions newer than the app knows that you chose to sync with anyway. */
     val acceptedVersions: List<String> = emptyList(),
+    /** Set when the app made the token itself (password sign-in), so signing out can revoke it. */
+    val tokenId: String? = null,
 ) {
     val key: String get() = "memos:$host:$remoteIdentifier"
     val serverName: String get() = Uri.parse(host).host ?: host
@@ -69,6 +71,12 @@ data class Account(
         defaultVisibility = defaultVisibility,
         avatarUrl = avatarUrl,
     )
+}
+
+/** How the user signs in: a username and password (the app then makes its own token), or a token. */
+sealed interface Credentials {
+    data class Password(val username: String, val password: String) : Credentials
+    data class Token(val token: String) : Credentials
 }
 
 /** The signed-in account, with its token (in memory only) and its memos. */
@@ -207,8 +215,10 @@ class SessionManager(
      * (not a TLS/certificate error), [HttpFallbackNeeded] is thrown so the UI can ask before using
      * plain HTTP. An explicit http:// address is used as typed (the sign-in screen warns about it).
      * A server newer than the app knows throws [NewerServerException] unless [allowNewer].
+     * With a password, the server makes a never-expiring token for the app; the password itself is
+     * sent once and never kept.
      */
-    suspend fun signIn(address: String, token: String, label: String, allowNewer: Boolean): Account {
+    suspend fun signIn(address: String, credentials: Credentials, label: String, allowNewer: Boolean): Account {
         val (host, explicit) = normalize(address)
         // Only reached for an http:// address the user typed or confirmed in the "unencrypted" dialog.
         CleartextPolicy.allowServer(host)
@@ -242,7 +252,24 @@ class SessionManager(
             VersionPolicy.Verdict.SUPPORTED -> Unit
         }
 
-        val cleanToken = token.trim()
+        var tokenId: String? = null
+        val cleanToken = when (credentials) {
+            is Credentials.Token -> credentials.token.trim()
+            is Credentials.Password -> try {
+                val issued = clientFor(api, host, null).createTokenWithPassword(
+                    credentials.username.trim(),
+                    credentials.password,
+                    "MemoCtrl on ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}".trim(),
+                )
+                tokenId = issued.id
+                issued.token
+            } catch (e: ApiException) {
+                if (e.status == 401 || e.status == 403) {
+                    throw ApiException(e.message?.takeIf { it.isNotBlank() && !it.startsWith("Server answered") } ?: "Wrong username or password.", e.status)
+                }
+                throw e
+            }
+        }
         val account = try {
             when (api) {
                 ServerApi.V1 -> {
@@ -262,6 +289,7 @@ class SessionManager(
                         avatarUrl = me.avatarUrl,
                         serverVersion = version,
                         acceptedVersions = if (allowNewer) listOf(version) else emptyList(),
+                        tokenId = tokenId,
                     )
                 }
                 ServerApi.V0 -> {
@@ -278,6 +306,7 @@ class SessionManager(
                         defaultVisibility = me.defaultVisibility,
                         avatarUrl = me.avatarUrl,
                         serverVersion = version,
+                        tokenId = tokenId,
                     )
                 }
             }
@@ -313,8 +342,18 @@ class SessionManager(
         activate(acc)
     }
 
-    /** Signs out of [key] and deletes everything kept on the phone for it: memos, attachments, draft. */
+    /**
+     * Signs out of [key] and deletes everything kept on the phone for it: memos, attachments, draft.
+     * A token the app made at password sign-in is revoked on the server too (when it can be reached).
+     */
     suspend fun signOut(key: String) = mutex.withLock {
+        _accounts.value.firstOrNull { it.key == key }?.let { acc ->
+            val id = acc.tokenId ?: return@let
+            val token = KeystoreCrypto.decrypt(acc.tokenEnc) ?: return@let
+            kotlinx.coroutines.withTimeoutOrNull(5_000) {
+                runCatching { clientFor(acc.api, acc.host, token, acc.remoteIdentifier).revokeToken(id) }
+            }
+        }
         val remaining = _accounts.value.filterNot { it.key == key }
         val wasActive = _active.value?.account?.key == key
         if (wasActive) _active.value?.repo?.close()

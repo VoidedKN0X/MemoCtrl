@@ -104,6 +104,18 @@ private data class V0Profile(val version: String = "")
 @Serializable
 private data class V0Status(val profile: V0Profile? = null)
 
+@Serializable
+private data class V0SignIn(val username: String, val password: String, val remember: Boolean = false)
+
+@Serializable
+private data class V0CreateToken(val description: String)
+
+@Serializable
+private data class V0AccessToken(val accessToken: String = "")
+
+@Serializable
+private data class V0CreateTokenResponse(val accessToken: V0AccessToken? = null)
+
 class MemosV0(
     override val host: String,
     private val http: OkHttpClient,
@@ -263,4 +275,38 @@ class MemosV0(
 
     override fun memoUrl(remoteId: String): String =
         base.newBuilder().addPathSegment("m").addPathSegment(remoteId).build().toString()
+
+    override suspend fun createTokenWithPassword(username: String, password: String, description: String): IssuedToken {
+        // Memos 0.21 answers a password sign-in with a session cookie.
+        val (body, headers) = http.fetchWithHeaders(
+            Request.Builder().url(base.path("api/v1/auth/signin").build())
+                .header("Accept", "application/json")
+                .post(jsonBody(ApiJson.encodeToString(V0SignIn.serializer(), V0SignIn(username, password))))
+                .build(),
+        )
+        val session = headers.values("Set-Cookie").firstNotNullOfOrNull { cookie ->
+            val (name, value) = cookie.substringBefore(';').split('=', limit = 2).let { it[0].trim() to it.getOrElse(1) { "" }.trim() }
+            value.takeIf { name == "memos.access-token" && it.isNotEmpty() }
+        } ?: throw ApiException("The server didn't sign you in.")
+        val user = runCatching { ApiJson.decodeFromString(V0User.serializer(), body) }.getOrNull()
+            ?: throw ApiException("Unexpected answer from the server. Is this a Memos server?")
+        val created = http.fetchJson(
+            Request.Builder()
+                .url(base.path("api/v2/users").addPathSegment(user.id.toString()).addPathSegment("access_tokens").build())
+                .header("Authorization", "Bearer $session")
+                .header("Accept", "application/json")
+                .post(jsonBody(ApiJson.encodeToString(V0CreateToken.serializer(), V0CreateToken(description))))
+                .build(),
+            V0CreateTokenResponse.serializer(),
+        )
+        val token = created.accessToken?.accessToken?.takeIf { it.isNotBlank() } ?: throw ApiException("The server didn't make an access token.")
+        return IssuedToken(token, "users/${user.id}")
+    }
+
+    override suspend fun revokeToken(tokenId: String) {
+        val token = accessToken ?: return
+        http.fetchText(
+            request(base.path("api/v2").addPathSegments(tokenId).addPathSegment("access_tokens").addPathSegment(token).build()).delete().build(),
+        )
+    }
 }

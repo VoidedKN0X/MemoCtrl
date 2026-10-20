@@ -36,6 +36,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
@@ -60,6 +63,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.vknxworks.memoctrl.container
+import com.vknxworks.memoctrl.data.auth.Credentials
 import com.vknxworks.memoctrl.data.auth.HttpFallbackNeeded
 import com.vknxworks.memoctrl.data.auth.NewerServerException
 import com.vknxworks.memoctrl.data.net.ClientCertificate
@@ -102,6 +106,11 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
     val scope = rememberCoroutineScope()
     var address by rememberSaveable { mutableStateOf("") }
     var label by rememberSaveable { mutableStateOf("") }
+    // Password sign-in by default; an access token for SSO accounts or if you'd rather make one yourself.
+    var usePassword by rememberSaveable { mutableStateOf(true) }
+    var username by rememberSaveable { mutableStateOf("") }
+    // Kept in memory only for this screen; never saved, never written to the phone.
+    var password by remember { mutableStateOf("") }
     var token by remember { mutableStateOf("") }
     var showToken by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
@@ -110,14 +119,18 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
     var newer by remember { mutableStateOf<NewerServerException?>(null) }
     var certificate by remember { mutableStateOf(ClientCertificate.selectedAlias(context)) }
     var pendingTarget by remember { mutableStateOf<String?>(null) }
-    val canSubmit = address.isNotBlank() && token.isNotBlank() && !busy
+    val canSubmit = address.isNotBlank() && !busy &&
+        (if (usePassword) username.isNotBlank() && password.isNotEmpty() else token.isNotBlank())
 
     fun attempt(target: String, allowNewer: Boolean = false) {
         busy = true
         error = null
         scope.launch {
             try {
-                c.sessions.signIn(target, token, label, allowNewer)
+                val credentials = if (usePassword) Credentials.Password(username, password) else Credentials.Token(token)
+                c.sessions.signIn(target, credentials, label, allowNewer)
+                password = ""
+                token = ""
                 onDone()
             } catch (e: HttpFallbackNeeded) {
                 offerHttp = e.httpUrl
@@ -161,7 +174,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
         ConfirmDialog(
             "Use an unencrypted connection?",
             "MemoCtrl couldn't connect to this server over HTTPS. It can try plain HTTP instead, " +
-                "but then your access token and memos are sent unencrypted and anyone on the network can read them. " +
+                "but then your password or access token and your memos are sent unencrypted and anyone on the network can read them. " +
                 "Only do this on a network you trust.",
             "Use HTTP",
             onDismiss = {
@@ -208,7 +221,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
             }
             Text(if (onCancel == null) "MemoCtrl" else "Add a server", style = MaterialTheme.typography.displaySmall)
             Text(
-                "Sign in to your Memos server with its address and an access token.",
+                "Sign in to your Memos server with the address you'd open in a browser.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -228,29 +241,63 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
                     Icon(Icons.Outlined.LockOpen, null, tint = MaterialTheme.colorScheme.error)
                     Spacer(Modifier.width(12.dp))
                     Text(
-                        "Not encrypted (HTTP). Your access token and memos are sent in the clear. Fine on your home network, risky anywhere else.",
+                        "Not encrypted (HTTP). Your password, access token and memos are sent in the clear. Fine on your home network, risky anywhere else.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
-            Field(
-                token, { token = it },
-                label = "Access token",
-                visual = if (showToken) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboard = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next, autoCorrectEnabled = false),
-                enabled = !busy,
-                trailing = {
-                    IconButton(onClick = { showToken = !showToken }) {
-                        Icon(if (showToken) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, if (showToken) "Hide token" else "Show token")
-                    }
-                },
-            )
-            Text(
-                "Make one in Memos under Settings > My account > Access tokens. Pick one that never expires.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                SegmentedButton(selected = usePassword, onClick = { usePassword = true }, shape = SegmentedButtonDefaults.itemShape(0, 2), enabled = !busy) {
+                    Text("Password")
+                }
+                SegmentedButton(selected = !usePassword, onClick = { usePassword = false }, shape = SegmentedButtonDefaults.itemShape(1, 2), enabled = !busy) {
+                    Text("Access token")
+                }
+            }
+            if (usePassword) {
+                Field(
+                    username, { username = it },
+                    label = "Username",
+                    keyboard = KeyboardOptions(imeAction = ImeAction.Next, capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
+                    enabled = !busy,
+                )
+                Field(
+                    password, { password = it },
+                    label = "Password",
+                    visual = if (showToken) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboard = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next, autoCorrectEnabled = false),
+                    enabled = !busy,
+                    trailing = {
+                        IconButton(onClick = { showToken = !showToken }) {
+                            Icon(if (showToken) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, if (showToken) "Hide password" else "Show password")
+                        }
+                    },
+                )
+                Text(
+                    "Your password is only used to sign in. MemoCtrl then gets its own access token from your server and never keeps the password. You'll find the token under Settings > My account > Access tokens in Memos, and it's revoked when you sign out here.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                Field(
+                    token, { token = it },
+                    label = "Access token",
+                    visual = if (showToken) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboard = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next, autoCorrectEnabled = false),
+                    enabled = !busy,
+                    trailing = {
+                        IconButton(onClick = { showToken = !showToken }) {
+                            Icon(if (showToken) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, if (showToken) "Hide token" else "Show token")
+                        }
+                    },
+                )
+                Text(
+                    "For accounts that sign in with SSO, or if you'd rather make the token yourself: Memos > Settings > My account > Access tokens. Pick one that never expires.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             Field(
                 label, { label = it },
                 label = "Account name (optional)",
@@ -290,7 +337,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
                 PillButton("Sign in", onClick = ::submit, enabled = canSubmit, modifier = Modifier.fillMaxWidth())
             }
             Text(
-                "Your token is stored encrypted on this phone and is only sent to your server. MemoCtrl works with Memos 0.21 and 0.27 to 0.31.",
+                "The access token is stored encrypted on this phone and is only sent to your server. MemoCtrl works with Memos 0.21 and 0.27 to 0.31.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
