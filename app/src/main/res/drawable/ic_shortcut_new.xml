@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Launcher shortcut "New memo": a pencil on the graphite circle. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#FF2B3038"
+        android:pathData="M24,0 A24,24 0 1 1 23.99,0 Z" />
+    <path
+        android:fillColor="#FFF4C76B"
+        android:pathData="M15,30.2 V33 H17.8 L29.6,21.2 L26.8,18.4 Z M32.8,18 C33.1,17.7 33.1,17.2 32.8,16.9 L31.1,15.2 C30.8,14.9 30.3,14.9 30,15.2 L28.6,16.6 L31.4,19.4 Z" />
+</vector>

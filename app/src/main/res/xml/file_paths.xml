@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Photos taken from the editor, before they're attached. -->
+    <cache-path name="camera" path="camera/" />
+    <!-- Attachments downloaded to open in another app. -->
+    <cache-path name="open" path="open/" />
+    <!-- Attachments kept for memos that haven't synced yet. -->
+    <files-path name="attachments" path="attachments/" />
+</paths>

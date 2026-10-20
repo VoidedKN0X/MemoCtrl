@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_new"
+        android:shortcutId="new_memo"
+        android:shortcutLongLabel="@string/new_memo"
+        android:shortcutShortLabel="@string/new_memo">
+        <intent
+            android:action="com.vknxworks.memoctrl.NEW_MEMO"
+            android:targetClass="com.vknxworks.memoctrl.MainActivity"
+            android:targetPackage="com.vknxworks.memoctrl" />
+    </shortcut>
+</shortcuts>

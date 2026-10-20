@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MemoCtrl</string>
+    <string name="new_memo">New memo</string>
+    <string name="refresh">Refresh</string>
+    <string name="pinned">Pinned</string>
+
+    <string name="widget_memos_title">Memos</string>
+    <string name="widget_memos_description">Your latest memos, pinned ones first. Pick a tag to show only those.</string>
+    <string name="widget_memory_title">Memory</string>
+    <string name="widget_memory_description">A random memo from your timeline, different each time it refreshes.</string>
+    <string name="widget_empty">No memos yet</string>
+
+    <string name="group_about">About</string>
+    <string name="support_title">Support MemoCtrl</string>
+    <string name="support_subtitle">MemoCtrl is free and open source. Sponsor development on GitHub</string>
+    <string name="bugs_title">Report a bug</string>
+    <string name="bugs_subtitle">Found a problem or have an idea? Open an issue on GitHub</string>
+    <string name="source_title">Source code</string>
+    <string name="source_subtitle">github.com/VoidedKN0X/MemoCtrl</string>
+    <string name="licence_title">Licence</string>
+    <string name="licence_subtitle">GNU General Public License v3.0</string>
+    <string name="about_footer">MemoCtrl %1$s · VKNXWorks</string>
+</resources>
