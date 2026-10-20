@@ -11,6 +11,7 @@ import com.vknxworks.memoctrl.data.api.MemosV1
 import com.vknxworks.memoctrl.data.appDataStore
 import com.vknxworks.memoctrl.data.db.MemoDatabase
 import com.vknxworks.memoctrl.data.files.FileStorage
+import com.vknxworks.memoctrl.data.lock.LockVault
 import com.vknxworks.memoctrl.data.model.MemoVisibility
 import com.vknxworks.memoctrl.data.model.User
 import com.vknxworks.memoctrl.data.net.CleartextPolicy
@@ -148,6 +149,7 @@ class SessionManager(
     private val db: MemoDatabase,
     private val files: FileStorage,
     private val settings: SettingsRepository,
+    private val vault: LockVault,
     private val scope: CoroutineScope,
 ) {
     private val accountsKey = stringPreferencesKey("accounts")
@@ -167,14 +169,86 @@ class SessionManager(
         scope.launch { load() }
     }
 
-    private suspend fun load() {
+    private suspend fun load() = mutex.withLock {
         val prefs = context.appDataStore.data.first()
         val list = prefs[accountsKey]?.let {
             runCatching { ApiJson.decodeFromString(ListSerializer(Account.serializer()), it) }.getOrNull()
         }.orEmpty()
         _accounts.value = list
-        val acc = list.firstOrNull { it.key == prefs[activeKey] } ?: list.firstOrNull()
-        if (acc != null) activate(acc)
+        // With the app lock on, the login can only be decrypted after unlocking; onUnlocked() continues.
+        if (vault.enabled && !vault.isOpen) return@withLock
+        activateSaved()
+        _ready.value = true
+    }
+
+    private suspend fun activateSaved() {
+        val activeKeyValue = context.appDataStore.data.first()[activeKey]
+        val list = _accounts.value
+        val acc = list.firstOrNull { it.key == activeKeyValue } ?: list.firstOrNull()
+        if (acc != null) activate(acc) else _active.value = null
+    }
+
+    /** The token of [acc], or null while it's sealed by the app lock and the app is locked. */
+    private fun tokenOf(acc: Account): String? {
+        val plain = KeystoreCrypto.decrypt(acc.tokenEnc) ?: return null
+        return if (LockVault.isSealed(plain)) vault.open(plain) else plain
+    }
+
+    /** Encrypts a token for saving: with the Keystore, and also with the app lock's key when it's on. */
+    private fun storeToken(token: String): String {
+        val inner = if (vault.enabled) vault.seal(token) ?: throw ApiException("Unlock MemoCtrl first.") else token
+        return KeystoreCrypto.encrypt(inner)
+    }
+
+    /** The app locked: forget the session and its token until the next unlock. */
+    fun onLocked() {
+        if (!vault.enabled) return
+        _ready.value = false
+        _active.value?.repo?.close()
+        _active.value = null
+    }
+
+    /** The app unlocked: decrypt the login and open the session again. */
+    fun onUnlocked() {
+        scope.launch {
+            mutex.withLock {
+                if (_active.value == null) activateSaved()
+                _ready.value = true
+            }
+        }
+    }
+
+    /** The app lock was turned on: encrypt every saved login with its key too. */
+    suspend fun sealTokens() = mutex.withLock {
+        val list = _accounts.value.map { acc ->
+            val token = tokenOf(acc) ?: return@map acc
+            acc.copy(tokenEnc = storeToken(token))
+        }
+        persist(list, context.appDataStore.data.first()[activeKey])
+        _active.value?.let { s -> list.firstOrNull { it.key == s.account.key }?.let { _active.value = s.copy(account = it) } }
+    }
+
+    /** The app lock is being turned off (while unlocked): go back to Keystore-only encryption. */
+    suspend fun unsealTokens() = mutex.withLock {
+        val list = _accounts.value.map { acc ->
+            val token = tokenOf(acc) ?: return@map acc
+            acc.copy(tokenEnc = KeystoreCrypto.encrypt(token))
+        }
+        persist(list, context.appDataStore.data.first()[activeKey])
+        _active.value?.let { s -> list.firstOrNull { it.key == s.account.key }?.let { _active.value = s.copy(account = it) } }
+    }
+
+    /** "Forgot PIN?": deletes every account and what's kept for it on the phone. Tokens can't be revoked. */
+    suspend fun forgetAllAccounts() = mutex.withLock {
+        _active.value?.repo?.close()
+        _active.value = null
+        val keys = _accounts.value.map { it.key }
+        persist(emptyList(), null)
+        for (key in keys) {
+            db.deleteAccount(key)
+            files.deleteAccountFiles(key)
+            settings.clearDraft(key)
+        }
         _ready.value = true
     }
 
@@ -283,7 +357,7 @@ class SessionManager(
                         username = me.username,
                         displayName = user.name,
                         label = label.trim(),
-                        tokenEnc = KeystoreCrypto.encrypt(cleanToken),
+                        tokenEnc = storeToken(cleanToken),
                         startDateEpochSecond = me.createTime?.epochSecond ?: 0,
                         defaultVisibility = user.defaultVisibility,
                         avatarUrl = me.avatarUrl,
@@ -301,7 +375,7 @@ class SessionManager(
                         username = me.username ?: me.name.orEmpty(),
                         displayName = me.nickname ?: me.name.orEmpty(),
                         label = label.trim(),
-                        tokenEnc = KeystoreCrypto.encrypt(cleanToken),
+                        tokenEnc = storeToken(cleanToken),
                         startDateEpochSecond = me.createdTs,
                         defaultVisibility = me.defaultVisibility,
                         avatarUrl = me.avatarUrl,
@@ -349,7 +423,7 @@ class SessionManager(
     suspend fun signOut(key: String) = mutex.withLock {
         _accounts.value.firstOrNull { it.key == key }?.let { acc ->
             val id = acc.tokenId ?: return@let
-            val token = KeystoreCrypto.decrypt(acc.tokenEnc) ?: return@let
+            val token = tokenOf(acc) ?: return@let
             kotlinx.coroutines.withTimeoutOrNull(5_000) {
                 runCatching { clientFor(acc.api, acc.host, token, acc.remoteIdentifier).revokeToken(id) }
             }
@@ -427,7 +501,7 @@ class SessionManager(
 
     private fun activate(acc: Account, knownToken: String? = null) {
         _active.value?.repo?.close()
-        val token = knownToken ?: KeystoreCrypto.decrypt(acc.tokenEnc)
+        val token = knownToken ?: tokenOf(acc)
         if (token == null) {
             _active.value = null
             return

@@ -23,7 +23,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Search** that works offline, optionally in your archive too
 - **Archive** and **attachments** pages, and a full-screen picture viewer
 - **Share to MemoCtrl** from any app, a **New memo** launcher shortcut, and **Memos** and **Memory** home screen widgets
-- **App lock** with fingerprint, face or screen lock
+- **App lock** with its own PIN and optional fingerprint unlock; your server login stays encrypted while the app is locked
 - **Client certificates** (mutual TLS) for servers behind a proxy that asks for one
 - **Sign in with your password** (MemoCtrl makes its own access token and never keeps the password) or an access token
 - **Several servers and accounts**

@@ -6,11 +6,13 @@ import com.vknxworks.memoctrl.data.auth.SessionManager
 import com.vknxworks.memoctrl.data.auth.SyncCheck
 import com.vknxworks.memoctrl.data.db.MemoDatabase
 import com.vknxworks.memoctrl.data.files.FileStorage
+import com.vknxworks.memoctrl.data.lock.LockVault
 import com.vknxworks.memoctrl.data.net.CleartextPolicy
 import com.vknxworks.memoctrl.data.net.ClientCertificate
 import com.vknxworks.memoctrl.data.net.RedirectGuard
 import com.vknxworks.memoctrl.data.settings.SettingsRepository
 import com.vknxworks.memoctrl.data.sync.SyncingRepository
+import com.vknxworks.memoctrl.ui.lock.AppLock
 import com.vknxworks.memoctrl.widget.Widgets
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.ConnectionPool
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -74,7 +77,45 @@ class AppContainer(val context: Context) {
     val settings = SettingsRepository(context, appScope)
     val db = MemoDatabase(context)
     val files = FileStorage(context)
-    val sessions = SessionManager(context, http, db, files, settings, appScope)
+
+    /** The app lock's PIN, fingerprint key and the key that encrypts server logins while locked. */
+    val vault = LockVault(context, "memoctrl")
+    val sessions = SessionManager(context, http, db, files, settings, vault, appScope)
+
+    /** Turns the app lock on: the PIN encrypts the server logins from now on. */
+    suspend fun enableLock(pin: String) {
+        // Unlocked first, so the lock screen doesn't flash up while the PIN is being saved.
+        AppLock.markUnlocked()
+        withContext(Dispatchers.Default) { vault.setUp(pin) }
+        settings.update { it.copy(appLock = true) }
+        sessions.sealTokens()
+    }
+
+    /** Turns the app lock off (after the PIN was confirmed): logins go back to Keystore-only encryption. */
+    suspend fun disableLock() {
+        sessions.unsealTokens()
+        settings.update { it.copy(appLock = false) }
+        vault.disable()
+    }
+
+    /** "Forgot PIN?": the logins can't be decrypted any more, so sign out everywhere and start over. */
+    suspend fun forgetEverything() {
+        sessions.forgetAllAccounts()
+        AppLock.markUnlocked()
+        settings.update { it.copy(appLock = false) }
+        vault.disable()
+    }
+
+    /** Locked: wipe the key from memory and close the session that holds the login. */
+    fun onLocked() {
+        vault.close()
+        sessions.onLocked()
+    }
+
+    fun onUnlocked() {
+        AppLock.markUnlocked()
+        sessions.onUnlocked()
+    }
 
     /** Memos of the signed-in account. Screens are only shown while signed in. */
     val repo: SyncingRepository

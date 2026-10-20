@@ -21,7 +21,9 @@ import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Attachment
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Image
+import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Password
 import androidx.compose.material.icons.outlined.Save
 import androidx.compose.material.icons.outlined.Timer
 import androidx.compose.material.icons.outlined.Badge
@@ -61,6 +63,8 @@ import com.vknxworks.memoctrl.ui.components.LoadingView
 import com.vknxworks.memoctrl.ui.components.MessageView
 import com.vknxworks.memoctrl.ui.components.ScreenTopBar
 import com.vknxworks.memoctrl.ui.lock.AppLock
+import com.vknxworks.memoctrl.ui.lock.PinRequest
+import com.vknxworks.memoctrl.data.lock.LockVault
 import com.vknxworks.memoctrl.ui.lock.findActivity
 import com.vknxworks.memoctrl.ui.memos.MemoCard
 import com.vknxworks.memoctrl.ui.nav.AddAccountRoute
@@ -75,7 +79,7 @@ fun SettingsScreen() {
     val scope = rememberCoroutineScope()
     val s by c.settings.settings.collectAsStateWithLifecycle()
     fun update(t: (AppSettings) -> AppSettings) { scope.launch { c.settings.update(t) } }
-    val lockAvailable = remember { AppLock.canAuthenticate(context) }
+    val bioAvailable = remember { AppLock.biometricAvailable(context) }
     var certificate by remember { mutableStateOf(ClientCertificate.selectedAlias(context)) }
     var removingCertificate by remember { mutableStateOf(false) }
 
@@ -117,25 +121,46 @@ fun SettingsScreen() {
                 "Privacy and security",
                 footer = "MemoCtrl has no analytics or tracking. It only talks to your own Memos server.",
             ) {
+                val lockOn = c.vault.enabled
                 GroupSwitch(
                     "App lock",
-                    if (lockAvailable || s.appLock) "Ask for your fingerprint, face or screen lock when opening MemoCtrl. The recent-apps screen and widgets hide your memos."
-                    else "Set up a fingerprint, face or screen lock on this phone first",
-                    s.appLock,
+                    "Ask for an app PIN (and optionally your fingerprint) when opening MemoCtrl. While locked, your server " +
+                        "login stays encrypted with the PIN, and the recent-apps screen and widgets hide your memos.",
+                    lockOn,
                     icon = Icons.Outlined.Lock,
-                    enabled = lockAvailable || s.appLock,
-                ) { on ->
-                    if (!on) {
-                        update { it.copy(appLock = false) }
-                    } else {
-                        val activity = context.findActivity() ?: return@GroupSwitch
-                        // Confirm it works before turning it on, so nobody locks themselves out.
-                        AppLock.authenticate(activity, "Turn on app lock") { error ->
-                            if (error == null) update { it.copy(appLock = true) }
+                ) { on -> AppLock.request = if (on) PinRequest.ENABLE else PinRequest.DISABLE }
+                if (lockOn) {
+                    GroupRow(
+                        "Change app PIN",
+                        "At least ${LockVault.PIN_MIN} digits, separate from your phone's PIN",
+                        icon = Icons.Outlined.Password,
+                        showChevron = true,
+                        onClick = { AppLock.request = PinRequest.CHANGE },
+                    )
+                    GroupSwitch(
+                        "Unlock with fingerprint",
+                        if (bioAvailable || c.vault.biometricEnabled)
+                            "Only strong biometrics such as your fingerprint, checked by the phone's secure hardware. The PIN is still needed after a restart and every 72 hours."
+                        else "Set up a fingerprint on this phone first",
+                        c.vault.biometricEnabled,
+                        icon = Icons.Outlined.Fingerprint,
+                        enabled = bioAvailable || c.vault.biometricEnabled,
+                    ) { on ->
+                        if (!on) {
+                            c.vault.disableBiometric()
+                        } else {
+                            val activity = context.findActivity() ?: return@GroupSwitch
+                            val cipher = c.vault.biometricEnrolCipher() ?: run {
+                                Toast.makeText(context, "Couldn't set up fingerprint unlock", Toast.LENGTH_SHORT).show()
+                                return@GroupSwitch
+                            }
+                            AppLock.biometricPrompt(activity, "Turn on fingerprint unlock", "Confirm your fingerprint", cipher) { unlocked ->
+                                if (!c.vault.finishBiometricEnrol(unlocked)) {
+                                    Toast.makeText(context, "Couldn't set up fingerprint unlock", Toast.LENGTH_SHORT).show()
+                                }
+                            }
                         }
                     }
-                }
-                if (s.appLock) {
                     GroupChoice(
                         "Lock again",
                         LockTimeout.entries.map { it to it.label },
