@@ -118,6 +118,9 @@ import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import java.io.File
 import java.util.UUID
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
+import androidx.annotation.StringRes
 
 private const val MAX_IMAGES = 100
 
@@ -338,7 +341,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Throwable) {
-                    toast("Couldn't add the file: ${e.friendlyMessage()}")
+                    toast(context.getString(R.string.editor_add_file_failed, e.friendlyMessage()))
                 }
             }
         }
@@ -364,7 +367,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
             AppLock.expectReturn()
             takePhoto.launch(uri)
         } catch (e: ActivityNotFoundException) {
-            toast("No camera app found")
+            toast(context.getString(R.string.editor_no_camera))
         } catch (e: Exception) {
             toast(e.friendlyMessage())
         }
@@ -394,7 +397,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                                 text = TextFieldValue(kept.content, TextRange(kept.content.length))
                                 location = kept.location
                                 c.settings.clearDraft(editDraftKey)
-                                toast("Restored your unsaved changes")
+                                toast(context.getString(R.string.editor_restored))
                             }
                         }
                     }
@@ -462,8 +465,8 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
 
     Column(Modifier.fillMaxSize().imePadding()) {
         TopAppBar(
-            title = { Text(if (isEdit) "Edit memo" else "New memo", style = MaterialTheme.typography.titleLarge) },
-            navigationIcon = { IconButton(onClick = ::exit) { Icon(Icons.Filled.Close, "Close") } },
+            title = { Text(stringResource(if (isEdit) R.string.editor_edit_title else R.string.new_memo), style = MaterialTheme.typography.titleLarge) },
+            navigationIcon = { IconButton(onClick = ::exit) { Icon(Icons.Filled.Close, stringResource(R.string.close)) } },
             actions = {
                 Button(
                     onClick = ::submit,
@@ -474,7 +477,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                 ) {
                     if (busy) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
                     else Icon(Icons.AutoMirrored.Filled.Send, null, Modifier.size(18.dp))
-                    Text(if (isEdit) "Save" else "Post", modifier = Modifier.padding(start = 8.dp))
+                    Text(stringResource(if (isEdit) R.string.save else R.string.post), modifier = Modifier.padding(start = 8.dp))
                 }
             },
             colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
@@ -496,7 +499,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                     }
                     text = updated
                 },
-                placeholder = { Text("Any thoughts…") },
+                placeholder = { Text(stringResource(R.string.editor_placeholder)) },
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 textStyle = MaterialTheme.typography.bodyLarge,
                 colors = TextFieldDefaults.colors(
@@ -519,16 +522,16 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         // Formatting
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            FormatText("H1") { text = applyFormat(text, MarkdownFormat.H1) }
-            FormatText("H2") { text = applyFormat(text, MarkdownFormat.H2) }
-            FormatText("H3") { text = applyFormat(text, MarkdownFormat.H3) }
-            ToolButton(Icons.Outlined.FormatBold, "Bold") { text = applyFormat(text, MarkdownFormat.BOLD) }
-            ToolButton(Icons.Outlined.FormatItalic, "Italic") { text = applyFormat(text, MarkdownFormat.ITALIC) }
-            ToolButton(Icons.Outlined.FormatStrikethrough, "Strikethrough") { text = applyFormat(text, MarkdownFormat.STRIKETHROUGH) }
-            ToolButton(Icons.Outlined.Code, "Code") { text = applyFormat(text, MarkdownFormat.CODE) }
-            ToolButton(Icons.Outlined.FormatQuote, "Quote") { text = applyFormat(text, MarkdownFormat.QUOTE) }
-            ToolButton(Icons.AutoMirrored.Outlined.FormatListBulleted, "Bulleted list") { text = applyFormat(text, MarkdownFormat.BULLET) }
-            ToolButton(Icons.Outlined.FormatListNumbered, "Numbered list") { text = applyFormat(text, MarkdownFormat.NUMBERED) }
+            FormatText(stringResource(R.string.format_h1)) { text = applyFormat(text, MarkdownFormat.H1) }
+            FormatText(stringResource(R.string.format_h2)) { text = applyFormat(text, MarkdownFormat.H2) }
+            FormatText(stringResource(R.string.format_h3)) { text = applyFormat(text, MarkdownFormat.H3) }
+            ToolButton(Icons.Outlined.FormatBold, stringResource(R.string.format_bold)) { text = applyFormat(text, MarkdownFormat.BOLD) }
+            ToolButton(Icons.Outlined.FormatItalic, stringResource(R.string.format_italic)) { text = applyFormat(text, MarkdownFormat.ITALIC) }
+            ToolButton(Icons.Outlined.FormatStrikethrough, stringResource(R.string.format_strikethrough)) { text = applyFormat(text, MarkdownFormat.STRIKETHROUGH) }
+            ToolButton(Icons.Outlined.Code, stringResource(R.string.format_code)) { text = applyFormat(text, MarkdownFormat.CODE) }
+            ToolButton(Icons.Outlined.FormatQuote, stringResource(R.string.format_quote)) { text = applyFormat(text, MarkdownFormat.QUOTE) }
+            ToolButton(Icons.AutoMirrored.Outlined.FormatListBulleted, stringResource(R.string.format_bullets)) { text = applyFormat(text, MarkdownFormat.BULLET) }
+            ToolButton(Icons.Outlined.FormatListNumbered, stringResource(R.string.format_numbers)) { text = applyFormat(text, MarkdownFormat.NUMBERED) }
         }
         // Content
         Row(
@@ -537,11 +540,11 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
         ) {
             Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
                 Box {
-                    ToolButton(Icons.Outlined.Tag, "Tag") {
+                    ToolButton(Icons.Outlined.Tag, stringResource(R.string.editor_tag)) {
                         if (tags.isEmpty()) text = replaceSelection(text, "#") else showTags = true
                     }
                     DropdownMenu(expanded = showTags, onDismissRequest = { showTags = false }) {
-                        DropdownMenuItem(text = { Text("New tag") }, onClick = {
+                        DropdownMenuItem(text = { Text(stringResource(R.string.editor_new_tag)) }, onClick = {
                             showTags = false
                             text = replaceSelection(text, "#")
                         })
@@ -553,17 +556,17 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                         }
                     }
                 }
-                ToolButton(Icons.Outlined.CheckBox, "Task") { text = toggleTask(text) }
-                ToolButton(Icons.Outlined.Image, "Add pictures") {
+                ToolButton(Icons.Outlined.CheckBox, stringResource(R.string.editor_task)) { text = toggleTask(text) }
+                ToolButton(Icons.Outlined.Image, stringResource(R.string.editor_add_pictures)) {
                     AppLock.expectReturn()
                     pickImages.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
                 }
-                ToolButton(Icons.Outlined.PhotoCamera, "Take a photo") { launchCamera() }
-                ToolButton(Icons.Outlined.Attachment, "Attach a file") {
+                ToolButton(Icons.Outlined.PhotoCamera, stringResource(R.string.editor_take_photo)) { launchCamera() }
+                ToolButton(Icons.Outlined.Attachment, stringResource(R.string.editor_attach_file)) {
                     AppLock.expectReturn()
                     pickFile.launch(arrayOf("*/*"))
                 }
-                if (s.remote.supportsLocation) ToolButton(Icons.Outlined.LocationOn, "Location") { showLocation = true }
+                if (s.remote.supportsLocation) ToolButton(Icons.Outlined.LocationOn, stringResource(R.string.editor_location)) { showLocation = true }
             }
             TextButton(onClick = { showVisibility = true }) {
                 Icon(visibility.icon, null, Modifier.size(18.dp))
@@ -578,8 +581,8 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
             add(MemoVisibility.PROTECTED)
             add(MemoVisibility.PUBLIC)
             if (visibility == MemoVisibility.SPACE || model.baseline?.visibility == MemoVisibility.SPACE) add(MemoVisibility.SPACE)
-        }.map { it to "${it.label} · ${it.descriptionShort()}" }
-        ChoiceSheet("Who can see this memo", options, visibility, onDismiss = { showVisibility = false }) {
+        }.map { it to stringResource(R.string.editor_visibility_option, it.label, stringResource(it.descriptionShort())) }
+        ChoiceSheet(stringResource(R.string.editor_visibility_title), options, visibility, onDismiss = { showVisibility = false }) {
             visibility = it
             showVisibility = false
         }
@@ -596,48 +599,48 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
         if (isEdit) {
             androidx.compose.material3.AlertDialog(
                 onDismissRequest = { showExitDialog = false },
-                title = { Text("Save your changes?") },
-                text = { Text("You changed this memo. Save the changes before closing?") },
-                confirmButton = { TextButton(onClick = { showExitDialog = false; submit() }) { Text("Save") } },
+                title = { Text(stringResource(R.string.editor_save_changes_title)) },
+                text = { Text(stringResource(R.string.editor_save_changes_body)) },
+                confirmButton = { TextButton(onClick = { showExitDialog = false; submit() }) { Text(stringResource(R.string.save)) } },
                 dismissButton = {
                     TextButton(onClick = {
                         showExitDialog = false
                         discard()
-                    }) { Text("Discard", color = MaterialTheme.colorScheme.error) }
+                    }) { Text(stringResource(R.string.discard), color = MaterialTheme.colorScheme.error) }
                 },
             )
         } else {
             androidx.compose.material3.AlertDialog(
                 onDismissRequest = { showExitDialog = false },
-                title = { Text(if (usesDraft) "Keep this as a draft?" else "Post this memo?") },
+                title = { Text(stringResource(if (usesDraft) R.string.editor_keep_draft_title else R.string.editor_post_title)) },
                 text = {
                     Text(
-                        if (usesDraft) "It opens again next time you write a new memo. Pictures and files aren't kept in drafts."
-                        else "You haven't posted it yet.",
+                        stringResource(if (usesDraft) R.string.editor_keep_draft_body else R.string.editor_post_body),
                     )
                 },
                 confirmButton = {
                     TextButton(onClick = {
                         showExitDialog = false
                         if (usesDraft) keepDraft() else submit()
-                    }) { Text(if (usesDraft) "Keep draft" else "Post") }
+                    }) { Text(stringResource(if (usesDraft) R.string.editor_keep_draft else R.string.post)) }
                 },
                 dismissButton = {
                     TextButton(onClick = {
                         showExitDialog = false
                         discard()
-                    }) { Text("Discard", color = MaterialTheme.colorScheme.error) }
+                    }) { Text(stringResource(R.string.discard), color = MaterialTheme.colorScheme.error) }
                 },
             )
         }
     }
 }
 
-private fun MemoVisibility.descriptionShort(): String = when (this) {
-    MemoVisibility.PRIVATE -> "only you"
-    MemoVisibility.PROTECTED -> "anyone signed in to your server"
-    MemoVisibility.PUBLIC -> "anyone with the link"
-    MemoVisibility.SPACE -> "members of your space"
+@StringRes
+private fun MemoVisibility.descriptionShort(): Int = when (this) {
+    MemoVisibility.PRIVATE -> R.string.visibility_private_short
+    MemoVisibility.PROTECTED -> R.string.visibility_protected_short
+    MemoVisibility.PUBLIC -> R.string.visibility_public_short
+    MemoVisibility.SPACE -> R.string.visibility_space_short
 }
 
 private fun removeResource(c: AppContainer, model: EditorModel, r: ResourceEntity, autosave: Boolean) {

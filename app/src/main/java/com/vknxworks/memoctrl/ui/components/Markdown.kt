@@ -68,6 +68,8 @@ import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
 
 /** What tapping things inside a memo does. */
 class MarkdownActions(
@@ -310,7 +312,7 @@ private fun MarkdownImage(image: InlineImage, serverUrl: String?) {
         ) {
             Icon(Icons.Outlined.Image, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
-                image.alt.ifBlank { "Image" } + " · $host",
+                stringResource(R.string.markdown_image_link, image.alt.ifBlank { stringResource(R.string.markdown_image) }, host),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 8.dp),
@@ -342,13 +344,13 @@ private fun isExternal(url: String, serverUrl: String?): Boolean {
 fun openLink(context: Context, url: String) {
     val uri = Uri.parse(url)
     if (uri.scheme !in setOf("http", "https", "mailto", "geo", "tel")) {
-        Toast.makeText(context, "Can't open this kind of link", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.link_unsupported), Toast.LENGTH_SHORT).show()
         return
     }
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     } catch (_: ActivityNotFoundException) {
-        Toast.makeText(context, "No app can open this link", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.link_no_app), Toast.LENGTH_SHORT).show()
     }
 }
 

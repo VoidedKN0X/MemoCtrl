@@ -1,11 +1,8 @@
 package com.vknxworks.memoctrl.ui.memos
 
-import android.content.ClipData
-import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.text.format.DateUtils
-import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
@@ -67,24 +64,33 @@ import com.vknxworks.memoctrl.ui.components.runTask
 import com.vknxworks.memoctrl.ui.nav.LocalNavigator
 import com.vknxworks.memoctrl.ui.theme.Gutter
 import com.vknxworks.memoctrl.util.extractPreview
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
+import androidx.annotation.StringRes
+import com.vknxworks.memoctrl.ui.components.copySensitive
 
 // ---------- Visibility ----------
 
-val MemoVisibility.label: String
-    get() = when (this) {
-        MemoVisibility.PRIVATE -> "Private"
-        MemoVisibility.PROTECTED -> "Signed-in users"
-        MemoVisibility.PUBLIC -> "Public"
-        MemoVisibility.SPACE -> "Space members"
+val MemoVisibility.labelRes: Int
+    @StringRes get() = when (this) {
+        MemoVisibility.PRIVATE -> R.string.visibility_private
+        MemoVisibility.PROTECTED -> R.string.visibility_protected
+        MemoVisibility.PUBLIC -> R.string.visibility_public
+        MemoVisibility.SPACE -> R.string.visibility_space
     }
 
+val MemoVisibility.label: String
+    @Composable get() = stringResource(labelRes)
+
 val MemoVisibility.description: String
-    get() = when (this) {
-        MemoVisibility.PRIVATE -> "Only you"
-        MemoVisibility.PROTECTED -> "Everyone with an account on your server"
-        MemoVisibility.PUBLIC -> "Anyone, including people who aren't signed in"
-        MemoVisibility.SPACE -> "Members of your space"
-    }
+    @Composable get() = stringResource(
+        when (this) {
+            MemoVisibility.PRIVATE -> R.string.visibility_private_desc
+            MemoVisibility.PROTECTED -> R.string.visibility_protected_desc
+            MemoVisibility.PUBLIC -> R.string.visibility_public_desc
+            MemoVisibility.SPACE -> R.string.visibility_space_desc
+        },
+    )
 
 val MemoVisibility.icon: ImageVector
     get() = when (this) {
@@ -170,7 +176,7 @@ fun MemoHeader(
         }
         if (pinned) {
             Spacer(Modifier.width(8.dp))
-            Icon(Icons.Outlined.PushPin, "Pinned", Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+            Icon(Icons.Outlined.PushPin, stringResource(R.string.pinned), Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
         }
         if (visibility != null) {
             Spacer(Modifier.width(8.dp))
@@ -178,12 +184,12 @@ fun MemoHeader(
         }
         if (unsynced) {
             Spacer(Modifier.width(8.dp))
-            Icon(Icons.Outlined.CloudOff, "Not synced yet", Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
+            Icon(Icons.Outlined.CloudOff, stringResource(R.string.not_synced), Modifier.size(16.dp), tint = MaterialTheme.colorScheme.error)
         }
         Spacer(Modifier.weight(1f))
         if (onMenu != null) {
             IconButton(onClick = onMenu) {
-                Icon(Icons.Filled.MoreVert, "More", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.Filled.MoreVert, stringResource(R.string.more), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -208,7 +214,7 @@ fun MemoBody(memo: MemoEntity, preview: Boolean, onShowMore: (() -> Unit)? = nul
     }
     if (cut && onShowMore != null) {
         Text(
-            "Show more",
+            stringResource(R.string.show_more),
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.clickable(onClick = onShowMore).padding(vertical = 2.dp),
@@ -237,9 +243,9 @@ fun MemoActionsSheet(memo: MemoEntity, onDismiss: () -> Unit) {
     var deleting by remember { mutableStateOf(false) }
     if (deleting) {
         ConfirmDialog(
-            "Delete this memo?",
-            "It's removed from your server too. This can't be undone.",
-            "Delete",
+            stringResource(R.string.delete_memo_title),
+            stringResource(R.string.delete_memo_body),
+            stringResource(R.string.delete),
             onDismiss = { deleting = false; onDismiss() },
         ) {
             deleting = false
@@ -251,22 +257,22 @@ fun MemoActionsSheet(memo: MemoEntity, onDismiss: () -> Unit) {
     val remoteUrl = memo.remoteId?.let { id -> c.sessions.active.value?.remote?.memoUrl(id) }
     val actions = buildList {
         if (memo.archived) {
-            add(SheetAction("Restore", Icons.Outlined.Restore) { c.runTask { c.repo.restoreMemo(memo.identifier) } })
+            add(SheetAction(stringResource(R.string.restore), Icons.Outlined.Restore) { c.runTask { c.repo.restoreMemo(memo.identifier) } })
         } else {
             add(
-                if (memo.pinned) SheetAction("Unpin", Icons.Outlined.PinDrop) { c.runTask { c.repo.updateMemo(memo.identifier, pinned = false) } }
-                else SheetAction("Pin to the top", Icons.Outlined.PushPin) { c.runTask { c.repo.updateMemo(memo.identifier, pinned = true) } },
+                if (memo.pinned) SheetAction(stringResource(R.string.unpin), Icons.Outlined.PinDrop) { c.runTask { c.repo.updateMemo(memo.identifier, pinned = false) } }
+                else SheetAction(stringResource(R.string.pin_to_top), Icons.Outlined.PushPin) { c.runTask { c.repo.updateMemo(memo.identifier, pinned = true) } },
             )
-            add(SheetAction("Edit", Icons.Outlined.Edit) { nav.edit(memo.identifier) })
-            add(SheetAction("Share", Icons.Outlined.Share) { shareText(context, memo.content) })
-            add(SheetAction("Copy text", Icons.Outlined.ContentCopy) { copyText(context, memo.content) })
-            if (remoteUrl != null) add(SheetAction("Share link", Icons.Outlined.Link) { shareText(context, remoteUrl) })
-            add(SheetAction("Archive", Icons.Outlined.Archive) { c.runTask { c.repo.archiveMemo(memo.identifier) } })
+            add(SheetAction(stringResource(R.string.edit), Icons.Outlined.Edit) { nav.edit(memo.identifier) })
+            add(SheetAction(stringResource(R.string.share), Icons.Outlined.Share) { shareText(context, memo.content) })
+            add(SheetAction(stringResource(R.string.copy_text), Icons.Outlined.ContentCopy) { copyText(context, memo.content) })
+            if (remoteUrl != null) add(SheetAction(stringResource(R.string.share_link), Icons.Outlined.Link) { shareText(context, remoteUrl) })
+            add(SheetAction(stringResource(R.string.archive), Icons.Outlined.Archive) { c.runTask { c.repo.archiveMemo(memo.identifier) } })
         }
-        add(SheetAction("Delete", Icons.Outlined.Delete, destructive = true) { deleting = true })
+        add(SheetAction(stringResource(R.string.delete), Icons.Outlined.Delete, destructive = true) { deleting = true })
     }
     ActionSheet(
-        title = memo.content.lineSequence().firstOrNull { it.isNotBlank() }?.trim()?.take(80) ?: "Memo",
+        title = memo.content.lineSequence().firstOrNull { it.isNotBlank() }?.trim()?.take(80) ?: stringResource(R.string.memo),
         subtitle = relativeTime(memo.date.toEpochMilli()),
         actions = actions,
         onDismiss = { if (!deleting) onDismiss() },
@@ -283,9 +289,9 @@ fun shareText(context: Context, text: String) {
 }
 
 fun copyText(context: Context, text: String) {
-    context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText("Memo", text))
-    // Android 13 and newer show their own confirmation.
-    if (android.os.Build.VERSION.SDK_INT < 33) Toast.makeText(context, "Copied", Toast.LENGTH_SHORT).show()
+    // Marked sensitive: the clipboard preview and keyboards' clipboard history don't show your memo.
+    // Android shows its own "Copied" confirmation.
+    copySensitive(context, context.getString(R.string.memo), text)
 }
 
 /** A memo someone shared on the server, in Explore. Read-only. */

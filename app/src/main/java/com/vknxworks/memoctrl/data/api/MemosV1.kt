@@ -18,6 +18,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.InputStream
 import java.time.Instant
+import com.vknxworks.memoctrl.R
+import com.vknxworks.memoctrl.str
 
 // ---------- Memos 0.27 and newer (api/v1 with resource names) ----------
 
@@ -189,7 +191,7 @@ class MemosV1(
 
     suspend fun me(): V1User =
         http.fetchJson(request(base.path("api/v1/auth/me").build()).build(), V1CurrentUser.serializer()).user
-            ?: throw ApiException("Not signed in", 401)
+            ?: throw ApiException(str(R.string.error_not_signed_in), 401)
 
     override suspend fun currentUser(): User {
         val user = me()
@@ -336,8 +338,8 @@ class MemosV1(
                 .build(),
             V1SignInResponse.serializer(),
         )
-        val session = signIn.accessToken?.takeIf { it.isNotBlank() } ?: throw ApiException("The server didn't sign you in.")
-        val user = signIn.user ?: throw ApiException("The server didn't sign you in.")
+        val session = signIn.accessToken?.takeIf { it.isNotBlank() } ?: throw ApiException(str(R.string.error_no_signin))
+        val user = signIn.user ?: throw ApiException(str(R.string.error_no_signin))
         try {
             val created = http.fetchJson(
                 Request.Builder()
@@ -348,7 +350,7 @@ class MemosV1(
                     .build(),
                 V1CreateTokenResponse.serializer(),
             )
-            val token = created.token?.takeIf { it.isNotBlank() } ?: throw ApiException("The server didn't make an access token.")
+            val token = created.token?.takeIf { it.isNotBlank() } ?: throw ApiException(str(R.string.error_no_token))
             return IssuedToken(token, created.personalAccessToken?.name)
         } finally {
             // The short sign-in session isn't needed anymore: the app uses its own token from now on.

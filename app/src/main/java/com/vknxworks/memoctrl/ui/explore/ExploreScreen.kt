@@ -44,6 +44,8 @@ import com.vknxworks.memoctrl.ui.memos.ExploreCard
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
 
 private const val PAGE_SIZE = 20
 
@@ -112,14 +114,14 @@ fun ExploreScreen(model: ExploreModel = viewModel()) {
     LaunchedEffect(remote) { model.bind(remote) }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
-        TabTitle("Explore")
+        TabTitle(stringResource(R.string.tab_explore))
         when {
             model.memos.isEmpty() && model.loading -> LoadingView()
             model.memos.isEmpty() && model.error != null -> ErrorView(model.error.orEmpty()) { model.refresh(initial = true) }
             model.memos.isEmpty() && model.endReached -> MessageView(
                 Icons.Outlined.Public,
-                "Nothing shared yet",
-                "Memos that are public or visible to signed-in users on your server show up here.",
+                stringResource(R.string.explore_empty),
+                stringResource(R.string.explore_empty_body),
             )
             else -> PullToRefreshBox(
                 isRefreshing = model.refreshing,
@@ -135,9 +137,9 @@ fun ExploreScreen(model: ExploreModel = viewModel()) {
                         Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
                             when {
                                 model.loading -> CircularProgressIndicator(Modifier.size(28.dp))
-                                model.error != null -> TextButton(onClick = { model.loadMore() }) { Text("Couldn't load more. Try again") }
+                                model.error != null -> TextButton(onClick = { model.loadMore() }) { Text(stringResource(R.string.explore_load_more_failed)) }
                                 model.endReached -> Text(
-                                    "That's everything",
+                                    stringResource(R.string.explore_end),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )

@@ -9,6 +9,10 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.vknxworks.memoctrl.ui.lock.AppLock
+import androidx.annotation.StringRes
+
+/** A string from strings.xml, for code outside Compose (errors, widgets, toasts). */
+fun str(@StringRes id: Int, vararg args: Any): String = MemoCtrlApp.instance.getString(id, *args)
 
 class MemoCtrlApp : Application(), SingletonImageLoader.Factory {
     lateinit var container: AppContainer
@@ -16,6 +20,7 @@ class MemoCtrlApp : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
+        instance = this
         container = AppContainer(this)
         AppLock.onLocked = { container.onLocked() }
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
@@ -41,4 +46,9 @@ class MemoCtrlApp : Application(), SingletonImageLoader.Factory {
         ImageLoader.Builder(context)
             .components { add(OkHttpNetworkFetcherFactory(callFactory = { container.http })) }
             .build()
+
+    companion object {
+        lateinit var instance: MemoCtrlApp
+            private set
+    }
 }

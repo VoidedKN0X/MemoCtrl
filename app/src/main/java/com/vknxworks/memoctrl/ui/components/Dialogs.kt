@@ -35,6 +35,8 @@ import com.vknxworks.memoctrl.AppContainer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
 
 /** Runs a task that outlives the screen or sheet that started it, reporting a failure as a toast. */
 fun AppContainer.runTask(block: suspend () -> Unit) {
@@ -114,7 +116,7 @@ fun TextInputDialog(
         title = { Text(title) },
         text = { OutlinedTextField(text, { text = it }, label = { Text(label) }, singleLine = true, modifier = Modifier.fillMaxWidth()) },
         confirmButton = { TextButton(onClick = { onConfirm(text.trim()) }, enabled = text.isNotBlank()) { Text(confirm) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }
 
@@ -126,7 +128,7 @@ fun ConfirmDialog(title: String, body: String?, confirm: String, onDismiss: () -
         title = { Text(title) },
         text = if (body != null) { { Text(body) } } else null,
         confirmButton = { TextButton(onClick = onConfirm) { Text(confirm, color = MaterialTheme.colorScheme.error) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }
 
@@ -137,6 +139,6 @@ fun InfoDialog(title: String, body: String, onDismiss: () -> Unit) {
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(body) },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.close)) } },
     )
 }

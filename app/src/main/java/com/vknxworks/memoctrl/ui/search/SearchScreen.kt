@@ -45,6 +45,8 @@ import com.vknxworks.memoctrl.ui.theme.Gutter
 import com.vknxworks.memoctrl.util.matchesSearch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
 
 /** The Search tab: finds memos on this phone by their text, so it works offline too. */
 @Composable
@@ -66,14 +68,14 @@ fun SearchScreen() {
     }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
-        TabTitle("Search")
+        TabTitle(stringResource(R.string.tab_search))
         TextField(
             value = query,
             onValueChange = { query = it },
-            placeholder = { Text("Search your memos") },
+            placeholder = { Text(stringResource(R.string.search_hint)) },
             leadingIcon = { Icon(Icons.Filled.Search, null) },
             trailingIcon = {
-                if (query.isNotEmpty()) IconButton(onClick = { query = "" }) { Icon(Icons.Filled.Close, "Clear") }
+                if (query.isNotEmpty()) IconButton(onClick = { query = "" }) { Icon(Icons.Filled.Close, stringResource(R.string.clear)) }
             },
             singleLine = true,
             shape = CircleShape,
@@ -90,14 +92,14 @@ fun SearchScreen() {
         when {
             debounced.isEmpty() -> MessageView(
                 Icons.Filled.Search,
-                "Search your memos",
-                if (settings.searchIncludesArchived) "Searches your memos and archive." else "Searches every memo on your timeline. Turn on archived memos in Settings.",
+                stringResource(R.string.search_hint),
+                stringResource(if (settings.searchIncludesArchived) R.string.search_archive_note else R.string.search_timeline_note),
                 modifier = Modifier.padding(bottom = LocalBottomClearance.current),
             )
             results.isEmpty() && archivedResults.isEmpty() -> MessageView(
                 Icons.Outlined.SearchOff,
-                "Nothing found",
-                "No memo contains \"$debounced\".",
+                stringResource(R.string.search_nothing),
+                stringResource(R.string.search_nothing_body, debounced),
                 modifier = Modifier.padding(bottom = LocalBottomClearance.current),
             )
             else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
@@ -105,7 +107,7 @@ fun SearchScreen() {
                 if (archivedResults.isNotEmpty()) {
                     item(key = "archived-header") {
                         Text(
-                            "Archived",
+                            stringResource(R.string.archived),
                             style = MaterialTheme.typography.titleSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.padding(start = Gutter + 4.dp, top = 16.dp, bottom = 4.dp),

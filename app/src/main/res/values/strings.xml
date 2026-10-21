@@ -21,4 +21,393 @@
     <string name="licence_title">Licence</string>
     <string name="licence_subtitle">GNU General Public License v3.0</string>
     <string name="about_footer">MemoCtrl %1$s · VKNXWorks</string>
+
+    <!-- Errors and empty states -->
+    <string name="error_server">Server error</string>
+    <string name="error_token_invalid">Your access token no longer works</string>
+    <string name="error_unknown_host">Can\'t reach the server - check the address and your connection</string>
+    <string name="error_refused">Connection refused - is the server running?</string>
+    <string name="error_timeout">The server took too long to respond</string>
+    <string name="error_tls">Secure connection failed: %1$s</string>
+    <string name="error_tls_certificate">certificate problem</string>
+    <string name="error_network">Network error</string>
+    <string name="error_generic">Something went wrong</string>
+    <string name="error_load_title">Couldn\'t load this</string>
+    <string name="retry">Retry</string>
+
+    <!-- Common -->
+    <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
+    <string name="back">Back</string>
+    <string name="you_title">You</string>
+    <string name="selected">Selected</string>
+
+    <!-- App lock -->
+    <string name="lock_title">MemoCtrl is locked</string>
+    <string name="lock_subtitle">Confirm it\'s you to choose an app PIN</string>
+    <string name="lock_legacy_title">Unlock MemoCtrl</string>
+    <string name="lock_legacy_body">Unlock with your fingerprint, face or screen lock one last time, then choose an app PIN.</string>
+    <string name="lock_unlock">Unlock</string>
+    <string name="lock_enter_pin">Enter your PIN</string>
+    <string name="lock_pin_due">Enter your PIN. It\'s needed after a restart and every 72 hours.</string>
+    <string name="lock_wrong_pin">Wrong PIN</string>
+    <string name="lock_too_many">Too many tries. Try again in %1$d s</string>
+    <string name="lock_use_fingerprint">Use fingerprint</string>
+    <string name="lock_use_pin">Use PIN</string>
+    <string name="lock_fingerprint_title">Unlock MemoCtrl</string>
+    <string name="lock_fingerprint_subtitle">Confirm it\'s you to see your memos</string>
+    <string name="lock_fingerprint_changed">A fingerprint was added or removed. Unlock with your PIN, then turn fingerprint unlock on again.</string>
+    <string name="lock_fingerprint_failed">Couldn\'t unlock with your fingerprint. Use your PIN.</string>
+    <string name="lock_fingerprint_key_failed">Fingerprint didn\'t unlock the key</string>
+    <string name="lock_fingerprint_prompt_failed">Couldn\'t show the fingerprint prompt</string>
+    <string name="lock_prompt_failed">Couldn\'t show the unlock prompt</string>
+    <string name="lock_forgot">Forgot PIN?</string>
+    <string name="lock_forgot_title">Forgot your PIN?</string>
+    <string name="lock_forgot_body">The PIN can\'t be recovered, because it encrypts your server login. MemoCtrl will sign out of every account and delete the memos, pictures and drafts kept on this phone. Everything on your Memos server stays. Changes that haven\'t synced yet are lost.</string>
+    <string name="lock_forgot_confirm">Sign out and reset</string>
+    <string name="lock_choose_title">Choose an app PIN</string>
+    <string name="lock_choose_intro">At least %1$d digits, different from your phone\'s PIN. If you forget it, the only way back in is to sign out and sign in again.</string>
+    <string name="lock_migrate_intro">MemoCtrl\'s app lock now has its own PIN, separate from your phone\'s. Your server login is encrypted with it while the app is locked.</string>
+    <string name="lock_change_title">Change app PIN</string>
+    <string name="lock_change_intro">At least %1$d digits, different from your phone\'s PIN.</string>
+    <string name="lock_disable_title">Turn off app lock</string>
+    <string name="lock_disable_intro">Enter your app PIN to turn the lock off.</string>
+    <string name="lock_current_pin">Enter your current PIN</string>
+    <string name="lock_repeat_pin">Enter the same PIN again</string>
+    <string name="lock_too_easy">Too easy to guess. Try a less obvious PIN.</string>
+    <string name="lock_mismatch">The PINs didn\'t match. Start again.</string>
+    <string name="lock_save_failed">Couldn\'t save the PIN. Try again.</string>
+    <string name="lock_next">Next</string>
+    <string name="lock_done">Done</string>
+    <string name="lock_ok">OK</string>
+    <string name="lock_delete">Delete</string>
+    <string name="lock_cancel">Cancel</string>
+
+    <!-- Settings -->
+    <string name="theme_system">Follow system</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_black">Pure black</string>
+    <string name="edit_gesture_none">Only from the menu</string>
+    <string name="edit_gesture_tap">Tap</string>
+    <string name="edit_gesture_double">Double-tap</string>
+    <string name="edit_gesture_long">Long-press</string>
+    <string name="lock_again_immediately">As soon as you leave the app</string>
+    <string name="lock_again_1m">After 1 minute away</string>
+    <string name="lock_again_5m">After 5 minutes away</string>
+    <string name="lock_again_15m">After 15 minutes away</string>
+    <string name="lock_again_1h">After 1 hour away</string>
+    <string name="lock_again_restart">Only when the app restarts</string>
+
+    <!-- Settings screens -->
+    <string name="settings">Settings</string>
+    <string name="group_appearance">Appearance</string>
+    <string name="theme">Theme</string>
+    <string name="dynamic_colour">Use wallpaper colours</string>
+    <string name="dynamic_colour_subtitle">Replaces the default colours with ones from your wallpaper</string>
+    <string name="group_privacy">Privacy and security</string>
+    <string name="privacy_footer">MemoCtrl has no analytics or tracking. It only talks to your own Memos server.</string>
+    <string name="lock_app">App lock</string>
+    <string name="lock_app_subtitle">Ask for an app PIN (and optionally your fingerprint) when opening MemoCtrl. While locked, your server login stays encrypted with the PIN, and the recent-apps screen and widgets hide your memos.</string>
+    <string name="lock_change_pin">Change app PIN</string>
+    <string name="lock_change_pin_subtitle">At least %1$d digits, separate from your phone\'s PIN</string>
+    <string name="lock_fingerprint">Unlock with fingerprint</string>
+    <string name="lock_fingerprint_settings_subtitle">Only strong biometrics such as your fingerprint, checked by the phone\'s secure hardware. The PIN is still needed after a restart and every 72 hours.</string>
+    <string name="lock_fingerprint_unavailable">Set up a fingerprint on this phone first</string>
+    <string name="lock_fingerprint_setup_failed">Couldn\'t set up fingerprint unlock</string>
+    <string name="lock_fingerprint_enable_title">Turn on fingerprint unlock</string>
+    <string name="lock_fingerprint_enable_subtitle">Confirm your fingerprint</string>
+    <string name="lock_again">Lock again</string>
+    <string name="hide_content">Hide in screenshots and recent apps</string>
+    <string name="hide_content_subtitle">Screenshots, screen recordings and the recent apps view show a blank screen</string>
+    <string name="external_images">Load pictures from other websites</string>
+    <string name="external_images_subtitle">Pictures in memos that link to other sites. Off: they show as a link, so those sites can\'t see when you read your memos</string>
+    <string name="client_certificate">Client certificate</string>
+    <string name="client_certificate_using">Using \"%1$s\". Tap to pick another</string>
+    <string name="client_certificate_subtitle">For servers behind a proxy that asks for one (mutual TLS). The certificate stays in Android\'s certificate store</string>
+    <string name="client_certificate_stop">Stop using the certificate</string>
+    <string name="client_certificate_stop_title">Stop using the client certificate?</string>
+    <string name="client_certificate_stop_body">MemoCtrl won\'t send it anymore. It stays installed on your phone.</string>
+    <string name="client_certificate_stop_confirm">Stop using</string>
+    <string name="client_certificate_removed">Client certificate removed</string>
+    <string name="group_writing">Writing</string>
+    <string name="edit_gesture">Open a memo in the editor with</string>
+    <string name="autosave">Autosave</string>
+    <string name="autosave_subtitle">Save every change as you type and sync it in the background, instead of when you tap Post</string>
+    <string name="group_search">Search</string>
+    <string name="search_archived">Include archived memos</string>
+    <string name="search_archived_subtitle">Search results also show archived memos that match</string>
+    <string name="accounts_title">Servers and accounts</string>
+    <string name="accounts_footer">Tap an account to switch to it. Each account keeps its own memos on this phone.</string>
+    <string name="not_encrypted">Not encrypted (HTTP)</string>
+    <string name="account_active">Active</string>
+    <string name="account_sign_out">Sign out of this account</string>
+    <string name="account_add">Add a server or account</string>
+    <string name="sign_out_title">Sign out of %1$s?</string>
+    <string name="this_server">this server</string>
+    <string name="sign_out_account_body">Memos kept on this phone for this account are removed, including changes that haven\'t synced. They stay on your server.</string>
+    <string name="sign_out">Sign out</string>
+    <string name="archive_title">Archive</string>
+    <string name="archive_empty_title">Nothing archived</string>
+    <string name="archive_empty_body">Archive a memo from its menu to take it off your timeline without deleting it.</string>
+    <string name="attachments_title">Attachments</string>
+    <string name="attachments_pictures">Pictures</string>
+    <string name="attachments_files">Files</string>
+    <string name="attachments_no_pictures">No pictures yet</string>
+    <string name="attachments_no_pictures_body">Pictures you add to memos show up here.</string>
+    <string name="attachments_no_files">No files yet</string>
+    <string name="attachments_no_files_body">Files you attach to memos show up here.</string>
+
+    <!-- You page -->
+    <string name="memos_version">Memos %1$s</string>
+    <string name="group_sync">Sync</string>
+    <string name="sync_syncing">Syncing…</string>
+    <string name="sync_failed">Last sync failed</string>
+    <string name="sync_all_done">Everything is synced</string>
+    <string name="sync_explainer">Memos are kept on this phone and work offline. Changes sync to your server.</string>
+    <string name="archive_subtitle">Memos you put away. Restore or delete them here</string>
+    <string name="attachments_subtitle">Every picture and file in your memos</string>
+    <string name="group_server">Server</string>
+    <string name="default_visibility">New memos are %1$s by default</string>
+    <string name="memos_v0_api">Memos 0.21 API</string>
+    <plurals name="sign_out_unsynced">
+        <item quantity="one">%1$d change hasn\'t synced yet and will be lost. Memos on your server stay there.</item>
+        <item quantity="other">%1$d changes haven\'t synced yet and will be lost. Memos on your server stay there.</item>
+    </plurals>
+    <string name="sign_out_body">Memos kept on this phone for this account are removed. They stay on your server.</string>
+    <plurals name="sync_waiting">
+        <item quantity="one">%1$d change waiting to sync</item>
+        <item quantity="other">%1$d changes waiting to sync</item>
+    </plurals>
+
+    <!-- Memos -->
+    <string name="visibility_private">Private</string>
+    <string name="visibility_protected">Signed-in users</string>
+    <string name="visibility_public">Public</string>
+    <string name="visibility_space">Space members</string>
+    <string name="visibility_private_desc">Only you</string>
+    <string name="visibility_protected_desc">Everyone with an account on your server</string>
+    <string name="visibility_public_desc">Anyone, including people who aren\'t signed in</string>
+    <string name="visibility_space_desc">Members of your space</string>
+    <string name="not_synced">Not synced yet</string>
+    <string name="more">More</string>
+    <string name="show_more">Show more</string>
+    <string name="delete_memo_title">Delete this memo?</string>
+    <string name="delete_memo_body">It\'s removed from your server too. This can\'t be undone.</string>
+    <string name="delete">Delete</string>
+    <string name="restore">Restore</string>
+    <string name="unpin">Unpin</string>
+    <string name="pin_to_top">Pin to the top</string>
+    <string name="edit">Edit</string>
+    <string name="share">Share</string>
+    <string name="copy_text">Copy text</string>
+    <string name="share_link">Share link</string>
+    <string name="archive">Archive</string>
+    <string name="memo">Memo</string>
+
+    <!-- Sign in -->
+    <string name="signin_local_network_denied">MemoCtrl needs access to devices on your network to reach a server at home. Allow it in the app\'s settings and try again.</string>
+    <string name="signin_http_title">Use an unencrypted connection?</string>
+    <string name="signin_http_body">MemoCtrl couldn\'t connect to this server over HTTPS. It can try plain HTTP instead, but then your password or access token and your memos are sent unencrypted and anyone on the network can read them. Only do this on a network you trust.</string>
+    <string name="signin_http_confirm">Use HTTP</string>
+    <string name="signin_https_failed">Couldn\'t connect securely (HTTPS)</string>
+    <string name="signin_newer_title">Newer Memos version</string>
+    <string name="signin_newer_body">This server runs a newer Memos version.</string>
+    <string name="signin_newer_confirm">Sign in anyway</string>
+    <string name="signin_add_server">Add a server</string>
+    <string name="signin_intro">Sign in to your Memos server with the address you\'d open in a browser.</string>
+    <string name="signin_address">Server address</string>
+    <string name="signin_address_hint">memos.example.com</string>
+    <string name="signin_http_warning">Not encrypted (HTTP). Your password, access token and memos are sent in the clear. Fine on your home network, risky anywhere else.</string>
+    <string name="signin_password_tab">Password</string>
+    <string name="signin_token_tab">Access token</string>
+    <string name="signin_username">Username</string>
+    <string name="signin_password">Password</string>
+    <string name="signin_hide_password">Hide password</string>
+    <string name="signin_show_password">Show password</string>
+    <string name="signin_password_note">Your password is only used to sign in. MemoCtrl then gets its own access token from your server and never keeps the password. You\'ll find the token under Settings &gt; My account &gt; Access tokens in Memos, and it\'s revoked when you sign out here.</string>
+    <string name="signin_token">Access token</string>
+    <string name="signin_hide_token">Hide token</string>
+    <string name="signin_show_token">Show token</string>
+    <string name="signin_token_note">For accounts that sign in with SSO, or if you\'d rather make the token yourself: Memos &gt; Settings &gt; My account &gt; Access tokens. Pick one that never expires.</string>
+    <string name="signin_account_name">Account name (optional)</string>
+    <string name="signin_account_name_hint">Home</string>
+    <string name="signin_certificate_using">Using \"%1$s\"</string>
+    <string name="signin_certificate_hint">Only if your server\'s proxy asks for one</string>
+    <string name="signin_button">Sign in</string>
+    <string name="signin_footer">The access token is stored encrypted on this phone and is only sent to your server. MemoCtrl works with Memos 0.21 and 0.27 to 0.31.</string>
+
+    <!-- Editor -->
+    <string name="editor_add_file_failed">Couldn\'t add the file: %1$s</string>
+    <string name="editor_no_camera">No camera app found</string>
+    <string name="editor_restored">Restored your unsaved changes</string>
+    <string name="editor_edit_title">Edit memo</string>
+    <string name="save">Save</string>
+    <string name="post">Post</string>
+    <string name="editor_placeholder">Any thoughts…</string>
+    <string name="format_h1">H1</string>
+    <string name="format_h2">H2</string>
+    <string name="format_h3">H3</string>
+    <string name="format_bold">Bold</string>
+    <string name="format_italic">Italic</string>
+    <string name="format_strikethrough">Strikethrough</string>
+    <string name="format_code">Code</string>
+    <string name="format_quote">Quote</string>
+    <string name="format_bullets">Bulleted list</string>
+    <string name="format_numbers">Numbered list</string>
+    <string name="editor_tag">Tag</string>
+    <string name="editor_new_tag">New tag</string>
+    <string name="editor_task">Task</string>
+    <string name="editor_add_pictures">Add pictures</string>
+    <string name="editor_take_photo">Take a photo</string>
+    <string name="editor_attach_file">Attach a file</string>
+    <string name="editor_location">Location</string>
+    <string name="editor_visibility_option">%1$s · %2$s</string>
+    <string name="editor_visibility_title">Who can see this memo</string>
+    <string name="editor_save_changes_title">Save your changes?</string>
+    <string name="editor_save_changes_body">You changed this memo. Save the changes before closing?</string>
+    <string name="discard">Discard</string>
+    <string name="editor_keep_draft_title">Keep this as a draft?</string>
+    <string name="editor_post_title">Post this memo?</string>
+    <string name="editor_keep_draft_body">It opens again next time you write a new memo. Pictures and files aren\'t kept in drafts.</string>
+    <string name="editor_post_body">You haven\'t posted it yet.</string>
+    <string name="editor_keep_draft">Keep draft</string>
+    <string name="visibility_private_short">only you</string>
+    <string name="visibility_protected_short">anyone signed in to your server</string>
+    <string name="visibility_public_short">anyone with the link</string>
+    <string name="visibility_space_short">members of your space</string>
+
+    <!-- Location -->
+    <string name="location_gps_off">Turn on location (GPS) in your phone\'s settings, or type the coordinates.</string>
+    <string name="location_no_fix">Couldn\'t get a GPS fix. Go outside or near a window, or type the coordinates.</string>
+    <string name="location_denied">Location access was denied. You can still type the coordinates.</string>
+    <string name="location_title">Location</string>
+    <string name="location_finding">Finding you…</string>
+    <string name="location_use_current">Use current location</string>
+    <string name="location_settings">Location settings</string>
+    <string name="location_place">Place name</string>
+    <string name="location_latitude">Latitude</string>
+    <string name="location_latitude_range">−90 to 90</string>
+    <string name="location_longitude">Longitude</string>
+    <string name="location_longitude_range">−180 to 180</string>
+    <string name="location_remove">Remove location</string>
+
+    <!-- Sync -->
+    <string name="sync_unsupported">This server\'s Memos version isn\'t supported.</string>
+    <string name="sync_unsupported_title">Unsupported Memos version</string>
+    <string name="sync_newer_title">Newer Memos version</string>
+    <string name="sync_anyway">Sync anyway</string>
+    <string name="sync_failed_title">Sync didn\'t finish</string>
+    <string name="sync_failed_body">%1$s
+
+Your changes are kept on this phone and sync next time.</string>
+    <string name="sync_failed_now">Last sync failed. Sync now</string>
+    <string name="sync_now">Sync now</string>
+    <plurals name="sync_pending_now">
+        <item quantity="one">%1$d change not synced yet. Sync now</item>
+        <item quantity="other">%1$d changes not synced yet. Sync now</item>
+    </plurals>
+
+    <!-- Search, tags, explore -->
+    <string name="tab_search">Search</string>
+    <string name="search_hint">Search your memos</string>
+    <string name="clear">Clear</string>
+    <string name="search_archive_note">Searches your memos and archive.</string>
+    <string name="search_timeline_note">Searches every memo on your timeline. Turn on archived memos in Settings.</string>
+    <string name="search_nothing">Nothing found</string>
+    <string name="search_nothing_body">No memo contains \"%1$s\".</string>
+    <string name="archived">Archived</string>
+    <string name="tab_tags">Tags</string>
+    <string name="tags_empty">No tags yet. Add one to a memo by writing #something.</string>
+    <plurals name="stat_memos">
+        <item quantity="one">Memo</item>
+        <item quantity="other">Memos</item>
+    </plurals>
+    <plurals name="stat_tags">
+        <item quantity="one">Tag</item>
+        <item quantity="other">Tags</item>
+    </plurals>
+    <plurals name="stat_days">
+        <item quantity="one">Day</item>
+        <item quantity="other">Days</item>
+    </plurals>
+    <plurals name="tag_count">
+        <item quantity="one">%1$d memo</item>
+        <item quantity="other">%1$d memos</item>
+    </plurals>
+    <string name="tab_explore">Explore</string>
+    <string name="explore_empty">Nothing shared yet</string>
+    <string name="explore_empty_body">Memos that are public or visible to signed-in users on your server show up here.</string>
+    <string name="explore_load_more_failed">Couldn\'t load more. Try again</string>
+    <string name="explore_end">That\'s everything</string>
+    <string name="tab_memos">Memos</string>
+    <string name="memos_empty">No memos yet</string>
+    <string name="memos_empty_tag">No memos with this tag</string>
+    <string name="memos_empty_body">Capture a thought, a link or a to-do. It syncs to your Memos server.</string>
+    <string name="memos_empty_tag_body">Memos you write with this tag show up here.</string>
+    <string name="memo_not_found">Memo not found</string>
+    <string name="memo_not_found_body">It may have been deleted.</string>
+    <string name="markdown_image">Image</string>
+    <string name="markdown_image_link">%1$s · %2$s</string>
+    <string name="link_unsupported">Can\'t open this kind of link</string>
+    <string name="link_no_app">No app can open this link</string>
+    <string name="viewer_position">%1$d / %2$d</string>
+
+    <!-- Server errors -->
+    <string name="error_token_expired">Your access token no longer works. Create a new one in Memos (Settings &gt; Access tokens) and sign in again.</string>
+    <string name="error_server_answered">Server answered %1$d%2$s</string>
+    <string name="error_not_memos">Unexpected answer from the server. Is this a Memos server?</string>
+    <string name="error_https_fallback">Couldn\'t connect securely (HTTPS). The server may only support plain HTTP.</string>
+    <string name="error_newer_server">This server runs Memos %1$s, newer than MemoCtrl was made for (%2$s). Most things should work, but a newer version can change how memos are stored.</string>
+    <string name="supported_versions">Memos 0.21 and Memos 0.27 to 0.31</string>
+    <string name="error_unlock_first">Unlock MemoCtrl first.</string>
+    <string name="error_not_memos_server">This doesn\'t look like a Memos server.</string>
+    <string name="error_bad_address">That isn\'t a valid server address.</string>
+    <string name="error_tls_signin">Secure connection failed: %1$s. If your server only supports plain HTTP, type http:// in front of the address.</string>
+    <string name="error_tls_generic">TLS error</string>
+    <string name="error_too_old">This server runs Memos %1$s. MemoCtrl works with %2$s.</string>
+    <string name="version_unknown">(unknown)</string>
+    <string name="token_name">MemoCtrl on %1$s %2$s</string>
+    <string name="error_wrong_password">Wrong username or password.</string>
+    <string name="error_token_rejected">The server didn\'t accept this access token.</string>
+    <string name="error_newer_sync">Your server runs Memos %1$s, newer than MemoCtrl was made for (%2$s). Syncing anyway could mix up changes that haven\'t synced yet. Check the release notes first.</string>
+    <string name="error_not_signed_in">Not signed in</string>
+    <string name="error_no_signin">The server didn\'t sign you in.</string>
+    <string name="error_no_token">The server didn\'t make an access token.</string>
+    <string name="error_unknown_memo">Unknown memo</string>
+    <string name="error_nothing_to_change">Nothing to change</string>
+    <string name="error_memo_gone">This memo no longer exists</string>
+    <string name="error_sync_failed">Sync failed</string>
+    <string name="error_some_memos">Some memos couldn\'t be synced</string>
+    <string name="error_push_memo">Couldn\'t sync a memo</string>
+    <string name="error_push_attachment">Couldn\'t upload an attachment</string>
+    <string name="error_delete_attachment">Couldn\'t delete an attachment on the server</string>
+    <string name="error_memo_no_id">The server sent a memo without an id</string>
+    <string name="error_attachment_no_id">The server sent an attachment without an id</string>
+    <string name="error_attachments_failed">One or more attachments couldn\'t be uploaded</string>
+    <string name="error_cleartext_blocked">Blocked an unencrypted (HTTP) connection to %1$s</string>
+    <string name="error_redirect_blocked">Refused to send this request on to another server (%1$s)</string>
+    <string name="error_read_file">Couldn\'t read the file</string>
+
+    <!-- Attachments -->
+    <string name="attachment_remove">Remove %1$s</string>
+    <string name="attachment">Attachment</string>
+    <string name="location">Location</string>
+    <string name="attachment_open_failed">Couldn\'t open this attachment</string>
+    <string name="attachment_no_app">No app can open this file</string>
+    <string name="attachment_get_failed">Couldn\'t get this file</string>
+
+    <!-- Widgets -->
+    <string name="widget_sign_in">Sign in to MemoCtrl to see your memos</string>
+    <string name="widget_locked">MemoCtrl is locked</string>
+    <string name="widget_config_title">Memos widget</string>
+    <string name="widget_config_tag">Tag</string>
+    <string name="widget_config_all">All memos</string>
+    <string name="widget_config_pinned">Pinned memos only</string>
+    <string name="widget_config_max">Show up to</string>
+    <string name="widget_config_add">Add widget</string>
+    <plurals name="widget_config_count">
+        <item quantity="one">%1$d memo</item>
+        <item quantity="other">%1$d memos</item>
+    </plurals>
 </resources>

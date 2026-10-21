@@ -16,25 +16,32 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import java.security.MessageDigest
+import androidx.annotation.StringRes
+import com.vknxworks.memoctrl.R
 
-enum class ThemeChoice(val label: String) { SYSTEM("Follow system"), DARK("Dark"), LIGHT("Light"), BLACK("Pure black") }
+enum class ThemeChoice(@StringRes val label: Int) {
+    SYSTEM(R.string.theme_system),
+    DARK(R.string.theme_dark),
+    LIGHT(R.string.theme_light),
+    BLACK(R.string.theme_black),
+}
 
 /** How a memo in a list opens in the editor, besides its menu. */
-enum class EditGesture(val label: String) {
-    NONE("Only from the menu"),
-    SINGLE("Tap"),
-    DOUBLE("Double-tap"),
-    LONG("Long-press"),
+enum class EditGesture(@StringRes val label: Int) {
+    NONE(R.string.edit_gesture_none),
+    SINGLE(R.string.edit_gesture_tap),
+    DOUBLE(R.string.edit_gesture_double),
+    LONG(R.string.edit_gesture_long),
 }
 
 /** When the app lock asks again after you leave the app. */
-enum class LockTimeout(val label: String, val millis: Long) {
-    IMMEDIATELY("As soon as you leave the app", 0L),
-    MINUTE_1("After 1 minute away", 60_000L),
-    MINUTES_5("After 5 minutes away", 5 * 60_000L),
-    MINUTES_15("After 15 minutes away", 15 * 60_000L),
-    HOUR_1("After 1 hour away", 60 * 60_000L),
-    RESTART("Only when the app restarts", -1L),
+enum class LockTimeout(@StringRes val label: Int, val millis: Long) {
+    IMMEDIATELY(R.string.lock_again_immediately, 0L),
+    MINUTE_1(R.string.lock_again_1m, 60_000L),
+    MINUTES_5(R.string.lock_again_5m, 5 * 60_000L),
+    MINUTES_15(R.string.lock_again_15m, 15 * 60_000L),
+    HOUR_1(R.string.lock_again_1h, 60 * 60_000L),
+    RESTART(R.string.lock_again_restart, -1L),
 }
 
 data class AppSettings(
@@ -48,6 +55,8 @@ data class AppSettings(
     val lockTimeout: LockTimeout = LockTimeout.IMMEDIATELY,
     /** Load pictures that memos link from other websites. Off: they show as a link instead. */
     val externalImages: Boolean = false,
+    /** FLAG_SECURE: keep the app out of screenshots, screen recordings and the recent-apps view. */
+    val hideContent: Boolean = false,
 )
 
 /** An unsent new memo, kept per account until it's posted or thrown away. */
@@ -63,6 +72,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val appLock = booleanPreferencesKey("app_lock")
         val lockTimeout = stringPreferencesKey("lock_timeout")
         val externalImages = booleanPreferencesKey("external_images")
+        val hideContent = booleanPreferencesKey("hide_content")
     }
 
     val settings: StateFlow<AppSettings> = context.appDataStore.data
@@ -81,6 +91,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         appLock = this[K.appLock] ?: false,
         lockTimeout = enumOr(this[K.lockTimeout], LockTimeout.IMMEDIATELY),
         externalImages = this[K.externalImages] ?: false,
+        hideContent = this[K.hideContent] ?: false,
     )
 
     suspend fun update(transform: (AppSettings) -> AppSettings) {
@@ -94,6 +105,7 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             p[K.appLock] = s.appLock
             p[K.lockTimeout] = s.lockTimeout.name
             p[K.externalImages] = s.externalImages
+            p[K.hideContent] = s.hideContent
         }
     }
 

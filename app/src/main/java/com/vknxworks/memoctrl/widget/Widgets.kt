@@ -161,15 +161,15 @@ object Widgets {
         )
         val subtitle = when {
             config.tag != null -> "#${config.tag}"
-            config.pinnedOnly -> "Pinned"
+            config.pinnedOnly -> context.getString(R.string.pinned)
             else -> null
         }
         views.setTextViewText(R.id.widget_subtitle, subtitle.orEmpty())
         views.setViewVisibility(R.id.widget_subtitle, if (subtitle != null) View.VISIBLE else View.GONE)
 
         val message = when {
-            !snap.signedIn -> "Sign in to MemoCtrl to see your memos"
-            snap.locked -> "MemoCtrl is locked"
+            !snap.signedIn -> context.getString(R.string.widget_sign_in)
+            snap.locked -> context.getString(R.string.widget_locked)
             else -> null
         }
         val memos = if (message != null) emptyList() else snap.memos
@@ -220,12 +220,12 @@ object Widgets {
         when {
             !snap.signedIn -> {
                 views.setTextViewText(R.id.memory_date, "")
-                views.setTextViewText(R.id.memory_content, "Sign in to MemoCtrl to see your memos")
+                views.setTextViewText(R.id.memory_content, context.getString(R.string.widget_sign_in))
                 views.setOnClickPendingIntent(R.id.widget_root, openApp(context))
             }
             snap.locked -> {
                 views.setTextViewText(R.id.memory_date, "")
-                views.setTextViewText(R.id.memory_content, "MemoCtrl is locked")
+                views.setTextViewText(R.id.memory_content, context.getString(R.string.widget_locked))
                 views.setOnClickPendingIntent(R.id.widget_root, openApp(context))
             }
             memo == null -> {

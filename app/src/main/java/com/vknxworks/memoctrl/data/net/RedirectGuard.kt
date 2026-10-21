@@ -3,6 +3,8 @@ package com.vknxworks.memoctrl.data.net
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import java.io.IOException
+import com.vknxworks.memoctrl.R
+import com.vknxworks.memoctrl.str
 
 /**
  * OkHttp follows redirects on its own. A 307/308 redirect sends the request body again (a memo you
@@ -25,7 +27,7 @@ object RedirectGuard {
         val original = chain.call().request()
         if (sameServer(request.url, original.url)) return@Interceptor chain.proceed(request)
         if (request.body != null) {
-            throw IOException("Refused to send this request on to another server (${request.url.host})")
+            throw IOException(str(R.string.error_redirect_blocked, request.url.host))
         }
         val stripped = request.newBuilder().apply { SENSITIVE_HEADERS.forEach { removeHeader(it) } }.build()
         chain.proceed(stripped)

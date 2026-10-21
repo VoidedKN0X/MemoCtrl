@@ -41,13 +41,15 @@ import com.vknxworks.memoctrl.ui.components.TabTitle
 import com.vknxworks.memoctrl.ui.nav.EditorRoute
 import com.vknxworks.memoctrl.ui.nav.LocalNavigator
 import com.vknxworks.memoctrl.util.hasTag
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
 
 /** The Memos tab: your timeline, pinned memos first, and a button to write a new one. */
 @Composable
 fun MemosScreen() {
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         val sync = rememberManualSync()
-        TabTitle("Memos") { SyncButton(sync) }
+        TabTitle(stringResource(R.string.tab_memos)) { SyncButton(sync) }
         MemoTimeline(sync = sync, filter = null)
     }
 }
@@ -96,8 +98,8 @@ private fun MemoTimeline(sync: ManualSync, filter: ((MemoEntity) -> Boolean)?, n
                 if (memos.isEmpty()) {
                     MessageView(
                         Icons.Outlined.Edit,
-                        if (filter == null) "No memos yet" else "No memos with this tag",
-                        if (filter == null) "Capture a thought, a link or a to-do. It syncs to your Memos server." else "Memos you write with this tag show up here.",
+                        stringResource(if (filter == null) R.string.memos_empty else R.string.memos_empty_tag),
+                        stringResource(if (filter == null) R.string.memos_empty_body else R.string.memos_empty_tag_body),
                         modifier = Modifier.padding(bottom = LocalBottomClearance.current),
                     )
                 } else {
@@ -118,7 +120,7 @@ private fun MemoTimeline(sync: ManualSync, filter: ((MemoEntity) -> Boolean)?, n
             onClick = { nav.navigate(EditorRoute(text = newMemoText)) },
             expanded = expandedFab,
             icon = { Icon(Icons.Filled.Add, null) },
-            text = { Text("New memo") },
+            text = { Text(stringResource(R.string.new_memo)) },
             shape = CircleShape,
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,

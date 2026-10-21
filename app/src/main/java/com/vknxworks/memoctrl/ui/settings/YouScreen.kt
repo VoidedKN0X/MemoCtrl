@@ -61,6 +61,7 @@ import com.vknxworks.memoctrl.ui.nav.LocalNavigator
 import com.vknxworks.memoctrl.ui.nav.SettingsRoute
 import com.vknxworks.memoctrl.ui.theme.Gutter
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.pluralStringResource
 
 private const val SPONSOR_URL = "https://github.com/sponsors/VoidedKN0X"
 private const val REPO_URL = "https://github.com/VoidedKN0X/MemoCtrl"
@@ -84,7 +85,7 @@ fun YouScreen() {
     }
 
     Column(Modifier.fillMaxSize()) {
-        ScreenTopBar("You")
+        ScreenTopBar(stringResource(R.string.you_title))
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 24.dp + LocalBottomClearance.current)) {
             Column(Modifier.fillMaxWidth().padding(start = Gutter, end = Gutter, top = 8.dp, bottom = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(Modifier.size(96.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
@@ -96,7 +97,7 @@ fun YouScreen() {
                     listOfNotNull(
                         "@${acc.username}".takeIf { acc.username.isNotBlank() && acc.username != acc.title },
                         acc.serverName,
-                        acc.serverVersion?.let { "Memos ${it.removePrefix("v")}" },
+                        acc.serverVersion?.let { stringResource(R.string.memos_version, it.removePrefix("v")) },
                     ).joinToString("  ·  "),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -104,15 +105,15 @@ fun YouScreen() {
                 )
             }
 
-            Group("Sync") {
+            Group(stringResource(R.string.group_sync)) {
                 GroupRow(
                     when {
-                        status.syncing -> "Syncing…"
-                        status.errorMessage != null -> "Last sync failed"
-                        status.unsyncedCount > 0 -> "${status.unsyncedCount} ${if (status.unsyncedCount == 1) "change" else "changes"} waiting to sync"
-                        else -> "Everything is synced"
+                        status.syncing -> stringResource(R.string.sync_syncing)
+                        status.errorMessage != null -> stringResource(R.string.sync_failed)
+                        status.unsyncedCount > 0 -> pluralStringResource(R.plurals.sync_waiting, status.unsyncedCount, status.unsyncedCount)
+                        else -> stringResource(R.string.sync_all_done)
                     },
-                    status.errorMessage ?: "Memos are kept on this phone and work offline. Changes sync to your server.",
+                    status.errorMessage ?: stringResource(R.string.sync_explainer),
                     icon = if (status.errorMessage != null) Icons.Outlined.CloudOff else Icons.Outlined.Sync,
                     iconTint = if (status.errorMessage != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
                     onClick = { sync.start() },
@@ -121,27 +122,27 @@ fun YouScreen() {
             }
 
             Group {
-                GroupRow("Archive", "Memos you put away. Restore or delete them here", icon = Icons.Outlined.Archive, showChevron = true, onClick = { nav.navigate(ArchivedRoute) })
-                GroupRow("Attachments", "Every picture and file in your memos", icon = Icons.Outlined.Attachment, showChevron = true, onClick = { nav.navigate(AttachmentsRoute) })
+                GroupRow(stringResource(R.string.archive_title), stringResource(R.string.archive_subtitle), icon = Icons.Outlined.Archive, showChevron = true, onClick = { nav.navigate(ArchivedRoute) })
+                GroupRow(stringResource(R.string.attachments_title), stringResource(R.string.attachments_subtitle), icon = Icons.Outlined.Attachment, showChevron = true, onClick = { nav.navigate(AttachmentsRoute) })
             }
 
-            Group("Server") {
+            Group(stringResource(R.string.group_server)) {
                 GroupRow(
                     acc.host,
                     listOfNotNull(
-                        if (acc.isEncrypted) null else "Not encrypted (HTTP)",
-                        "New memos are ${acc.defaultVisibility.label.lowercase()} by default",
-                        if (acc.api == ServerApi.V0) "Memos 0.21 API" else null,
+                        if (acc.isEncrypted) null else stringResource(R.string.not_encrypted),
+                        stringResource(R.string.default_visibility, acc.defaultVisibility.label.lowercase()),
+                        if (acc.api == ServerApi.V0) stringResource(R.string.memos_v0_api) else null,
                     ).joinToString("  ·  "),
                     icon = Icons.Filled.Dns,
                 )
             }
 
             Group {
-                GroupRow("Settings", icon = Icons.Filled.Settings, showChevron = true, onClick = { nav.navigate(SettingsRoute) })
-                GroupRow("Servers and accounts", icon = Icons.Filled.SwapHoriz, showChevron = true, onClick = { nav.navigate(AccountsRoute) })
+                GroupRow(stringResource(R.string.settings), icon = Icons.Filled.Settings, showChevron = true, onClick = { nav.navigate(SettingsRoute) })
+                GroupRow(stringResource(R.string.accounts_title), icon = Icons.Filled.SwapHoriz, showChevron = true, onClick = { nav.navigate(AccountsRoute) })
                 GroupRow(
-                    "Sign out",
+                    stringResource(R.string.sign_out),
                     icon = Icons.AutoMirrored.Filled.Logout,
                     iconTint = MaterialTheme.colorScheme.error,
                     titleColor = MaterialTheme.colorScheme.error,
@@ -167,10 +168,10 @@ fun YouScreen() {
 
     if (confirmSignOut) {
         ConfirmDialog(
-            "Sign out of ${acc.serverName}?",
-            if (status.unsyncedCount > 0) "${status.unsyncedCount} changes haven't synced yet and will be lost. Memos on your server stay there."
-            else "Memos kept on this phone for this account are removed. They stay on your server.",
-            "Sign out",
+            stringResource(R.string.sign_out_title, acc.serverName),
+            if (status.unsyncedCount > 0) pluralStringResource(R.plurals.sign_out_unsynced, status.unsyncedCount, status.unsyncedCount)
+            else stringResource(R.string.sign_out_body),
+            stringResource(R.string.sign_out),
             onDismiss = { confirmSignOut = false },
         ) {
             confirmSignOut = false

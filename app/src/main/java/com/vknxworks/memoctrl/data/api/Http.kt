@@ -24,6 +24,8 @@ import java.time.Instant
 import java.time.OffsetDateTime
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import com.vknxworks.memoctrl.R
+import com.vknxworks.memoctrl.str
 
 val ApiJson = Json {
     ignoreUnknownKeys = true
@@ -33,13 +35,13 @@ val ApiJson = Json {
 }
 
 /** A real answer from the server that isn't a success: a wrong token, a missing memo, a rejected change. */
-class ApiException(message: String, val status: Int = 0) : IOException(message) {
+class ApiException(message: String, val status: Int = 0, val generic: Boolean = false) : IOException(message) {
     val isUnauthorized: Boolean get() = status == 401 || status == 403
 }
 
 /** The saved access token no longer works. The user has to sign in again with a new one. */
 class AccessTokenInvalidException :
-    IOException("Your access token no longer works. Create a new one in Memos (Settings > Access tokens) and sign in again.")
+    IOException(str(R.string.error_token_expired))
 
 @Serializable
 private data class ErrorBody(val message: String? = null, val error: String? = null)
@@ -75,8 +77,12 @@ suspend fun OkHttpClient.fetchWithHeaders(request: Request): Pair<String, okhttp
             val message = runCatching { ApiJson.decodeFromString(ErrorBody.serializer(), text) }.getOrNull()
                 ?.let { it.message ?: it.error }
                 ?.takeIf { it.isNotBlank() }
-                ?: "Server answered ${response.code}${response.message.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()}"
-            throw ApiException(message, response.code)
+            if (message != null) throw ApiException(message, response.code)
+            throw ApiException(
+                str(R.string.error_server_answered, response.code, response.message.takeIf { it.isNotBlank() }?.let { " ($it)" }.orEmpty()),
+                response.code,
+                generic = true,
+            )
         }
         return text to response.headers
     }
@@ -87,9 +93,9 @@ suspend fun <T> OkHttpClient.fetchJson(request: Request, serializer: KSerializer
     return try {
         ApiJson.decodeFromString(serializer, text.ifBlank { "{}" })
     } catch (e: kotlinx.serialization.SerializationException) {
-        throw ApiException("Unexpected answer from the server. Is this a Memos server?")
+        throw ApiException(str(R.string.error_not_memos))
     } catch (e: IllegalArgumentException) {
-        throw ApiException("Unexpected answer from the server. Is this a Memos server?")
+        throw ApiException(str(R.string.error_not_memos))
     }
 }
 

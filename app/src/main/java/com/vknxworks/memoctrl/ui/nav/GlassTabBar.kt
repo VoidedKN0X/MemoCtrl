@@ -36,8 +36,10 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.vknxworks.memoctrl.ui.components.glass
+import androidx.compose.ui.res.stringResource
+import androidx.annotation.StringRes
 
-data class TabItem(val label: String, val icon: ImageVector, val selectedIcon: ImageVector)
+data class TabItem(@StringRes val label: Int, val icon: ImageVector, val selectedIcon: ImageVector)
 
 private val BarHeight = 64.dp
 private val Inset = 6.dp
@@ -111,7 +113,7 @@ fun GlassTabBar(
                 ) {
                     Icon(if (selected) item.selectedIcon else item.icon, contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
                     Spacer(Modifier.height(2.dp))
-                    Text(item.label, style = MaterialTheme.typography.labelSmall, color = color, maxLines = 1)
+                    Text(stringResource(item.label), style = MaterialTheme.typography.labelSmall, color = color, maxLines = 1)
                 }
             }
         }
