@@ -58,6 +58,8 @@ import com.vknxworks.memoctrl.container
 import com.vknxworks.memoctrl.ui.nav.LocalNavigator
 import com.vknxworks.memoctrl.ui.nav.YouRoute
 import com.vknxworks.memoctrl.ui.theme.Gutter
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
 
 // ---------- Top bars ----------
 
@@ -72,7 +74,7 @@ fun ScreenTopBar(
     TopAppBar(
         title = { Text(title, style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         navigationIcon = {
-            if (showBack) IconButton(onClick = nav::back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
+            if (showBack) IconButton(onClick = nav::back) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
         },
         actions = actions,
         colors = TopAppBarDefaults.topAppBarColors(
@@ -107,19 +109,20 @@ fun ProfileButton() {
     val nav = LocalNavigator.current
     val session by LocalContext.current.container.sessions.active.collectAsStateWithLifecycle()
     val name = session?.account?.title.orEmpty()
+    val youLabel = stringResource(R.string.you_title)
     IconButton(onClick = { nav.navigate(YouRoute) }) {
         Box(
             Modifier.size(34.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)),
             contentAlignment = Alignment.Center,
         ) {
             if (name.isEmpty()) {
-                Icon(Icons.Filled.AccountCircle, "You", tint = MaterialTheme.colorScheme.primary)
+                Icon(Icons.Filled.AccountCircle, stringResource(R.string.you_title), tint = MaterialTheme.colorScheme.primary)
             } else {
                 Text(
                     name.take(1).uppercase(),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.semantics { contentDescription = "You" },
+                    modifier = Modifier.semantics { contentDescription = youLabel },
                 )
             }
         }
@@ -266,7 +269,7 @@ fun <T> ChoiceSheet(
                         color = if (isSel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                         modifier = Modifier.weight(1f),
                     )
-                    if (isSel) Icon(Icons.Filled.Check, "Selected", tint = MaterialTheme.colorScheme.primary)
+                    if (isSel) Icon(Icons.Filled.Check, stringResource(R.string.selected), tint = MaterialTheme.colorScheme.primary)
                 }
             }
         }

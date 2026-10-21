@@ -5,6 +5,8 @@ import android.net.Uri
 import java.io.File
 import java.io.InputStream
 import java.security.MessageDigest
+import com.vknxworks.memoctrl.R
+import com.vknxworks.memoctrl.str
 
 /** Attachment files kept on the phone, in a private folder per account. */
 class FileStorage(private val context: Context) {
@@ -17,7 +19,7 @@ class FileStorage(private val context: Context) {
 
     fun saveFile(accountKey: String, sourceUri: Uri, filename: String): Uri {
         val input = context.contentResolver.openInputStream(sourceUri)
-            ?: throw IllegalArgumentException("Couldn't read the file")
+            ?: throw IllegalArgumentException(str(R.string.error_read_file))
         return input.use { saveFile(accountKey, it, filename) }
     }
 

@@ -33,6 +33,9 @@ import com.vknxworks.memoctrl.widget.Widgets
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import com.vknxworks.memoctrl.R
 
 sealed interface SyncAlert {
     data class Blocked(val message: String) : SyncAlert
@@ -58,7 +61,7 @@ class ManualSync(private val c: AppContainer, private val scope: CoroutineScope)
                         if (allowVersion != null) c.sessions.acceptVersion(allowVersion)
                         Widgets.updateAll(c.context)
                     }
-                    is SyncCheck.Blocked -> alert = SyncAlert.Blocked(check.message ?: "This server's Memos version isn't supported.")
+                    is SyncCheck.Blocked -> alert = SyncAlert.Blocked(check.message ?: c.context.getString(R.string.sync_unsupported))
                     is SyncCheck.NeedsConfirmation -> alert = SyncAlert.Confirm(check.version, check.message)
                 }
             } catch (e: CancellationException) {
@@ -88,27 +91,27 @@ private fun SyncDialogs(sync: ManualSync) {
         null -> Unit
         is SyncAlert.Blocked -> AlertDialog(
             onDismissRequest = { sync.alert = null },
-            title = { Text("Unsupported Memos version") },
+            title = { Text(stringResource(R.string.sync_unsupported_title)) },
             text = { Text(a.message) },
-            confirmButton = { TextButton(onClick = { sync.alert = null }) { Text("Close") } },
+            confirmButton = { TextButton(onClick = { sync.alert = null }) { Text(stringResource(R.string.close)) } },
         )
         is SyncAlert.Confirm -> AlertDialog(
             onDismissRequest = { sync.alert = null },
-            title = { Text("Newer Memos version") },
+            title = { Text(stringResource(R.string.sync_newer_title)) },
             text = { Text(a.message) },
             confirmButton = {
                 TextButton(onClick = {
                     sync.alert = null
                     sync.start(allowVersion = a.version)
-                }) { Text("Sync anyway") }
+                }) { Text(stringResource(R.string.sync_anyway)) }
             },
-            dismissButton = { TextButton(onClick = { sync.alert = null }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { sync.alert = null }) { Text(stringResource(R.string.cancel)) } },
         )
         is SyncAlert.Failed -> AlertDialog(
             onDismissRequest = { sync.alert = null },
-            title = { Text("Sync didn't finish") },
-            text = { Text("${a.message}\n\nYour changes are kept on this phone and sync next time.") },
-            confirmButton = { TextButton(onClick = { sync.alert = null }) { Text("Close") } },
+            title = { Text(stringResource(R.string.sync_failed_title)) },
+            text = { Text(stringResource(R.string.sync_failed_body, a.message)) },
+            confirmButton = { TextButton(onClick = { sync.alert = null }) { Text(stringResource(R.string.close)) } },
         )
     }
 }
@@ -125,11 +128,11 @@ fun SyncButton(sync: ManualSync) {
             status.syncing || sync.running -> Box(contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
             }
-            status.errorMessage != null -> Icon(Icons.Outlined.CloudOff, "Last sync failed. Sync now", tint = MaterialTheme.colorScheme.error)
+            status.errorMessage != null -> Icon(Icons.Outlined.CloudOff, stringResource(R.string.sync_failed_now), tint = MaterialTheme.colorScheme.error)
             status.unsyncedCount > 0 -> BadgedBox(badge = { Badge { Text(status.unsyncedCount.coerceAtMost(99).toString()) } }) {
-                Icon(Icons.Outlined.Sync, "${status.unsyncedCount} changes not synced yet. Sync now")
+                Icon(Icons.Outlined.Sync, pluralStringResource(R.plurals.sync_pending_now, status.unsyncedCount, status.unsyncedCount))
             }
-            else -> Icon(Icons.Outlined.Sync, "Sync now", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            else -> Icon(Icons.Outlined.Sync, stringResource(R.string.sync_now), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

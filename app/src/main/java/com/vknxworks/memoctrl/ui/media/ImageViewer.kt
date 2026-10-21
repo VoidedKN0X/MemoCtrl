@@ -46,6 +46,8 @@ import com.vknxworks.memoctrl.container
 import com.vknxworks.memoctrl.data.model.ResourceEntity
 import com.vknxworks.memoctrl.ui.components.shareAttachment
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
 
 /** Full-screen pictures of a memo: swipe between them, pinch or double-tap to zoom. */
 @Composable
@@ -66,16 +68,16 @@ fun ImageViewer(images: List<ResourceEntity>, start: Int, onDismiss: () -> Unit)
                 Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 4.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                IconButton(onClick = onDismiss) { Icon(Icons.Outlined.Close, "Close", tint = Color.White) }
+                IconButton(onClick = onDismiss) { Icon(Icons.Outlined.Close, stringResource(R.string.close), tint = Color.White) }
                 Spacer(Modifier.weight(1f))
                 if (images.size > 1) {
-                    Text("${pager.currentPage + 1} / ${images.size}", color = Color.White, style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.viewer_position, pager.currentPage + 1, images.size), color = Color.White, style = MaterialTheme.typography.labelLarge)
                     Spacer(Modifier.weight(1f))
                 }
                 IconButton(onClick = {
                     val img = images.getOrNull(pager.currentPage) ?: return@IconButton
                     scope.launch { shareAttachment(context, c, img) }
-                }) { Icon(Icons.Outlined.Share, "Share", tint = Color.White) }
+                }) { Icon(Icons.Outlined.Share, stringResource(R.string.share), tint = Color.White) }
             }
         }
     }

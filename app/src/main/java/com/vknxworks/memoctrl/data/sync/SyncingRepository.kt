@@ -42,6 +42,8 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import java.io.File
 import java.time.Instant
 import java.util.UUID
+import com.vknxworks.memoctrl.R
+import com.vknxworks.memoctrl.str
 
 /**
  * Offline-first memos for one account. Every change is written to the phone first and pushed to the
@@ -150,7 +152,7 @@ class SyncingRepository(
         // Compare-and-set, so a push landing between the read and the write (it records the server id)
         // isn't overwritten with the stale copy, which would create the memo on the server again.
         do {
-            val existing = db.getMemoById(identifier, accountKey) ?: throw IllegalStateException("This memo no longer exists")
+            val existing = db.getMemoById(identifier, accountKey) ?: throw IllegalStateException(str(R.string.error_memo_gone))
             updated = existing.copy(
                 content = content ?: existing.content,
                 location = if (location != null) location.value else existing.location,
@@ -272,7 +274,7 @@ class SyncingRepository(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Throwable) {
-                setSyncError(e.message ?: "Sync failed")
+                setSyncError(e.message ?: str(R.string.error_sync_failed))
                 throw e
             } finally {
                 refreshUnsyncedCount()
@@ -289,7 +291,7 @@ class SyncingRepository(
 
         var firstError: String? = null
         fun recordFailure() {
-            if (firstError == null) firstError = consumeDetailedError() ?: "Some memos couldn't be synced"
+            if (firstError == null) firstError = consumeDetailedError() ?: str(R.string.error_some_memos)
         }
 
         val localByRemoteId = db.getAllMemosForSync(accountKey).mapNotNull { m -> m.remoteId?.let { it to m } }.toMap()
@@ -389,7 +391,7 @@ class SyncingRepository(
 
         val uploaded = ensureUploadedResources(local)
         if (uploaded.failed > 0) {
-            if (pendingDetailedError == null) pendingDetailedError = ATTACHMENT_UPLOAD_FAILED
+            if (pendingDetailedError == null) pendingDetailedError = str(R.string.error_attachments_failed)
             return false
         }
         val resourceIds = uploaded.remoteIds
@@ -635,18 +637,18 @@ class SyncingRepository(
         val local = db.getResourceById(identifier, accountKey) ?: return true
         val ensured = ensureUploadedResource(local, null)
         if (ensured?.remoteId == null) {
-            if (pendingDetailedError == null) pendingDetailedError = ATTACHMENT_UPLOAD_FAILED
+            if (pendingDetailedError == null) pendingDetailedError = str(R.string.error_attachments_failed)
             return false
         }
         return true
     }
 
-    private fun enqueuePushMemo(identifier: String) = enqueue("Couldn't sync a memo") { pushLocalMemo(identifier) }
+    private fun enqueuePushMemo(identifier: String) = enqueue(str(R.string.error_push_memo)) { pushLocalMemo(identifier) }
 
-    private fun enqueuePushResource(identifier: String) = enqueue("Couldn't upload an attachment") { pushLocalResource(identifier) }
+    private fun enqueuePushResource(identifier: String) = enqueue(str(R.string.error_push_attachment)) { pushLocalResource(identifier) }
 
     private fun enqueueDeleteRemoteResource(remoteId: String) =
-        enqueue("Couldn't delete an attachment on the server") { tryRemote { remote.deleteResource(remoteId) } }
+        enqueue(str(R.string.error_delete_attachment)) { tryRemote { remote.deleteResource(remoteId) } }
 
     private fun enqueue(defaultError: String, block: suspend () -> Boolean) {
         scope.launch {
@@ -715,16 +717,15 @@ class SyncingRepository(
     }
 
     private fun remoteMemoId(memo: RemoteMemo): String =
-        memo.remoteId.takeIf { it.isNotBlank() } ?: throw IllegalStateException("The server sent a memo without an id")
+        memo.remoteId.takeIf { it.isNotBlank() } ?: throw IllegalStateException(str(R.string.error_memo_no_id))
 
     private fun remoteResourceId(resource: RemoteResource): String =
-        resource.remoteId.takeIf { it.isNotBlank() } ?: throw IllegalStateException("The server sent an attachment without an id")
+        resource.remoteId.takeIf { it.isNotBlank() } ?: throw IllegalStateException(str(R.string.error_attachment_no_id))
 
     fun close() = scope.cancel()
 
     companion object {
         private const val MAX_RECONCILE_ATTEMPTS = 5
-        private const val ATTACHMENT_UPLOAD_FAILED = "One or more attachments couldn't be uploaded"
     }
 }
 

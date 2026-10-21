@@ -71,6 +71,11 @@ import com.vknxworks.memoctrl.ui.nav.AddAccountRoute
 import com.vknxworks.memoctrl.ui.nav.LocalNavigator
 import com.vknxworks.memoctrl.ui.theme.Gutter
 import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.VisibilityOff
 
 @Composable
 fun SettingsScreen() {
@@ -84,64 +89,42 @@ fun SettingsScreen() {
     var removingCertificate by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize()) {
-        ScreenTopBar("Settings")
+        ScreenTopBar(stringResource(R.string.settings))
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)) {
-            Group("Writing") {
+            Group(stringResource(R.string.group_appearance)) {
                 GroupChoice(
-                    "Open a memo in the editor with",
-                    EditGesture.entries.map { it to it.label },
-                    s.editGesture,
-                    icon = Icons.Outlined.Edit,
-                ) { v -> update { it.copy(editGesture = v) } }
+                    stringResource(R.string.theme),
+                    ThemeChoice.entries.map { it to stringResource(it.label) },
+                    s.theme,
+                    icon = Icons.Outlined.DarkMode,
+                ) { v -> update { it.copy(theme = v) } }
                 GroupSwitch(
-                    "Autosave",
-                    "Save every change as you type and sync it in the background, instead of when you tap Post",
-                    s.autosave,
-                    icon = Icons.Outlined.Save,
-                ) { v -> update { it.copy(autosave = v) } }
+                    stringResource(R.string.dynamic_colour),
+                    stringResource(R.string.dynamic_colour_subtitle),
+                    s.dynamicColor,
+                    icon = Icons.Outlined.Palette,
+                ) { v -> update { it.copy(dynamicColor = v) } }
             }
 
-            Group("Search") {
-                GroupSwitch(
-                    "Include archived memos",
-                    "Search results also show archived memos that match",
-                    s.searchIncludesArchived,
-                    icon = Icons.Outlined.Archive,
-                ) { v -> update { it.copy(searchIncludesArchived = v) } }
-            }
-
-            Group("Appearance") {
-                GroupChoice("Theme", ThemeChoice.entries.map { it to it.label }, s.theme) { v -> update { it.copy(theme = v) } }
-                GroupSwitch("Use wallpaper colours", "Replaces the default colours with ones from your wallpaper", s.dynamicColor) { v ->
-                    update { it.copy(dynamicColor = v) }
-                }
-            }
-
-            Group(
-                "Privacy and security",
-                footer = "MemoCtrl has no analytics or tracking. It only talks to your own Memos server.",
-            ) {
+            Group(stringResource(R.string.group_privacy), footer = stringResource(R.string.privacy_footer)) {
                 val lockOn = c.vault.enabled
                 GroupSwitch(
-                    "App lock",
-                    "Ask for an app PIN (and optionally your fingerprint) when opening MemoCtrl. While locked, your server " +
-                        "login stays encrypted with the PIN, and the recent-apps screen and widgets hide your memos.",
+                    stringResource(R.string.lock_app),
+                    stringResource(R.string.lock_app_subtitle),
                     lockOn,
                     icon = Icons.Outlined.Lock,
                 ) { on -> AppLock.request = if (on) PinRequest.ENABLE else PinRequest.DISABLE }
                 if (lockOn) {
                     GroupRow(
-                        "Change app PIN",
-                        "At least ${LockVault.PIN_MIN} digits, separate from your phone's PIN",
+                        stringResource(R.string.lock_change_pin),
+                        stringResource(R.string.lock_change_pin_subtitle, LockVault.PIN_MIN),
                         icon = Icons.Outlined.Password,
                         showChevron = true,
                         onClick = { AppLock.request = PinRequest.CHANGE },
                     )
                     GroupSwitch(
-                        "Unlock with fingerprint",
-                        if (bioAvailable || c.vault.biometricEnabled)
-                            "Only strong biometrics such as your fingerprint, checked by the phone's secure hardware. The PIN is still needed after a restart and every 72 hours."
-                        else "Set up a fingerprint on this phone first",
+                        stringResource(R.string.lock_fingerprint),
+                        stringResource(if (bioAvailable || c.vault.biometricEnabled) R.string.lock_fingerprint_settings_subtitle else R.string.lock_fingerprint_unavailable),
                         c.vault.biometricEnabled,
                         icon = Icons.Outlined.Fingerprint,
                         enabled = bioAvailable || c.vault.biometricEnabled,
@@ -150,34 +133,44 @@ fun SettingsScreen() {
                             c.vault.disableBiometric()
                         } else {
                             val activity = context.findActivity() ?: return@GroupSwitch
+                            val failed = context.getString(R.string.lock_fingerprint_setup_failed)
                             val cipher = c.vault.biometricEnrolCipher() ?: run {
-                                Toast.makeText(context, "Couldn't set up fingerprint unlock", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, failed, Toast.LENGTH_SHORT).show()
                                 return@GroupSwitch
                             }
-                            AppLock.biometricPrompt(activity, "Turn on fingerprint unlock", "Confirm your fingerprint", cipher) { unlocked ->
-                                if (!c.vault.finishBiometricEnrol(unlocked)) {
-                                    Toast.makeText(context, "Couldn't set up fingerprint unlock", Toast.LENGTH_SHORT).show()
-                                }
+                            AppLock.biometricPrompt(
+                                activity,
+                                context.getString(R.string.lock_fingerprint_enable_title),
+                                context.getString(R.string.lock_fingerprint_enable_subtitle),
+                                cipher,
+                            ) { unlocked ->
+                                if (!c.vault.finishBiometricEnrol(unlocked)) Toast.makeText(context, failed, Toast.LENGTH_SHORT).show()
                             }
                         }
                     }
                     GroupChoice(
-                        "Lock again",
-                        LockTimeout.entries.map { it to it.label },
+                        stringResource(R.string.lock_again),
+                        LockTimeout.entries.map { it to stringResource(it.label) },
                         s.lockTimeout,
                         icon = Icons.Outlined.Timer,
                     ) { v -> update { it.copy(lockTimeout = v) } }
                 }
                 GroupSwitch(
-                    "Load pictures from other websites",
-                    "Pictures in memos that link to other sites. Off: they show as a link, so those sites can't see when you read your memos",
+                    stringResource(R.string.hide_content),
+                    stringResource(R.string.hide_content_subtitle),
+                    s.hideContent,
+                    icon = Icons.Outlined.VisibilityOff,
+                ) { v -> update { it.copy(hideContent = v) } }
+                GroupSwitch(
+                    stringResource(R.string.external_images),
+                    stringResource(R.string.external_images_subtitle),
                     s.externalImages,
                     icon = Icons.Outlined.Image,
                 ) { v -> update { it.copy(externalImages = v) } }
                 GroupRow(
-                    "Client certificate",
-                    certificate?.let { "Using \"$it\". Tap to pick another" }
-                        ?: "For servers behind a proxy that asks for one (mutual TLS). The certificate stays in Android's certificate store",
+                    stringResource(R.string.client_certificate),
+                    certificate?.let { stringResource(R.string.client_certificate_using, it) }
+                        ?: stringResource(R.string.client_certificate_subtitle),
                     icon = Icons.Outlined.Badge,
                     showChevron = true,
                     onClick = {
@@ -187,7 +180,7 @@ fun SettingsScreen() {
                 )
                 if (certificate != null) {
                     GroupRow(
-                        "Stop using the certificate",
+                        stringResource(R.string.client_certificate_stop),
                         icon = Icons.Outlined.Lock,
                         iconTint = MaterialTheme.colorScheme.error,
                         titleColor = MaterialTheme.colorScheme.error,
@@ -195,20 +188,44 @@ fun SettingsScreen() {
                     )
                 }
             }
+
+            Group(stringResource(R.string.group_writing)) {
+                GroupChoice(
+                    stringResource(R.string.edit_gesture),
+                    EditGesture.entries.map { it to stringResource(it.label) },
+                    s.editGesture,
+                    icon = Icons.Outlined.Edit,
+                ) { v -> update { it.copy(editGesture = v) } }
+                GroupSwitch(
+                    stringResource(R.string.autosave),
+                    stringResource(R.string.autosave_subtitle),
+                    s.autosave,
+                    icon = Icons.Outlined.Save,
+                ) { v -> update { it.copy(autosave = v) } }
+            }
+
+            Group(stringResource(R.string.group_search)) {
+                GroupSwitch(
+                    stringResource(R.string.search_archived),
+                    stringResource(R.string.search_archived_subtitle),
+                    s.searchIncludesArchived,
+                    icon = Icons.Outlined.Archive,
+                ) { v -> update { it.copy(searchIncludesArchived = v) } }
+            }
         }
     }
 
     if (removingCertificate) {
         ConfirmDialog(
-            "Stop using the client certificate?",
-            "MemoCtrl won't send it anymore. It stays installed on your phone.",
-            "Stop using",
+            stringResource(R.string.client_certificate_stop_title),
+            stringResource(R.string.client_certificate_stop_body),
+            stringResource(R.string.client_certificate_stop_confirm),
             onDismiss = { removingCertificate = false },
         ) {
             removingCertificate = false
             ClientCertificate.clear(context)
             certificate = null
-            Toast.makeText(context, "Client certificate removed", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.client_certificate_removed), Toast.LENGTH_SHORT).show()
         }
     }
 }
@@ -223,9 +240,9 @@ fun AccountsScreen() {
     var removing by remember { mutableStateOf<String?>(null) }
 
     Column(Modifier.fillMaxSize()) {
-        ScreenTopBar("Servers and accounts")
+        ScreenTopBar(stringResource(R.string.accounts_title))
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-            Group(footer = "Tap an account to switch to it. Each account keeps its own memos on this phone.") {
+            Group(footer = stringResource(R.string.accounts_footer)) {
                 accounts.forEach { a ->
                     val isActive = a.key == active?.account?.key
                     GroupRow(
@@ -233,22 +250,22 @@ fun AccountsScreen() {
                         listOfNotNull(
                             a.username.takeIf { it.isNotBlank() && it != a.title }?.let { "@$it" },
                             a.host,
-                            if (a.isEncrypted) null else "Not encrypted (HTTP)",
+                            if (a.isEncrypted) null else stringResource(R.string.not_encrypted),
                         ).joinToString("  ·  "),
                         onClick = if (isActive) null else {
                             { scope.launch { c.sessions.switchTo(a.key) }; Unit }
                         },
                         trailing = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                if (isActive) Icon(Icons.Filled.CheckCircle, "Active", tint = MaterialTheme.colorScheme.primary)
-                                IconButton(onClick = { removing = a.key }) { Icon(Icons.AutoMirrored.Filled.Logout, "Sign out of this account") }
+                                if (isActive) Icon(Icons.Filled.CheckCircle, stringResource(R.string.account_active), tint = MaterialTheme.colorScheme.primary)
+                                IconButton(onClick = { removing = a.key }) { Icon(Icons.AutoMirrored.Filled.Logout, stringResource(R.string.account_sign_out)) }
                             }
                         },
                     )
                 }
             }
             Group {
-                GroupRow("Add a server or account", icon = Icons.Filled.Add, showChevron = true, onClick = { nav.navigate(AddAccountRoute) })
+                GroupRow(stringResource(R.string.account_add), icon = Icons.Filled.Add, showChevron = true, onClick = { nav.navigate(AddAccountRoute) })
             }
         }
     }
@@ -256,9 +273,9 @@ fun AccountsScreen() {
     removing?.let { key ->
         val acc = accounts.firstOrNull { it.key == key }
         ConfirmDialog(
-            "Sign out of ${acc?.serverName ?: "this server"}?",
-            "Memos kept on this phone for this account are removed, including changes that haven't synced. They stay on your server.",
-            "Sign out",
+            stringResource(R.string.sign_out_title, acc?.serverName ?: stringResource(R.string.this_server)),
+            stringResource(R.string.sign_out_account_body),
+            stringResource(R.string.sign_out),
             onDismiss = { removing = null },
         ) {
             removing = null
@@ -276,14 +293,14 @@ fun ArchivedScreen() {
     val repo = session?.repo ?: return
     val memos by remember(repo) { repo.observeArchived() }.collectAsStateWithLifecycle(initialValue = null)
     Column(Modifier.fillMaxSize()) {
-        ScreenTopBar("Archive")
+        ScreenTopBar(stringResource(R.string.archive_title))
         val list = memos
         when {
             list == null -> LoadingView()
             list.isEmpty() -> MessageView(
                 Icons.Outlined.Archive,
-                "Nothing archived",
-                "Archive a memo from its menu to take it off your timeline without deleting it.",
+                stringResource(R.string.archive_empty_title),
+                stringResource(R.string.archive_empty_body),
             )
             else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 4.dp, bottom = 24.dp)) {
                 items(list, key = { it.identifier }) { m -> MemoCard(m, onOpen = { nav.memo(m.identifier) }) }
@@ -305,24 +322,24 @@ fun AttachmentsScreen() {
     val images = tab == 0
 
     Column(Modifier.fillMaxSize()) {
-        ScreenTopBar("Attachments")
+        ScreenTopBar(stringResource(R.string.attachments_title))
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 8.dp)) {
-            SegmentedButton(selected = tab == 0, onClick = { tab = 0 }, shape = SegmentedButtonDefaults.itemShape(0, 2)) { Text("Pictures") }
-            SegmentedButton(selected = tab == 1, onClick = { tab = 1 }, shape = SegmentedButtonDefaults.itemShape(1, 2)) { Text("Files") }
+            SegmentedButton(selected = tab == 0, onClick = { tab = 0 }, shape = SegmentedButtonDefaults.itemShape(0, 2)) { Text(stringResource(R.string.attachments_pictures)) }
+            SegmentedButton(selected = tab == 1, onClick = { tab = 1 }, shape = SegmentedButtonDefaults.itemShape(1, 2)) { Text(stringResource(R.string.attachments_files)) }
         }
         val list = all
         when {
             list == null -> LoadingView()
             images -> {
                 val pics = list.filter { it.isImage }
-                if (pics.isEmpty()) MessageView(Icons.Outlined.Image, "No pictures yet", "Pictures you add to memos show up here.")
+                if (pics.isEmpty()) MessageView(Icons.Outlined.Image, stringResource(R.string.attachments_no_pictures), stringResource(R.string.attachments_no_pictures_body))
                 else Box(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Gutter).padding(bottom = 24.dp)) {
                     ImageGrid(pics)
                 }
             }
             else -> {
                 val files = list.filterNot { it.isImage }
-                if (files.isEmpty()) MessageView(Icons.Outlined.Attachment, "No files yet", "Files you attach to memos show up here.")
+                if (files.isEmpty()) MessageView(Icons.Outlined.Attachment, stringResource(R.string.attachments_no_files), stringResource(R.string.attachments_no_files_body))
                 else Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Gutter).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     AttachmentChips(files)
                 }

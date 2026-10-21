@@ -61,6 +61,8 @@ import okhttp3.Request
 import java.io.File
 import java.util.Locale
 import kotlin.math.ceil
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
 
 /** The pictures of a memo in a grid of up to three across; tapping one opens the viewer. */
 @Composable
@@ -93,7 +95,7 @@ fun ImageGrid(images: List<ResourceEntity>, onRemove: ((ResourceEntity) -> Unit)
                                         .clip(MaterialTheme.shapes.extraLarge)
                                         .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.55f)),
                                 ) {
-                                    Icon(Icons.Outlined.Close, "Remove ${images[i].filename}", Modifier.size(16.dp), tint = MaterialTheme.colorScheme.inverseOnSurface)
+                                    Icon(Icons.Outlined.Close, stringResource(R.string.attachment_remove, images[i].filename), Modifier.size(16.dp), tint = MaterialTheme.colorScheme.inverseOnSurface)
                                 }
                             }
                         }
@@ -133,10 +135,10 @@ fun AttachmentChips(files: List<ResourceEntity>, onRemove: ((ResourceEntity) -> 
                 if (opening == f.identifier) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
                 else Icon(Icons.Outlined.Attachment, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.size(8.dp))
-                Text(f.filename.ifBlank { "Attachment" }, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                Text(f.filename.ifBlank { stringResource(R.string.attachment) }, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                 if (onRemove != null) {
                     IconButton(onClick = { onRemove(f) }, modifier = Modifier.size(28.dp)) {
-                        Icon(Icons.Outlined.Close, "Remove ${f.filename}", Modifier.size(16.dp))
+                        Icon(Icons.Outlined.Close, stringResource(R.string.attachment_remove, f.filename), Modifier.size(16.dp))
                     }
                 }
             }
@@ -157,7 +159,7 @@ fun LocationRow(location: MemoLocation, onClick: (() -> Unit)? = null) {
             .padding(vertical = 6.dp, horizontal = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(Icons.Outlined.LocationOn, "Location", Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+        Icon(Icons.Outlined.LocationOn, stringResource(R.string.location), Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
         Spacer(Modifier.size(6.dp))
         Text(location.displayText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
     }
@@ -226,7 +228,7 @@ suspend fun openAttachment(context: Context, c: AppContainer, resource: Resource
         null
     }
     if (file == null) {
-        Toast.makeText(context, "Couldn't open this attachment", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.attachment_open_failed), Toast.LENGTH_SHORT).show()
         return
     }
     val uri = fileUri(context, file)
@@ -239,7 +241,7 @@ suspend fun openAttachment(context: Context, c: AppContainer, resource: Resource
         AppLock.expectReturn()
         context.startActivity(Intent.createChooser(intent, null).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION))
     } catch (_: ActivityNotFoundException) {
-        Toast.makeText(context, "No app can open this file", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.attachment_no_app), Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -247,7 +249,7 @@ suspend fun openAttachment(context: Context, c: AppContainer, resource: Resource
 suspend fun shareAttachment(context: Context, c: AppContainer, resource: ResourceEntity) {
     val file = runCatching { ensureLocalFile(context, c, resource) }.getOrNull()
     if (file == null) {
-        Toast.makeText(context, "Couldn't get this file", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, context.getString(R.string.attachment_get_failed), Toast.LENGTH_SHORT).show()
         return
     }
     val uri = fileUri(context, file)

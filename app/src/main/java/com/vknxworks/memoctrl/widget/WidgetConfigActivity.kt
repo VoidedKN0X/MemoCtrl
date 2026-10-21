@@ -38,6 +38,9 @@ import com.vknxworks.memoctrl.ui.components.PillButton
 import com.vknxworks.memoctrl.ui.theme.Gutter
 import com.vknxworks.memoctrl.ui.theme.MemoCtrlTheme
 import kotlinx.coroutines.flow.first
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import com.vknxworks.memoctrl.R
 
 /** Settings of one "Memos" widget: which tag it shows, pinned memos only, and how many. */
 class WidgetConfigActivity : ComponentActivity() {
@@ -67,24 +70,24 @@ class WidgetConfigActivity : ComponentActivity() {
                 }
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState())) {
-                        Text("Memos widget", style = MaterialTheme.typography.headlineLarge, modifier = Modifier.padding(start = Gutter, top = 16.dp, bottom = 8.dp))
+                        Text(stringResource(R.string.widget_config_title), style = MaterialTheme.typography.headlineLarge, modifier = Modifier.padding(start = Gutter, top = 16.dp, bottom = 8.dp))
                         Group {
                             GroupChoice(
-                                "Tag",
-                                listOf<String?>(null).map { it to "All memos" } + (tags + listOfNotNull(start.tag)).distinct().map { it to "#$it" },
+                                stringResource(R.string.widget_config_tag),
+                                listOf<String?>(null).map { it to stringResource(R.string.widget_config_all) } + (tags + listOfNotNull(start.tag)).distinct().map { it to "#$it" },
                                 tag,
                                 icon = Icons.Outlined.Tag,
                             ) { tag = it }
-                            GroupSwitch("Pinned memos only", checked = pinned, icon = Icons.Outlined.PushPin) { pinned = it }
+                            GroupSwitch(stringResource(R.string.widget_config_pinned), checked = pinned, icon = Icons.Outlined.PushPin) { pinned = it }
                             GroupChoice(
-                                "Show up to",
-                                listOf(3, 5, 10, 20, 30).map { it to "$it memos" },
+                                stringResource(R.string.widget_config_max),
+                                listOf(3, 5, 10, 20, 30).map { it to pluralStringResource(R.plurals.widget_config_count, it, it) },
                                 max,
                                 icon = Icons.Outlined.FormatListNumbered,
                             ) { max = it }
                         }
                         PillButton(
-                            "Add widget",
+                            stringResource(R.string.widget_config_add),
                             onClick = {
                                 Widgets.saveConfig(this@WidgetConfigActivity, id, Widgets.Config(tag, pinned, max))
                                 Widgets.update(this@WidgetConfigActivity, intArrayOf(id), memory = false)

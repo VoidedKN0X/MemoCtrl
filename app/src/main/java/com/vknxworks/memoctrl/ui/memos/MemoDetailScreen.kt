@@ -37,6 +37,8 @@ import com.vknxworks.memoctrl.ui.nav.MemoRoute
 import com.vknxworks.memoctrl.ui.theme.Gutter
 import java.text.DateFormat
 import java.util.Date
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
 
 private sealed interface Lookup {
     data object Loading : Lookup
@@ -68,13 +70,13 @@ fun MemoDetailScreen(id: String) {
 
     Column(Modifier.fillMaxSize()) {
         val memo = (lookup as? Lookup.Found)?.memo
-        ScreenTopBar("Memo") {
-            if (memo != null && !memo.archived) IconButton(onClick = { nav.edit(memo.identifier) }) { Icon(Icons.Outlined.Edit, "Edit") }
-            if (memo != null) IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, "More") }
+        ScreenTopBar(stringResource(R.string.memo)) {
+            if (memo != null && !memo.archived) IconButton(onClick = { nav.edit(memo.identifier) }) { Icon(Icons.Outlined.Edit, stringResource(R.string.edit)) }
+            if (memo != null) IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, stringResource(R.string.more)) }
         }
         when (val l = lookup) {
             Lookup.Loading -> LoadingView()
-            Lookup.Missing -> MessageView(Icons.Outlined.SearchOff, "Memo not found", "It may have been deleted.")
+            Lookup.Missing -> MessageView(Icons.Outlined.SearchOff, stringResource(R.string.memo_not_found), stringResource(R.string.memo_not_found_body))
             is Lookup.Found -> {
                 val m = l.memo
                 Column(
@@ -92,8 +94,8 @@ fun MemoDetailScreen(id: String) {
                         listOfNotNull(
                             DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.SHORT).format(Date(m.date.toEpochMilli())),
                             m.visibility.description,
-                            if (m.archived) "Archived" else null,
-                            if (m.needsSync) "Not synced yet" else null,
+                            if (m.archived) stringResource(R.string.archived) else null,
+                            if (m.needsSync) stringResource(R.string.not_synced) else null,
                         ).joinToString("  ·  "),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,

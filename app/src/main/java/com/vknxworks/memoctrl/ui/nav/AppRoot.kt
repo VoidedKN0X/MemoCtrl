@@ -77,6 +77,8 @@ import com.vknxworks.memoctrl.ui.settings.YouScreen
 import com.vknxworks.memoctrl.ui.tags.TagsScreen
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
 
 @Composable
 fun AppRoot() {
@@ -99,10 +101,10 @@ fun AppRoot() {
 private data class TopDest(val route: Any, val item: TabItem)
 
 private val topDestinations = listOf(
-    TopDest(MemosRoute, TabItem("Memos", Icons.Outlined.GridView, Icons.Filled.GridView)),
-    TopDest(TagsRoute, TabItem("Tags", Icons.Outlined.Tag, Icons.Filled.Tag)),
-    TopDest(ExploreRoute, TabItem("Explore", Icons.Outlined.Public, Icons.Filled.Public)),
-    TopDest(SearchRoute, TabItem("Search", Icons.Outlined.Search, Icons.Filled.Search)),
+    TopDest(MemosRoute, TabItem(R.string.tab_memos, Icons.Outlined.GridView, Icons.Filled.GridView)),
+    TopDest(TagsRoute, TabItem(R.string.tab_tags, Icons.Outlined.Tag, Icons.Filled.Tag)),
+    TopDest(ExploreRoute, TabItem(R.string.tab_explore, Icons.Outlined.Public, Icons.Filled.Public)),
+    TopDest(SearchRoute, TabItem(R.string.tab_search, Icons.Outlined.Search, Icons.Filled.Search)),
 )
 
 @Composable
@@ -152,8 +154,8 @@ private fun MainScaffold() {
                             NavigationRailItem(
                                 selected = selected,
                                 onClick = { selectTab(i) },
-                                icon = { Icon(if (selected) top.item.selectedIcon else top.item.icon, contentDescription = top.item.label) },
-                                label = { Text(top.item.label) },
+                                icon = { Icon(if (selected) top.item.selectedIcon else top.item.icon, contentDescription = stringResource(top.item.label)) },
+                                label = { Text(stringResource(top.item.label)) },
                             )
                         }
                         Spacer(Modifier.weight(1f))

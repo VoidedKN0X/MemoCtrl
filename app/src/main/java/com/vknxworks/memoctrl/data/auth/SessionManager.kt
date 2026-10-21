@@ -33,6 +33,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import java.io.IOException
 import java.time.Instant
+import com.vknxworks.memoctrl.R
+import com.vknxworks.memoctrl.str
 
 /** Which generation of the Memos API a server speaks. */
 @Serializable
@@ -90,16 +92,15 @@ data class ActiveSession(val account: Account, val token: String, val repo: Sync
  * whether to try plain HTTP (which sends the token unencrypted) and signs in again with [httpUrl].
  */
 class HttpFallbackNeeded(val httpUrl: String, cause: Throwable) :
-    Exception("Couldn't connect securely (HTTPS). The server may only support plain HTTP.", cause)
+    Exception(str(R.string.error_https_fallback), cause)
 
 /** The server runs a Memos version newer than the app was made for. The user can continue anyway. */
 class NewerServerException(val version: String) : Exception(
-    "This server runs Memos $version, newer than MemoCtrl was made for (${VersionPolicy.SUPPORTED_TEXT}). " +
-        "Most things should work, but a newer version can change how memos are stored.",
+    str(R.string.error_newer_server, version, VersionPolicy.supportedText()),
 )
 
 object VersionPolicy {
-    const val SUPPORTED_TEXT = "Memos 0.21 and Memos 0.27 to 0.31"
+    fun supportedText(): String = str(R.string.supported_versions)
     private val V0_MIN = listOf(0, 21, 0)
     private val V1_MIN = listOf(0, 27, 0)
     private val V1_MAX = listOf(0, 31, 0)
@@ -196,7 +197,7 @@ class SessionManager(
 
     /** Encrypts a token for saving: with the Keystore, and also with the app lock's key when it's on. */
     private fun storeToken(token: String): String {
-        val inner = if (vault.enabled) vault.seal(token) ?: throw ApiException("Unlock MemoCtrl first.") else token
+        val inner = if (vault.enabled) vault.seal(token) ?: throw ApiException(str(R.string.error_unlock_first)) else token
         return KeystoreCrypto.encrypt(inner)
     }
 
@@ -272,14 +273,14 @@ class SessionManager(
         if (v0.isNotEmpty()) return ServerApi.V0 to v0
         val v1 = MemosV1(host, http, null).serverVersion()
         if (v1.isNotEmpty()) return ServerApi.V1 to v1
-        throw ApiException("This doesn't look like a Memos server.")
+        throw ApiException(str(R.string.error_not_memos_server))
     }
 
     private fun normalize(address: String): Pair<String, Boolean> {
         val raw = address.trim().trimEnd('/')
         val explicit = raw.startsWith("http://", true) || raw.startsWith("https://", true)
         val url = if (explicit) raw else "https://$raw"
-        val parsed = url.toHttpUrlOrNull() ?: throw ApiException("That isn't a valid server address.")
+        val parsed = url.toHttpUrlOrNull() ?: throw ApiException(str(R.string.error_bad_address))
         return parsed.toString().trimEnd('/') to explicit
     }
 
@@ -311,8 +312,7 @@ class SessionManager(
             if (explicit) throw e
             if (e.isTlsProblem()) {
                 throw ApiException(
-                    "Secure connection failed: ${e.message ?: "TLS error"}. " +
-                        "If your server only supports plain HTTP, type http:// in front of the address.",
+                    str(R.string.error_tls_signin, e.message ?: str(R.string.error_tls_generic)),
                 )
             }
             throw HttpFallbackNeeded("http://" + host.removePrefix("https://"), e)
@@ -320,7 +320,7 @@ class SessionManager(
 
         when (VersionPolicy.verdict(api, version)) {
             VersionPolicy.Verdict.TOO_OLD -> throw ApiException(
-                "This server runs Memos ${version.ifBlank { "(unknown)" }}. MemoCtrl works with ${VersionPolicy.SUPPORTED_TEXT}.",
+                str(R.string.error_too_old, version.ifBlank { str(R.string.version_unknown) }, VersionPolicy.supportedText()),
             )
             VersionPolicy.Verdict.NEWER -> if (!allowNewer) throw NewerServerException(version)
             VersionPolicy.Verdict.SUPPORTED -> Unit
@@ -333,13 +333,13 @@ class SessionManager(
                 val issued = clientFor(api, host, null).createTokenWithPassword(
                     credentials.username.trim(),
                     credentials.password,
-                    "MemoCtrl on ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}".trim(),
+                    str(R.string.token_name, android.os.Build.MANUFACTURER, android.os.Build.MODEL).trim(),
                 )
                 tokenId = issued.id
                 issued.token
             } catch (e: ApiException) {
                 if (e.status == 401 || e.status == 403) {
-                    throw ApiException(e.message?.takeIf { it.isNotBlank() && !it.startsWith("Server answered") } ?: "Wrong username or password.", e.status)
+                    throw ApiException(e.message?.takeIf { it.isNotBlank() && !e.generic } ?: str(R.string.error_wrong_password), e.status)
                 }
                 throw e
             }
@@ -385,7 +385,7 @@ class SessionManager(
                 }
             }
         } catch (e: ApiException) {
-            if (e.isUnauthorized) throw ApiException("The server didn't accept this access token.", e.status)
+            if (e.isUnauthorized) throw ApiException(str(R.string.error_token_rejected), e.status)
             throw e
         }
 
@@ -467,15 +467,14 @@ class SessionManager(
         return when (VersionPolicy.verdict(session.account.api, version)) {
             VersionPolicy.Verdict.SUPPORTED -> SyncCheck.Allowed
             VersionPolicy.Verdict.TOO_OLD -> SyncCheck.Blocked(
-                if (automatic) null else "This server runs Memos $version. MemoCtrl works with ${VersionPolicy.SUPPORTED_TEXT}.",
+                if (automatic) null else str(R.string.error_too_old, version, VersionPolicy.supportedText()),
             )
             VersionPolicy.Verdict.NEWER -> when {
                 version in session.account.acceptedVersions || version == allowVersion -> SyncCheck.Allowed
                 automatic -> SyncCheck.Blocked(null)
                 else -> SyncCheck.NeedsConfirmation(
                     version,
-                    "Your server runs Memos $version, newer than MemoCtrl was made for (${VersionPolicy.SUPPORTED_TEXT}). " +
-                        "Syncing anyway could mix up changes that haven't synced yet. Check the release notes first.",
+                    str(R.string.error_newer_sync, version, VersionPolicy.supportedText()),
                 )
             }
         }

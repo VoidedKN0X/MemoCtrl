@@ -6,17 +6,17 @@ import androidx.compose.ui.text.input.TextFieldValue
 /** Line starts that make a list item, longest first so "- [ ] " wins over "- ". */
 val LIST_PREFIXES = listOf("- [ ] ", "- [x] ", "- [X] ", "* ", "- ")
 
-enum class MarkdownFormat(val label: String, val prefix: String, val suffix: String = "", val linePrefix: Boolean = false) {
-    H1("H1", "# ", linePrefix = true),
-    H2("H2", "## ", linePrefix = true),
-    H3("H3", "### ", linePrefix = true),
-    BOLD("Bold", "**", "**"),
-    ITALIC("Italic", "*", "*"),
-    STRIKETHROUGH("Strikethrough", "~~", "~~"),
-    CODE("Code", "`", "`"),
-    QUOTE("Quote", "> ", linePrefix = true),
-    BULLET("Bulleted list", "- ", linePrefix = true),
-    NUMBERED("Numbered list", "1. ", linePrefix = true),
+enum class MarkdownFormat(val prefix: String, val suffix: String = "", val linePrefix: Boolean = false) {
+    H1("# ", linePrefix = true),
+    H2("## ", linePrefix = true),
+    H3("### ", linePrefix = true),
+    BOLD("**", "**"),
+    ITALIC("*", "*"),
+    STRIKETHROUGH("~~", "~~"),
+    CODE("`", "`"),
+    QUOTE("> ", linePrefix = true),
+    BULLET("- ", linePrefix = true),
+    NUMBERED("1. ", linePrefix = true),
 }
 
 private data class Line(val before: String, val line: String, val after: String)

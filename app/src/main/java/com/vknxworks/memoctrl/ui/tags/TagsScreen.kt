@@ -47,6 +47,9 @@ import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import java.time.temporal.WeekFields
 import java.util.Locale
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.pluralStringResource
+import com.vknxworks.memoctrl.R
 
 /** The Tags tab: how much you've written, a heatmap of the days you wrote, and every tag you use. */
 @Composable
@@ -58,7 +61,7 @@ fun TagsScreen() {
     val memos by remember(repo) { repo.observeMemos() }.collectAsStateWithLifecycle(initialValue = null)
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
-        TabTitle("Tags")
+        TabTitle(stringResource(R.string.tab_tags))
         val list = memos ?: run {
             LoadingView()
             return@Column
@@ -82,9 +85,9 @@ fun TagsScreen() {
                 ) {
                     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                            Stat(list.size.toString(), if (list.size == 1) "Memo" else "Memos")
-                            Stat(tagCounts.size.toString(), if (tagCounts.size == 1) "Tag" else "Tags")
-                            Stat(days.toString(), if (days == 1L) "Day" else "Days")
+                            Stat(list.size.toString(), pluralStringResource(R.plurals.stat_memos, list.size))
+                            Stat(tagCounts.size.toString(), pluralStringResource(R.plurals.stat_tags, tagCounts.size))
+                            Stat(days.toString(), pluralStringResource(R.plurals.stat_days, days.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()))
                         }
                         Heatmap(list)
                     }
@@ -93,7 +96,7 @@ fun TagsScreen() {
             if (tagCounts.isEmpty()) {
                 item(key = "empty") {
                     Text(
-                        "No tags yet. Add one to a memo by writing #something.",
+                        stringResource(R.string.tags_empty),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = Gutter + 4.dp, vertical = 16.dp),
@@ -101,11 +104,11 @@ fun TagsScreen() {
                 }
             } else {
                 item(key = "tags") {
-                    Group("Tags") {
+                    Group(stringResource(R.string.tab_tags)) {
                         tagCounts.forEach { (tag, count) ->
                             GroupRow(
                                 "#$tag",
-                                if (count == 1) "1 memo" else "$count memos",
+                                pluralStringResource(R.plurals.tag_count, count, count),
                                 icon = Icons.Outlined.Tag,
                                 showChevron = true,
                                 onClick = { nav.tag(tag) },

@@ -49,6 +49,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.coroutines.resume
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
 
 private fun hasLocationPermission(context: Context): Boolean =
     ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
@@ -89,6 +91,7 @@ fun LocationDialog(location: MemoLocation?, onConfirm: (MemoLocation?) -> Unit, 
     var lon by rememberSaveable { mutableStateOf(location?.longitude?.toString().orEmpty()) }
     var locating by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var gpsOff by remember { mutableStateOf(false) }
     var job by remember { mutableStateOf<Job?>(null) }
     val candidate = MemoLocation.fromInput(name, lat, lon)
     DisposableEffect(Unit) { onDispose { job?.cancel() } }
@@ -96,9 +99,11 @@ fun LocationDialog(location: MemoLocation?, onConfirm: (MemoLocation?) -> Unit, 
     fun locate() {
         if (locating) return
         error = null
+        gpsOff = false
         val manager = context.getSystemService(LocationManager::class.java)
         if (manager == null || !manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            error = "Turn on location (GPS) in your phone's settings, or type the coordinates."
+            error = context.getString(R.string.location_gps_off)
+            gpsOff = true
             return
         }
         job = scope.launch {
@@ -106,7 +111,7 @@ fun LocationDialog(location: MemoLocation?, onConfirm: (MemoLocation?) -> Unit, 
             try {
                 val fix = currentLocation(context)
                 if (fix == null) {
-                    error = "Couldn't get a GPS fix. Go outside or near a window, or type the coordinates."
+                    error = context.getString(R.string.location_no_fix)
                 } else {
                     lat = fix.latitude.toString()
                     lon = fix.longitude.toString()
@@ -122,13 +127,13 @@ fun LocationDialog(location: MemoLocation?, onConfirm: (MemoLocation?) -> Unit, 
 
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
         if (result.values.any { it } || hasLocationPermission(context)) locate()
-        else error = "Location access was denied. You can still type the coordinates."
+        else error = context.getString(R.string.location_denied)
     }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Outlined.LocationOn, null) },
-        title = { Text("Location") },
+        title = { Text(stringResource(R.string.location_title)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 FilledTonalButton(
@@ -141,20 +146,20 @@ fun LocationDialog(location: MemoLocation?, onConfirm: (MemoLocation?) -> Unit, 
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (locating) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                        Text(if (locating) "Finding you…" else "Use current location")
+                        Text(stringResource(if (locating) R.string.location_finding else R.string.location_use_current))
                     }
                 }
                 error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-                if (error?.startsWith("Turn on location") == true) {
+                if (error != null && gpsOff) {
                     TextButton(onClick = { runCatching { context.startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)) } }) {
-                        Text("Location settings")
+                        Text(stringResource(R.string.location_settings))
                     }
                 }
-                OutlinedTextField(name, { name = it }, label = { Text("Place name") }, singleLine = true, enabled = !locating, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.location_place)) }, singleLine = true, enabled = !locating, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(
                     lat, { lat = it },
-                    label = { Text("Latitude") },
-                    supportingText = { Text("−90 to 90") },
+                    label = { Text(stringResource(R.string.location_latitude)) },
+                    supportingText = { Text(stringResource(R.string.location_latitude_range)) },
                     singleLine = true,
                     enabled = !locating,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
@@ -162,19 +167,19 @@ fun LocationDialog(location: MemoLocation?, onConfirm: (MemoLocation?) -> Unit, 
                 )
                 OutlinedTextField(
                     lon, { lon = it },
-                    label = { Text("Longitude") },
-                    supportingText = { Text("−180 to 180") },
+                    label = { Text(stringResource(R.string.location_longitude)) },
+                    supportingText = { Text(stringResource(R.string.location_longitude_range)) },
                     singleLine = true,
                     enabled = !locating,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth(),
                 )
                 if (location != null) {
-                    TextButton(onClick = { onConfirm(null) }) { Text("Remove location", color = MaterialTheme.colorScheme.error) }
+                    TextButton(onClick = { onConfirm(null) }) { Text(stringResource(R.string.location_remove), color = MaterialTheme.colorScheme.error) }
                 }
             }
         },
-        confirmButton = { TextButton(enabled = candidate != null && !locating, onClick = { onConfirm(candidate) }) { Text("Save") } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        confirmButton = { TextButton(enabled = candidate != null && !locating, onClick = { onConfirm(candidate) }) { Text(stringResource(R.string.save)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
 }

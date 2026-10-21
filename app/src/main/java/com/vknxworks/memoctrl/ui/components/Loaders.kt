@@ -27,17 +27,20 @@ import com.vknxworks.memoctrl.data.api.AccessTokenInvalidException
 import com.vknxworks.memoctrl.data.api.ApiException
 import java.io.IOException
 import java.net.UnknownHostException
+import androidx.compose.ui.res.stringResource
+import com.vknxworks.memoctrl.R
+import com.vknxworks.memoctrl.str
 
 /** A message for people, not developers, for anything that went wrong talking to the server. */
 fun Throwable.friendlyMessage(): String = when (this) {
-    is ApiException -> message ?: "Server error"
-    is AccessTokenInvalidException -> message ?: "Your access token no longer works"
-    is UnknownHostException -> "Can't reach the server - check the address and your connection"
-    is java.net.ConnectException -> "Connection refused - is the server running?"
-    is java.net.SocketTimeoutException -> "The server took too long to respond"
-    is javax.net.ssl.SSLException -> "Secure connection failed: ${message ?: "certificate problem"}"
-    is IOException -> message ?: "Network error"
-    else -> message ?: this::class.simpleName ?: "Something went wrong"
+    is ApiException -> message ?: str(R.string.error_server)
+    is AccessTokenInvalidException -> message ?: str(R.string.error_token_invalid)
+    is UnknownHostException -> str(R.string.error_unknown_host)
+    is java.net.ConnectException -> str(R.string.error_refused)
+    is java.net.SocketTimeoutException -> str(R.string.error_timeout)
+    is javax.net.ssl.SSLException -> str(R.string.error_tls, message ?: str(R.string.error_tls_certificate))
+    is IOException -> message ?: str(R.string.error_network)
+    else -> message ?: str(R.string.error_generic)
 }
 
 @Composable
@@ -47,7 +50,8 @@ fun LoadingView(modifier: Modifier = Modifier) {
 
 @Composable
 fun ErrorView(message: String, modifier: Modifier = Modifier, onRetry: (() -> Unit)? = null) {
-    MessageView(Icons.Outlined.ErrorOutline, "Couldn't load this", message, modifier, actionLabel = onRetry?.let { "Retry" }, onAction = onRetry)
+    val retry = stringResource(R.string.retry)
+    MessageView(Icons.Outlined.ErrorOutline, stringResource(R.string.error_load_title), message, modifier, actionLabel = onRetry?.let { retry }, onAction = onRetry)
 }
 
 @Composable

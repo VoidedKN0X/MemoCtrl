@@ -4,6 +4,41 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.1.6 (2026-10-21)
+
+Settings now follow the same layout as the other Ctrl apps, and a few more places keep your memos and login private.
+
+### New
+
+- **Hide in screenshots and recent apps** (**Settings > Privacy and security**). When it's on, screenshots, screen recordings and the recent-apps view show a blank screen instead of MemoCtrl. It works with or without the app lock.
+
+### Changed
+
+- **Settings are in the same order as in every Ctrl app:** Appearance first, then Privacy and security (app lock, change app PIN, fingerprint unlock, lock again, hide in screenshots, pictures from other websites and the client certificate), then Writing and Search. Theme and wallpaper colours have icons like the other rows.
+- **Plurals read correctly:** "1 change waiting to sync", "1 memo" on a tag, and the sign-out warning no longer say "1 changes" or "1 memos".
+
+### Security
+
+- **The sign-in screen is always kept out of screenshots and screen recordings**, not only the recent-apps view, because your password or access token is typed (and can be shown) there.
+- **The lock screen and every PIN screen are kept out of screenshots and screen recordings**, so a recording can't show the PIN being typed.
+- **Copied memo text is marked as sensitive:** Android's clipboard preview and keyboards with a clipboard history don't show or keep it.
+- **Share to MemoCtrl only accepts content another app really shares.** File paths, and links that point back to MemoCtrl's own private files, are ignored, so another app can't make MemoCtrl attach its own files to a memo.
+
+## v0.1.5 (2026-10-21)
+
+### Security
+
+- **Trips out of the app no longer skip the lock if you stay away.** Taking a photo, picking pictures or files, sharing or opening an attachment still doesn't count as leaving the app, but if you don't come back within 5 minutes (or your "Lock again" time, if that's longer), MemoCtrl locks anyway. Before, such a trip never locked, however long you were gone.
+
+## v0.1.4 (2026-10-21)
+
+### Fixed
+
+- **Adding a second account on the same server no longer sends the first account's access token.** Signing in and checking a server never get another account's token attached, even when it's the same server.
+- **Unsaved changes aren't lost when the app locks.** If the lock closes the editor while you're writing, a new memo is kept as your draft, and changes to an existing memo come back the next time you edit it ("Restored your unsaved changes"). With autosave on, everything was already saved.
+- **Each Memory widget opens its own memo.** With more than one Memory widget, tapping any of them used to open the memo shown on the last one that refreshed.
+- **Updating from the old app lock no longer gets stuck** on a phone that has no screen lock or fingerprint any more: MemoCtrl goes straight to choosing an app PIN.
+
 ## v0.1.3 (2026-10-21)
 
 The app lock now works the same way as in every other Ctrl app, with the strongest protection of the options we compared.
@@ -24,21 +59,6 @@ The app lock now works the same way as in every other Ctrl app, with the stronge
 - **Wrong PINs lock the screen**: after 5 tries you wait 30 seconds, doubling with every further 5 wrong tries up to 15 minutes. Restarting the app or the phone, or changing the clock, doesn't reset the wait.
 - **Fingerprint unlock can't be faked**: the fingerprint has to unlock a key in the phone's secure hardware, so a tampered "success" on a rooted phone doesn't open the app. Adding a new fingerprint turns fingerprint unlock off until you turn it on again with your PIN.
 - **Forgot your PIN?** The lock screen offers to sign out of every account and delete the memos, pictures and drafts kept on the phone. Because the PIN encrypts your login, there's no way around it. Everything on your Memos server stays.
-
-## v0.1.5 (2026-10-21)
-
-### Security
-
-- **Trips out of the app no longer skip the lock if you stay away.** Taking a photo, picking pictures or files, sharing or opening an attachment still doesn't count as leaving the app, but if you don't come back within 5 minutes (or your "Lock again" time, if that's longer), MemoCtrl locks anyway. Before, such a trip never locked, however long you were gone.
-
-## v0.1.4 (2026-10-21)
-
-### Fixed
-
-- **Adding a second account on the same server no longer sends the first account's access token.** Signing in and checking a server never get another account's token attached, even when it's the same server.
-- **Unsaved changes aren't lost when the app locks.** If the lock closes the editor while you're writing, a new memo is kept as your draft, and changes to an existing memo come back the next time you edit it ("Restored your unsaved changes"). With autosave on, everything was already saved.
-- **Each Memory widget opens its own memo.** With more than one Memory widget, tapping any of them used to open the memo shown on the last one that refreshed.
-- **Updating from the old app lock no longer gets stuck** on a phone that has no screen lock or fingerprint any more: MemoCtrl goes straight to choosing an app PIN.
 
 ## v0.1.2 (2026-10-21)
 

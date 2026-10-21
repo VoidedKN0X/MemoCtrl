@@ -17,6 +17,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.InputStream
 import java.time.Instant
+import com.vknxworks.memoctrl.R
+import com.vknxworks.memoctrl.str
 
 // ---------- Memos 0.21 (the older api/v1 with numeric ids) ----------
 
@@ -227,7 +229,7 @@ class MemosV0(
         archived: Boolean?,
         location: MemoLocationChange?,
     ): RemoteMemo {
-        val id = remoteId.toLongOrNull() ?: throw ApiException("Unknown memo")
+        val id = remoteId.toLongOrNull() ?: throw ApiException(str(R.string.error_unknown_memo))
         var result: RemoteMemo? = null
         if (pinned != null) {
             val req = request(base.path("api/v1/memo").addPathSegment(id.toString()).addPathSegment("organizer").build())
@@ -248,7 +250,7 @@ class MemosV0(
                 .build()
             result = convert(http.fetchJson(req, V0Memo.serializer()))
         }
-        return result ?: throw ApiException("Nothing to change")
+        return result ?: throw ApiException(str(R.string.error_nothing_to_change))
     }
 
     override suspend fun deleteMemo(remoteId: String) {
@@ -288,9 +290,9 @@ class MemosV0(
         val session = headers.values("Set-Cookie").firstNotNullOfOrNull { cookie ->
             val (name, value) = cookie.substringBefore(';').split('=', limit = 2).let { it[0].trim() to it.getOrElse(1) { "" }.trim() }
             value.takeIf { name == "memos.access-token" && it.isNotEmpty() }
-        } ?: throw ApiException("The server didn't sign you in.")
+        } ?: throw ApiException(str(R.string.error_no_signin))
         val user = runCatching { ApiJson.decodeFromString(V0User.serializer(), body) }.getOrNull()
-            ?: throw ApiException("Unexpected answer from the server. Is this a Memos server?")
+            ?: throw ApiException(str(R.string.error_not_memos))
         val created = http.fetchJson(
             Request.Builder()
                 .url(base.path("api/v2/users").addPathSegment(user.id.toString()).addPathSegment("access_tokens").build())
@@ -300,7 +302,7 @@ class MemosV0(
                 .build(),
             V0CreateTokenResponse.serializer(),
         )
-        val token = created.accessToken?.accessToken?.takeIf { it.isNotBlank() } ?: throw ApiException("The server didn't make an access token.")
+        val token = created.accessToken?.accessToken?.takeIf { it.isNotBlank() } ?: throw ApiException(str(R.string.error_no_token))
         return IssuedToken(token, "users/${user.id}")
     }
 

@@ -23,7 +23,8 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Search** that works offline, optionally in your archive too
 - **Archive** and **attachments** pages, and a full-screen picture viewer
 - **Share to MemoCtrl** from any app, a **New memo** launcher shortcut, and **Memos** and **Memory** home screen widgets
-- **App lock** with its own PIN and optional fingerprint unlock; your server login stays encrypted while the app is locked
+- **App lock** with its own PIN and optional fingerprint unlock; your server login stays encrypted while the app is locked (see [App lock](#app-lock))
+- **Hide in screenshots and recent apps**, on its own or with the app lock
 - **Client certificates** (mutual TLS) for servers behind a proxy that asks for one
 - **Sign in with your password** (MemoCtrl makes its own access token and never keeps the password) or an access token
 - **Several servers and accounts**
@@ -73,11 +74,31 @@ Settings, the archive, attachments, accounts and sign out are behind your profil
 - **"Your access token no longer works"**: the token expired or was deleted in Memos. Sign out and sign in again.
 - **Changes waiting to sync** keep a cloud icon on the memo; tap the sync button at the top to try again.
 - **Location** needs Memos 0.27 or newer, and uses the phone's GPS only.
-- **Pictures from other websites** in memos show as a link until you turn on **Settings > Load pictures from other websites**.
+- **Pictures from other websites** in memos show as a link until you turn on **Settings > Privacy and security > Load pictures from other websites**.
+
+## App lock
+
+Turn it on under **Settings > Privacy and security > App lock**. It's off until you turn it on.
+
+- **Its own app PIN** of at least 6 digits, separate from your phone's screen lock. Very obvious PINs such as 111111 or 123456 are refused.
+- **Unlock with fingerprint** (optional) only accepts strong biometrics, such as the fingerprint sensor, checked by the phone's secure hardware. Face unlock that only uses the camera isn't accepted. The PIN is still needed after the phone restarts and at least every 72 hours, and adding a new fingerprint to the phone turns fingerprint unlock off until you turn it on again.
+- **Your server login is encrypted with the PIN while MemoCtrl is locked.** The key only exists in memory while the app is unlocked and is wiped the moment it locks. The PIN itself is never stored: it's stretched with 600,000 rounds of PBKDF2 and mixed with a key held in the phone's secure hardware, so a copy of the app's files isn't enough to guess it on a computer.
+- **Wrong PINs:** after 5 tries you wait 30 seconds, doubling up to 15 minutes. Restarting the app or the phone, or changing the clock, doesn't skip the wait.
+- **Lock again:** as soon as you leave the app (the default), after 1, 5 or 15 minutes or 1 hour away, or only when the app restarts. Taking a photo, picking pictures or files, sharing and opening an attachment don't count as leaving, unless you stay away for more than 5 minutes.
+- **Change app PIN** asks for your current PIN first, and turning the app lock off asks for the PIN too.
+- **Forgot your PIN?** It can't be recovered, because it encrypts your login. The lock screen offers to sign out of every account and delete what MemoCtrl keeps on the phone; everything on your Memos server stays.
+- **With the app lock on**, the recent-apps screen always shows a blank card, and the widgets show "MemoCtrl is locked" instead of your memos and don't sync, because your login stays encrypted.
+
+**Hide in screenshots and recent apps** (in the same section, also without the app lock) keeps MemoCtrl out of screenshots, screen recordings and the recent-apps view. The sign-in screen and the lock screen are always hidden.
 
 ## Privacy
 
 **Telemetry-free.** MemoCtrl has no analytics, crash reporting, usage stats or tracking of any kind. It only talks to your own Memos server. Your password is never stored; the app's access token is stored encrypted on the phone and is only sent to that server.
+
+- **Servers:** only the Memos servers you sign in to. Pictures that memos link from other websites are only loaded after you turn on **Settings > Privacy and security > Load pictures from other websites**; until then they show as a link.
+- **Links:** links in memos, a memo's location (OpenStreetMap) and the Support, Report a bug, Source code and Licence rows in About open in your browser only when you tap them; the app itself doesn't contact those sites.
+- **Location** comes from the phone's GPS only, and only when you tap **Use current location** on a memo.
+- **No backups:** Android doesn't back up MemoCtrl's data or move it to a new phone. Your memos live on your own server.
 
 ## Build from source
 
@@ -107,6 +128,7 @@ Native Android apps for self-hosted services and everyday tools, all with the sa
 
 | App | What it's for |
 | --- | --- |
+| [AdCtrl](https://github.com/VoidedKN0X/AdCtrl) | Control your AdGuard Home DNS server |
 | [ArrCtrl](https://github.com/VoidedKN0X/ArrCtrl) | Radarr, Sonarr, Prowlarr, Bazarr, qBittorrent, autobrr and Cleanuparr in one app |
 | [BeamCtrl](https://github.com/VoidedKN0X/BeamCtrl) | TV remote for phones with an IR blaster |
 | [CraftyCtrl](https://github.com/VoidedKN0X/CraftyCtrl) | Manage Minecraft servers on Crafty Controller |
