@@ -326,7 +326,7 @@ fun ExploreCard(memo: RemoteMemo, serverUrl: String?) {
                     )
                 }
             }
-            ImageGrid(asEntities.filter { it.isImage })
+            ImageGrid(asEntities.filter { it.isImage }, serverUrl = serverUrl)
             AttachmentChips(asEntities.filterNot { it.isImage })
             memo.location?.let { LocationRow(it) }
         }

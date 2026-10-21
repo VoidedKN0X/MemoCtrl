@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Attachment
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -41,10 +42,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.vknxworks.memoctrl.AppContainer
 import com.vknxworks.memoctrl.container
@@ -57,6 +60,7 @@ import com.vknxworks.memoctrl.ui.media.ImageViewer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import java.io.File
 import java.util.Locale
@@ -64,10 +68,25 @@ import kotlin.math.ceil
 import androidx.compose.ui.res.stringResource
 import com.vknxworks.memoctrl.R
 
-/** The pictures of a memo in a grid of up to three across; tapping one opens the viewer. */
+/**
+ * The pictures of a memo in a grid of up to three across; tapping one opens the viewer.
+ * Pictures that are only a link to another website (an attachment's external link) are loaded only with
+ * "Load pictures from other websites" on, like pictures in the memo text; until then they show as a link.
+ * [serverUrl] is the Memos server they belong to; null means the signed-in server.
+ */
 @Composable
-fun ImageGrid(images: List<ResourceEntity>, onRemove: ((ResourceEntity) -> Unit)? = null) {
+fun ImageGrid(images: List<ResourceEntity>, serverUrl: String? = null, onRemove: ((ResourceEntity) -> Unit)? = null) {
     if (images.isEmpty()) return
+    val context = LocalContext.current
+    val c = context.container
+    val settings by c.settings.settings.collectAsStateWithLifecycle()
+    val session by c.sessions.active.collectAsStateWithLifecycle()
+    val server = serverUrl ?: session?.account?.host
+    val blocked = remember(images, server, settings.externalImages) {
+        images.map { !settings.externalImages && isExternal(it.displayUri, server) }
+    }
+    // The viewer only gets the pictures that may be loaded.
+    val viewable = remember(images, blocked) { images.filterIndexed { i, _ -> !blocked[i] } }
     var viewing by remember { mutableIntStateOf(-1) }
     val cols = 3
     val rows = ceil(images.size / cols.toFloat()).toInt()
@@ -77,7 +96,32 @@ fun ImageGrid(images: List<ResourceEntity>, onRemove: ((ResourceEntity) -> Unit)
                 for (col in 0 until cols) {
                     val i = r * cols + col
                     Box(Modifier.weight(1f).aspectRatio(1f)) {
-                        if (i < images.size) {
+                        if (i < images.size && blocked[i]) {
+                            // Not loaded: fetching it would tell another website you're reading this memo.
+                            val url = images[i].displayUri
+                            val host = url.toHttpUrlOrNull()?.host ?: url
+                            Column(
+                                Modifier
+                                    .fillMaxSize()
+                                    .clip(MaterialTheme.shapes.small)
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                                    .clickable { openLink(context, url) }
+                                    .padding(8.dp),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                Icon(Icons.Outlined.Image, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(
+                                    stringResource(R.string.markdown_image_link, images[i].filename.ifBlank { stringResource(R.string.markdown_image) }, host),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 3,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.padding(top = 4.dp),
+                                )
+                            }
+                        } else if (i < images.size) {
                             AsyncImage(
                                 model = images[i].displayUri,
                                 contentDescription = images[i].filename,
@@ -86,8 +130,10 @@ fun ImageGrid(images: List<ResourceEntity>, onRemove: ((ResourceEntity) -> Unit)
                                     .fillMaxSize()
                                     .clip(MaterialTheme.shapes.small)
                                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                                    .clickable { viewing = i },
+                                    .clickable { viewing = viewable.indexOf(images[i]) },
                             )
+                        }
+                        if (i < images.size) {
                             if (onRemove != null) {
                                 IconButton(
                                     onClick = { onRemove(images[i]) },
@@ -104,7 +150,7 @@ fun ImageGrid(images: List<ResourceEntity>, onRemove: ((ResourceEntity) -> Unit)
             }
         }
     }
-    if (viewing >= 0) ImageViewer(images, viewing, onDismiss = { viewing = -1 })
+    if (viewing >= 0 && viewable.isNotEmpty()) ImageViewer(viewable, viewing, onDismiss = { viewing = -1 })
 }
 
 /** Files that aren't pictures: a chip each, tapping opens the file in another app. */

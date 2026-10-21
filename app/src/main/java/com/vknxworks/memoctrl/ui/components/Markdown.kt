@@ -334,7 +334,8 @@ private fun resolveUrl(link: String, serverUrl: String?): String {
     return base.resolve(link)?.toString() ?: link
 }
 
-private fun isExternal(url: String, serverUrl: String?): Boolean {
+/** True for a web address on another site than the Memos server (or any web address when there's no server). */
+internal fun isExternal(url: String, serverUrl: String?): Boolean {
     val u = url.toHttpUrlOrNull() ?: return false
     val s = serverUrl?.toHttpUrlOrNull() ?: return true
     return !u.host.equals(s.host, ignoreCase = true)

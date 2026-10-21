@@ -4,6 +4,14 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.1.9 (2026-10-21)
+
+### Security
+
+- **Attached pictures from other websites now follow "Load pictures from other websites" too.** A memo's attachment can be just a link to a picture on another website. Those pictures were loaded straight away in the memo list, the Attachments page, Explore and the full-screen viewer, even with **Load pictures from other websites** off, so that website could see when you read the memo. Now, with the switch off (the default), such a picture shows as a tile with its name and the website's address instead; tapping it opens the picture in your browser. Pictures stored on your Memos server and pictures on your phone still show as before.
+- **Shared files can't point back to MemoCtrl's own files any more.** A share from another app with an address like "content://0@…" (with a user number in front) slipped past the check that stops other apps from making MemoCtrl attach its own private files to a memo. That form is now recognised and refused too.
+- **Server logins are always sealed with your app PIN when the app lock is on.** If MemoCtrl was closed at exactly the wrong moment while you turned the app lock on, your saved logins could stay protected by the phone's keystore only, without the extra encryption from your PIN. MemoCtrl now checks this every time you unlock and seals any login that isn't sealed yet.
+
 ## v0.1.8 (2026-10-21)
 
 ### Fixed
