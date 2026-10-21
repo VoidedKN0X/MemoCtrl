@@ -91,8 +91,12 @@ class MainActivity : ComponentActivity() {
      * Only content another app actually shares: never a file path, and never a link back to MemoCtrl's
      * own files (another app could otherwise make MemoCtrl attach its own private files to a memo).
      */
-    private fun isShareable(uri: Uri): Boolean =
-        uri.scheme == "content" && !uri.authority.orEmpty().startsWith(packageName)
+    private fun isShareable(uri: Uri): Boolean {
+        if (uri.scheme != "content") return false
+        // "content://0@<authority>" still reaches <authority> (the number is a user id), so look past it.
+        val authority = uri.authority?.substringAfterLast('@')?.takeIf { it.isNotBlank() } ?: return false
+        return !authority.startsWith(packageName)
+    }
 
     companion object {
         const val ACTION_NEW_MEMO = "com.vknxworks.memoctrl.NEW_MEMO"
