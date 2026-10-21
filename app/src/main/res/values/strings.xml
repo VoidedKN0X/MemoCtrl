@@ -118,8 +118,10 @@
     <string name="lock_fingerprint_enable_title">Turn on fingerprint unlock</string>
     <string name="lock_fingerprint_enable_subtitle">Confirm your fingerprint</string>
     <string name="lock_again">Lock again</string>
-    <string name="hide_content">Hide in screenshots and recent apps</string>
-    <string name="hide_content_subtitle">Screenshots, screen recordings and the recent apps view show a blank screen</string>
+    <string name="hide_screenshots">Hide in screenshots</string>
+    <string name="hide_screenshots_subtitle">Screenshots and screen recordings show a blank screen</string>
+    <string name="hide_recents">Hide in recent apps</string>
+    <string name="hide_recents_subtitle">The recent apps view shows a blank card instead of the app</string>
     <string name="external_images">Load pictures from other websites</string>
     <string name="external_images_subtitle">Pictures in memos that link to other sites. Off: they show as a link, so those sites can\'t see when you read your memos</string>
     <string name="client_certificate">Client certificate</string>

@@ -24,7 +24,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Archive** and **attachments** pages, and a full-screen picture viewer
 - **Share to MemoCtrl** from any app, a **New memo** launcher shortcut, and **Memos** and **Memory** home screen widgets
 - **App lock** with its own PIN and optional fingerprint unlock; your server login stays encrypted while the app is locked (see [App lock](#app-lock))
-- **Hide in screenshots and recent apps**, on its own or with the app lock
+- **Hide in screenshots** and **Hide in recent apps**, two separate switches, on their own or with the app lock
 - **Client certificates** (mutual TLS) for servers behind a proxy that asks for one
 - **Sign in with your password** (MemoCtrl makes its own access token and never keeps the password) or an access token
 - **Several servers and accounts**
@@ -89,7 +89,12 @@ Turn it on under **Settings > Privacy and security > App lock**. It's off until 
 - **Forgot your PIN?** It can't be recovered, because it encrypts your login. The lock screen offers to sign out of every account and delete what MemoCtrl keeps on the phone; everything on your Memos server stays.
 - **With the app lock on**, the recent-apps screen always shows a blank card, and the widgets show "MemoCtrl is locked" instead of your memos and don't sync, because your login stays encrypted.
 
-**Hide in screenshots and recent apps** (in the same section, also without the app lock) keeps MemoCtrl out of screenshots, screen recordings and the recent-apps view. The sign-in screen and the lock screen are always hidden.
+Two more switches in the same section work with or without the app lock, and are both off until you turn them on:
+
+- **Hide in screenshots**: screenshots and screen recordings show a blank screen (and so does the recent-apps view).
+- **Hide in recent apps**: the recent-apps view shows a blank card instead of MemoCtrl. Screenshots still work.
+
+The sign-in screen and the lock and PIN screens are always kept out of screenshots and recordings, whatever these switches say.
 
 ## Privacy
 

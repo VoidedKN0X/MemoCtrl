@@ -4,6 +4,14 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.1.7 (2026-10-21)
+
+### Changed
+
+- **Hide in screenshots** and **Hide in recent apps** are now two separate switches in **Settings > Privacy and security**, both off by default. **Hide in screenshots** makes screenshots and screen recordings show a blank screen (the recent-apps view too). **Hide in recent apps** only shows a blank card in the recent-apps view, so screenshots still work. They replace the single "Hide in screenshots and recent apps" switch from 0.1.6: if you had turned that on, both new switches are on after the update, so nothing changes for you.
+- **Nothing changes for people who never turned it on:** MemoCtrl was only hidden from screenshots while signing in and on the lock screen, and that stays the same. With the app lock on, the recent-apps view still always shows a blank card, because a preview there would show your memos without the PIN.
+- **The Memos widget's settings screen follows both switches too.**
+
 ## v0.1.6 (2026-10-21)
 
 Settings now follow the same layout as the other Ctrl apps, and a few more places keep your memos and login private.

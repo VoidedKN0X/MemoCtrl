@@ -55,8 +55,10 @@ data class AppSettings(
     val lockTimeout: LockTimeout = LockTimeout.IMMEDIATELY,
     /** Load pictures that memos link from other websites. Off: they show as a link instead. */
     val externalImages: Boolean = false,
-    /** FLAG_SECURE: keep the app out of screenshots, screen recordings and the recent-apps view. */
-    val hideContent: Boolean = false,
+    /** "Hide in screenshots": FLAG_SECURE on every window (also blanks the recent-apps preview). */
+    val hideScreenshots: Boolean = false,
+    /** "Hide in recent apps": the recent-apps view shows a blank card. Screenshots still work. */
+    val hideRecents: Boolean = false,
 )
 
 /** An unsent new memo, kept per account until it's posted or thrown away. */
@@ -72,7 +74,10 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val appLock = booleanPreferencesKey("app_lock")
         val lockTimeout = stringPreferencesKey("lock_timeout")
         val externalImages = booleanPreferencesKey("external_images")
-        val hideContent = booleanPreferencesKey("hide_content")
+        val hideScreenshots = booleanPreferencesKey("hide_screenshots")
+        val hideRecents = booleanPreferencesKey("hide_recents")
+        /** 0.1.6's single "Hide in screenshots and recent apps": turned on, it turns both switches on. */
+        val legacyHideContent = booleanPreferencesKey("hide_content")
     }
 
     val settings: StateFlow<AppSettings> = context.appDataStore.data
@@ -91,7 +96,8 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         appLock = this[K.appLock] ?: false,
         lockTimeout = enumOr(this[K.lockTimeout], LockTimeout.IMMEDIATELY),
         externalImages = this[K.externalImages] ?: false,
-        hideContent = this[K.hideContent] ?: false,
+        hideScreenshots = this[K.hideScreenshots] ?: this[K.legacyHideContent] ?: false,
+        hideRecents = this[K.hideRecents] ?: this[K.legacyHideContent] ?: false,
     )
 
     suspend fun update(transform: (AppSettings) -> AppSettings) {
@@ -105,7 +111,9 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             p[K.appLock] = s.appLock
             p[K.lockTimeout] = s.lockTimeout.name
             p[K.externalImages] = s.externalImages
-            p[K.hideContent] = s.hideContent
+            p[K.hideScreenshots] = s.hideScreenshots
+            p[K.hideRecents] = s.hideRecents
+            p.remove(K.legacyHideContent)
         }
     }
 
