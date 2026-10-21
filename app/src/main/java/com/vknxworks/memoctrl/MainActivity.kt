@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vknxworks.memoctrl.data.settings.ThemeChoice
 import androidx.compose.runtime.LaunchedEffect
 import com.vknxworks.memoctrl.ui.components.ScreenPrivacy
+import com.vknxworks.memoctrl.ui.components.WindowPrivacy
 import com.vknxworks.memoctrl.ui.lock.AppLock
 import com.vknxworks.memoctrl.ui.lock.AppLockGate
 import com.vknxworks.memoctrl.ui.nav.AppRoot
@@ -27,8 +28,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // Recents shows a blank card until the settings are read, never a snapshot of a locked app.
-        setRecentsScreenshotEnabled(false)
         val c = container
         if (savedInstanceState == null) handleIntent(intent)
         setContent {
@@ -45,17 +44,12 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
                 onDispose { }
             }
-            // "Hide in screenshots and recent apps", the sign-in screen and the lock and PIN screens keep the
-            // window out of screenshots and recordings. With the app lock on, Recents always shows a blank card.
+            // "Hide in screenshots" (off by default); always on for signing in and the lock and PIN screens.
             val covered = (settings.appLock && !c.vault.enabled) || (c.vault.enabled && !AppLock.unlocked) || AppLock.request != null
-            val secure = settings.hideContent || covered || ScreenPrivacy.forced > 0
-            LaunchedEffect(secure) {
-                if (secure) window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                else window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-            }
-            LaunchedEffect(settings.appLock, secure) {
-                setRecentsScreenshotEnabled(!settings.appLock && !secure)
-            }
+            val secure = settings.hideScreenshots || covered || ScreenPrivacy.forced > 0
+            // "Hide in recent apps" (off by default). With the app lock on, Recents always shows a blank
+            // card: a preview there would show your memos without the PIN.
+            WindowPrivacy(this, secure, hideRecents = settings.hideRecents || settings.appLock || c.vault.enabled)
             MemoCtrlTheme(settings.theme, settings.dynamicColor) {
                 AppLockGate { AppRoot() }
             }

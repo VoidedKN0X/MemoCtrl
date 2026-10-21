@@ -76,6 +76,7 @@ import com.vknxworks.memoctrl.R
 import androidx.compose.material.icons.outlined.DarkMode
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material.icons.outlined.Layers
 
 @Composable
 fun SettingsScreen() {
@@ -156,11 +157,17 @@ fun SettingsScreen() {
                     ) { v -> update { it.copy(lockTimeout = v) } }
                 }
                 GroupSwitch(
-                    stringResource(R.string.hide_content),
-                    stringResource(R.string.hide_content_subtitle),
-                    s.hideContent,
+                    stringResource(R.string.hide_screenshots),
+                    stringResource(R.string.hide_screenshots_subtitle),
+                    s.hideScreenshots,
                     icon = Icons.Outlined.VisibilityOff,
-                ) { v -> update { it.copy(hideContent = v) } }
+                ) { v -> update { it.copy(hideScreenshots = v) } }
+                GroupSwitch(
+                    stringResource(R.string.hide_recents),
+                    stringResource(R.string.hide_recents_subtitle),
+                    s.hideRecents,
+                    icon = Icons.Outlined.Layers,
+                ) { v -> update { it.copy(hideRecents = v) } }
                 GroupSwitch(
                     stringResource(R.string.external_images),
                     stringResource(R.string.external_images_subtitle),

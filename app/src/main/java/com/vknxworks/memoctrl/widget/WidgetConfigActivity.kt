@@ -35,6 +35,7 @@ import com.vknxworks.memoctrl.ui.components.Group
 import com.vknxworks.memoctrl.ui.components.GroupChoice
 import com.vknxworks.memoctrl.ui.components.GroupSwitch
 import com.vknxworks.memoctrl.ui.components.PillButton
+import com.vknxworks.memoctrl.ui.components.WindowPrivacy
 import com.vknxworks.memoctrl.ui.theme.Gutter
 import com.vknxworks.memoctrl.ui.theme.MemoCtrlTheme
 import kotlinx.coroutines.flow.first
@@ -58,6 +59,8 @@ class WidgetConfigActivity : ComponentActivity() {
         val c = container
         val start = Widgets.config(this, id)
         setContent {
+            val privacy by c.settings.settings.collectAsStateWithLifecycle()
+            WindowPrivacy(this, privacy.hideScreenshots, privacy.hideRecents || privacy.appLock)
             val settings by c.settings.settings.collectAsStateWithLifecycle()
             MemoCtrlTheme(settings.theme, settings.dynamicColor) {
                 var tag by remember { mutableStateOf(start.tag) }
