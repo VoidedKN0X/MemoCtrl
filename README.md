@@ -74,11 +74,11 @@ Settings, the archive, attachments, accounts and sign out are behind your profil
 - **"Your access token no longer works"**: the token expired or was deleted in Memos. Sign out and sign in again.
 - **Changes waiting to sync** keep a cloud icon on the memo; tap the sync button at the top to try again.
 - **Location** needs Memos 0.27 or newer, and uses the phone's GPS only.
-- **Pictures from other websites** in memos show as a link until you turn on **Settings > Privacy and security > Load pictures from other websites**.
+- **Pictures from other websites** in memos show as a link until you turn on **Load pictures from other websites** (your profile picture › **Settings > Privacy and security**).
 
 ## App lock
 
-Turn it on under **Settings > Privacy and security > App lock**. It's off until you turn it on.
+Turn it on under your profile picture › **Settings > Privacy and security > App lock**. It's off until you turn it on.
 
 - **Its own app PIN** of at least 6 digits, separate from your phone's screen lock. Very obvious PINs such as 111111 or 123456 are refused.
 - **Unlock with fingerprint** (optional) only accepts strong biometrics, such as the fingerprint sensor, checked by the phone's secure hardware. Face unlock that only uses the camera isn't accepted. The PIN is still needed after the phone restarts and at least every 72 hours, and adding a new fingerprint to the phone turns fingerprint unlock off until you turn it on again.
@@ -100,7 +100,7 @@ The sign-in screen and the lock and PIN screens are always kept out of screensho
 
 **Telemetry-free.** MemoCtrl has no analytics, crash reporting, usage stats or tracking of any kind. It only talks to your own Memos server. Your password is never stored; the app's access token is stored encrypted on the phone and is only sent to that server.
 
-- **Servers:** only the Memos servers you sign in to. Pictures that memos link from other websites are only loaded after you turn on **Settings > Privacy and security > Load pictures from other websites**; until then they show as a link.
+- **Servers:** only the Memos servers you sign in to. Pictures that memos link from other websites are only loaded after you turn on **Load pictures from other websites** (your profile picture › **Settings > Privacy and security**); until then they show as a link.
 - **Links:** links in memos, a memo's location (OpenStreetMap) and the Support, Report a bug, Source code and Licence rows in About open in your browser only when you tap them; the app itself doesn't contact those sites.
 - **Location** comes from the phone's GPS only, and only when you tap **Use current location** on a memo.
 - **No backups:** Android doesn't back up MemoCtrl's data or move it to a new phone. Your memos live on your own server.
