@@ -4,7 +4,11 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
-## Unreleased
+## v0.1.8 (2026-10-21)
+
+### Fixed
+
+- **Clear message for an attachment without a name**: if the Memos server ever sends an attachment that has no name, MemoCtrl now says "The server sent an attachment without a name, so MemoCtrl can't show it." instead of a technical message in English only. All of MemoCtrl's text now comes from its text file, ready for translations.
 
 ### Changed
 

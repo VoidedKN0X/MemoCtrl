@@ -165,7 +165,7 @@ class MemosV1(
     }
 
     private fun convert(a: V1Attachment) = RemoteResource(
-        remoteId = requireNotNull(a.name) { "Attachment without a name" },
+        remoteId = a.name ?: throw ApiException(str(R.string.error_attachment_without_name)),
         date = a.createTime ?: Instant.now(),
         filename = a.filename.orEmpty(),
         uri = fileUrl(a),
