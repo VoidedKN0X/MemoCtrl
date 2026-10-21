@@ -412,4 +412,5 @@ Your changes are kept on this phone and sync next time.</string>
         <item quantity="one">%1$d memo</item>
         <item quantity="other">%1$d memos</item>
     </plurals>
+    <string name="error_attachment_without_name">The server sent an attachment without a name, so MemoCtrl can\'t show it.</string>
 </resources>
