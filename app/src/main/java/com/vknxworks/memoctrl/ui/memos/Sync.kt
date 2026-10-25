@@ -18,7 +18,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,6 +31,7 @@ import com.vknxworks.memoctrl.ui.components.friendlyMessage
 import com.vknxworks.memoctrl.widget.Widgets
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.pluralStringResource
@@ -53,7 +53,7 @@ class ManualSync(private val c: AppContainer, private val scope: CoroutineScope)
         if (running) return
         val session = c.sessions.active.value ?: return
         running = true
-        scope.launch {
+        scope.launch(Dispatchers.Main) {
             try {
                 when (val check = c.sessions.checkSync(automatic = false, allowVersion = allowVersion)) {
                     SyncCheck.Allowed -> {
@@ -79,8 +79,8 @@ class ManualSync(private val c: AppContainer, private val scope: CoroutineScope)
 @Composable
 fun rememberManualSync(): ManualSync {
     val c = LocalContext.current.container
-    val scope = rememberCoroutineScope()
-    val sync = remember { ManualSync(c, scope) }
+    // On the app's own scope: a sync cut off halfway (by switching tabs) could post a memo twice.
+    val sync = remember { ManualSync(c, c.appScope) }
     SyncDialogs(sync)
     return sync
 }

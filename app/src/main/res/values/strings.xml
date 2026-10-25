@@ -67,6 +67,7 @@
     <string name="lock_forgot">Forgot PIN?</string>
     <string name="lock_forgot_title">Forgot your PIN?</string>
     <string name="lock_forgot_body">The PIN can\'t be recovered, because it encrypts your server login. MemoCtrl will sign out of every account and delete the memos, pictures and drafts kept on this phone. Everything on your Memos server stays. Changes that haven\'t synced yet are lost.</string>
+    <string name="lock_forgot_body_local">Memos kept only on this phone (\"On this phone\") are deleted for good too, because they aren\'t on any server.</string>
     <string name="lock_forgot_confirm">Sign out and reset</string>
     <string name="lock_choose_title">Choose an app PIN</string>
     <string name="lock_choose_intro">At least %1$d digits, different from your phone\'s PIN. If you forget it, the only way back in is to sign out and sign in again.</string>

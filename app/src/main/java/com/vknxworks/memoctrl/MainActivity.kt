@@ -62,7 +62,13 @@ class MainActivity : ComponentActivity() {
     /** Turns a share, shortcut or widget tap into something the main screen opens. */
     private fun handleIntent(intent: Intent?) {
         intent ?: return
-        val action = when (intent.action) {
+        // Another app can send anything: a broken extra must not crash MemoCtrl, it's just ignored.
+        val action = runCatching { parseIntent(intent) }.getOrNull()
+        if (action != null) container.pendingAction.value = action
+    }
+
+    private fun parseIntent(intent: Intent): PendingAction? =
+        when (intent.action) {
             ACTION_NEW_MEMO -> PendingAction.NewMemo
             ACTION_VIEW_MEMO -> intent.getStringExtra(EXTRA_MEMO_ID)?.let { PendingAction.ViewMemo(it) }
             ACTION_EDIT_MEMO -> intent.getStringExtra(EXTRA_MEMO_ID)?.let { PendingAction.EditMemo(it) }
@@ -81,8 +87,6 @@ class MainActivity : ComponentActivity() {
             }
             else -> null
         }
-        if (action != null) container.pendingAction.value = action
-    }
 
     /**
      * Only content another app actually shares: never a file path, and never a link back to MemoCtrl's

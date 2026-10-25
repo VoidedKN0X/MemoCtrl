@@ -325,7 +325,13 @@ fun AppLockGate(content: @Composable () -> Unit) {
         return
     }
     val vault = c.vault
+    // Locking as you leave (Back on the first screen, or swiping MemoCtrl away) can land while the screen
+    // is already closing. Nothing new is shown on it then (a prompt or dialog on a closing screen crashes
+    // the app); it's still locked, and the next start opens on the lock screen.
+    val activity = context.findActivity()
+    val closing = activity != null && (activity.isFinishing || activity.isDestroyed)
     when {
+        closing && !AppLock.unlocked && (vault.enabled || settings.appLock) -> Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
         // Updated from the old app lock (the phone's screen lock): confirm once, then choose a PIN.
         settings.appLock && !vault.enabled -> {
             if (!AppLock.unlocked) LegacyLockedScreen()
@@ -460,8 +466,8 @@ private fun PinLockScreen() {
     }
 
     fun askFingerprint() {
-        val a = activity ?: return
-        val cipher = vault.biometricUnlockCipher() ?: run {
+        val a = activity?.takeUnless { it.isFinishing || it.isDestroyed } ?: return
+        val cipher = runCatching { vault.biometricUnlockCipher() }.getOrNull() ?: run {
             message = if (!vault.biometricEnabled) context.getString(R.string.lock_fingerprint_changed) else null
             return
         }
@@ -532,12 +538,15 @@ private fun PinLockScreen() {
     if (forgetting) {
         ConfirmDialog(
             title = stringResource(R.string.lock_forgot_title),
-            body = stringResource(R.string.lock_forgot_body),
+            // Memos of "On this phone" aren't on any server: say they're deleted too.
+            body = stringResource(R.string.lock_forgot_body) +
+                (if (c.sessions.accounts.value.any { it.isLocal }) " " + stringResource(R.string.lock_forgot_body_local) else ""),
             confirm = stringResource(R.string.lock_forgot_confirm),
             onDismiss = { forgetting = false },
         ) {
             forgetting = false
-            scope.launch { c.forgetEverything() }
+            // On the app's scope: the lock screen closes while this runs.
+            c.appScope.launch { c.forgetEverything() }
         }
     }
 }

@@ -183,15 +183,18 @@ class MemoDatabase(context: Context) : SQLiteOpenHelper(context, "memoctrl.db", 
 
     /**
      * Gives every memo and attachment of [fromKey] to [toKey] as new, not yet uploaded ones (no server
-     * id, waiting to sync). [moveFile] moves an attachment's file and returns its new address.
+     * id, waiting to sync). [moveFile] copies an attachment's file and returns the copy's address.
      * Memos already deleted are dropped. Returns how many memos moved.
      */
     suspend fun moveAccount(fromKey: String, toKey: String, moveFile: (String) -> String): Int {
         val memos = io { queryMemos("account_key = ?", arrayOf(fromKey)) }
         val resources = io { queryResources("account_key = ?", arrayOf(fromKey)) }
-        // Files first: a file that can't be moved keeps its old address, which still works.
+        // Files first (copied, the originals stay until the rows are saved): a file that can't be copied
+        // keeps its old address, which still works.
+        val deletedIds = memos.filter { it.isDeleted }.mapTo(HashSet()) { it.identifier }
         val moved = withContext(Dispatchers.IO) {
-            resources.map { r ->
+            // Attachments of deleted memos go with their memo (the row cascades); don't copy their files.
+            resources.filter { it.memoId == null || it.memoId !in deletedIds }.map { r ->
                 val local = r.localUri?.let(moveFile)
                 val uri = if (r.uri == r.localUri && local != null) local else moveFile(r.uri)
                 r.copy(accountKey = toKey, remoteId = null, uri = uri, localUri = local)

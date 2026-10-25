@@ -71,6 +71,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -204,7 +205,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
     val autosave = settings.autosave
     val focus = remember { FocusRequester() }
 
-    var text by rememberSaveable(stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue("")) }
+    var text by rememberSaveable(stateSaver = LimitedTextSaver) { mutableStateOf(TextFieldValue("")) }
     var visibility by rememberSaveable { mutableStateOf(s.account.defaultVisibility) }
     var location by remember { mutableStateOf<MemoLocation?>(null) }
     var initialized by remember { mutableStateOf(false) }
@@ -681,3 +682,15 @@ private fun FormatText(label: String, onClick: () -> Unit) {
         Text(label, style = CtrlType.MonoStrong, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
+
+/**
+ * Keeps the editor text across Android recreating the screen, but only up to [MAX_SAVED_TEXT]
+ * characters: Android refuses saved state of about 1 MB and crashes the app when it's left. A longer
+ * memo is still kept by its draft or autosave.
+ */
+private const val MAX_SAVED_TEXT = 100_000
+
+private val LimitedTextSaver: Saver<TextFieldValue, Any> = Saver(
+    save = { value -> if (value.text.length > MAX_SAVED_TEXT) null else with(TextFieldValue.Saver) { save(value) } },
+    restore = { saved -> TextFieldValue.Saver.restore(saved) },
+)

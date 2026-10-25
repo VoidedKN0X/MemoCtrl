@@ -475,10 +475,24 @@ class SessionManager(
         val local = _accounts.value.firstOrNull { it.key == localKey && it.isLocal } ?: return@withLock 0
         val target = _accounts.value.firstOrNull { it.key == targetKey && !it.isLocal } ?: return@withLock 0
         // Stop the local-only account's repository first, so nothing writes to it while its memos move.
-        if (_active.value?.account?.key == local.key) _active.value?.repo?.close()
-        val moved = db.moveAccount(local.key, target.key) { uri -> files.moveToAccount(uri, target.key) }
+        val wasActive = _active.value?.account?.key == local.key
+        if (wasActive) _active.value?.repo?.close()
+        val moved = try {
+            db.moveAccount(local.key, target.key) { uri -> files.copyToAccount(uri, target.key) }
+        } catch (e: Throwable) {
+            // Nothing moved (it's one transaction): carry on with "On this phone" as it was.
+            if (wasActive) activate(local)
+            throw e
+        }
+        // An unposted memo goes along as the server account's draft, unless that one has a draft already.
+        val draft = settings.draft(local.key)
+        if ((draft.content.isNotEmpty() || draft.location != null) && settings.draft(target.key).content.isEmpty()) {
+            settings.saveDraft(target.key, draft)
+        }
         settings.clearDraft(local.key)
-        files.deleteAccountFiles(local.key)
+        // The originals, except any file that couldn't be copied: its memo still points to it.
+        val stillUsed = db.getAllResources(target.key).flatMap { listOfNotNull(it.uri, it.localUri) }
+        files.deleteAccountFilesExcept(local.key, stillUsed)
         persist(_accounts.value.filterNot { it.key == local.key }, target.key)
         activate(target)
         moved

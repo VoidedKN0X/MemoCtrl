@@ -4,6 +4,25 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.4.1 (2026-10-25)
+
+### Fixed
+
+- **Moving memos to a server can no longer lose pictures or files.** Attachments are now copied to the server account first and the originals on the phone are only removed once every memo has moved; a file that couldn't be copied stays where it is, and its memo keeps showing it. Before, a file could disappear if the move stopped halfway. If the move fails, "On this phone" stays as it was.
+- **An unposted memo of "On this phone" moves along** as the draft of the server account you move to (unless that account already has a draft), instead of being thrown away.
+- **Files of memos you deleted on "On this phone" are no longer copied** when moving memos to a server.
+- **No crash when you leave or close MemoCtrl with the app lock on "As soon as you leave"**: pressing Back on the first screen or swiping MemoCtrl away from recent apps could make the lock screen or fingerprint prompt open on a screen that was already closing. MemoCtrl still locks, and opens on the lock screen next time.
+- **No crash when leaving the app while writing a very long memo**: Android refuses to keep very large texts when it puts the editor away, which closed the app. Long texts are still kept by the draft or autosave.
+- **Turning the app lock on or off, and "Forgot PIN?", always finish**, even when the PIN screen closes halfway; before, the logins could stay half encrypted until the next unlock.
+- **Syncing by hand keeps going when you switch tabs** instead of stopping halfway, which could post a memo twice.
+- **"Forgot PIN?" also deletes unsaved edits** kept from an editor the app lock closed, and now says that memos of "On this phone" are deleted for good too.
+- **Unexpected errors in background work (sync, widgets, saving drafts) no longer crash the app**; they show in the sync status as before. A broken share from another app is ignored instead of crashing MemoCtrl.
+
+### Security
+
+- Two parts WorkManager adds to every app are switched off: its debugging receiver and the permission to run as a foreground service. Background sync uses neither.
+- Photos taken for a memo and attachments opened in another app are copies in MemoCtrl's cache; copies older than a day are now cleared at start-up (the memo keeps its own copy).
+
 ## v0.4.0 (2026-10-25)
 
 ### New

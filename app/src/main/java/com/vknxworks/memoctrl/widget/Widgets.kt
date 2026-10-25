@@ -16,6 +16,7 @@ import com.vknxworks.memoctrl.data.auth.SyncCheck
 import com.vknxworks.memoctrl.data.model.MemoEntity
 import com.vknxworks.memoctrl.data.settings.EditGesture
 import com.vknxworks.memoctrl.util.hasTag
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,7 +26,8 @@ import kotlinx.coroutines.withTimeoutOrNull
 
 /** Home screen widgets. They show what's kept on the phone, so they work offline and never wait for the server. */
 object Widgets {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    // A widget that can't be drawn just keeps its last look; it never crashes the app.
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, _ -> })
     const val ACTION_REFRESH = "com.vknxworks.memoctrl.widget.REFRESH"
 
     /** Per-widget choices made in the widget's settings. */
@@ -98,6 +100,10 @@ object Widgets {
                         runCatching { if (c.sessions.checkSync(automatic = true) is SyncCheck.Allowed) session.repo.sync() }
                     }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (_: Throwable) {
+                // Shown by the sync badge in the app.
             } finally {
                 updateAll(app)
                 onDone()

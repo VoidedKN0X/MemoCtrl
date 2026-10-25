@@ -167,6 +167,13 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         context.appDataStore.edit { it.remove(draftKey(accountKey)) }
     }
 
+    /** Every draft of every account, including unsaved edits kept when the app lock closed the editor. */
+    suspend fun clearAllDrafts() {
+        context.appDataStore.edit { p ->
+            p.asMap().keys.filter { it.name.startsWith("draft_") }.forEach { p.remove(it) }
+        }
+    }
+
     private inline fun <reified E : Enum<E>> enumOr(name: String?, default: E): E =
         name?.let { n -> enumValues<E>().firstOrNull { it.name == n } } ?: default
 

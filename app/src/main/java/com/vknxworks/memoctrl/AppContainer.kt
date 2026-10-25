@@ -17,8 +17,10 @@ import com.vknxworks.memoctrl.data.sync.SyncingRepository
 import com.vknxworks.memoctrl.ui.lock.AppLock
 import com.vknxworks.memoctrl.widget.Widgets
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
@@ -43,7 +45,9 @@ sealed interface PendingAction {
 
 /** Manual dependency container; one per process. */
 class AppContainer(val context: Context) {
-    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    // An unexpected error in background work (a full disk, a broken settings file) must never crash the
+    // app; the work just stops. Nothing is logged: errors can carry memo text or server addresses.
+    val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineExceptionHandler { _, _ -> })
 
     private val connectionPool = ConnectionPool()
 
@@ -88,7 +92,9 @@ class AppContainer(val context: Context) {
     val sessions = SessionManager(context, http, db, files, settings, vault, appScope)
 
     /** Turns the app lock on: the PIN encrypts the server logins from now on. */
-    suspend fun enableLock(pin: String) {
+    // These run to the end even when the PIN screen that started them closes halfway (it does, as soon
+    // as the lock state changes), so the logins are never left half sealed or the lock half removed.
+    suspend fun enableLock(pin: String): Unit = withContext(NonCancellable) {
         // Unlocked first, so the lock screen doesn't flash up while the PIN is being saved.
         AppLock.markUnlocked()
         withContext(Dispatchers.Default) { vault.setUp(pin) }
@@ -97,15 +103,16 @@ class AppContainer(val context: Context) {
     }
 
     /** Turns the app lock off (after the PIN was confirmed): logins go back to Keystore-only encryption. */
-    suspend fun disableLock() {
+    suspend fun disableLock(): Unit = withContext(NonCancellable) {
         sessions.unsealTokens()
         settings.update { it.copy(appLock = false) }
         vault.disable()
     }
 
     /** "Forgot PIN?": the logins can't be decrypted any more, so sign out everywhere and start over. */
-    suspend fun forgetEverything() {
+    suspend fun forgetEverything(): Unit = withContext(NonCancellable) {
         sessions.forgetAllAccounts()
+        settings.clearAllDrafts()
         AppLock.markUnlocked()
         settings.update { it.copy(appLock = false) }
         vault.disable()
@@ -130,6 +137,16 @@ class AppContainer(val context: Context) {
     val pendingAction = MutableStateFlow<PendingAction?>(null)
 
     init {
+        // Photos taken for a memo and attachments opened in another app are copies in the cache; the
+        // memo keeps its own. Clear the ones older than a day.
+        appScope.launch(Dispatchers.IO) {
+            val cutoff = System.currentTimeMillis() - 24 * 60 * 60_000L
+            for (name in listOf("camera", "open")) {
+                java.io.File(context.cacheDir, name).listFiles()?.forEach { f ->
+                    if (f.lastModified() < cutoff) runCatching { f.delete() }
+                }
+            }
+        }
         // Widgets show what's on the phone, so they follow every change.
         appScope.launch {
             db.changes.drop(1).debounce(1500).collect { Widgets.updateAll(context) }

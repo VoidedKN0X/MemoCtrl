@@ -21,6 +21,7 @@ import com.vknxworks.memoctrl.util.hasTag
 import com.vknxworks.memoctrl.util.rewriteTag
 import com.vknxworks.memoctrl.data.api.LocalRemote
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -66,7 +67,8 @@ class SyncingRepository(
 ) {
     private var currentUser: User = initialUser
     private val operationMutex = Mutex()
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    // Errors here are shown by the sync status; an unexpected one must never crash the app.
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + CoroutineExceptionHandler { _, _ -> })
     private val deferred = DeferredPushScheduler(scope, deferredPushDelayMillis) { identifier ->
         if (db.getMemoById(identifier, accountKey)?.needsSync == true) enqueuePushMemo(identifier)
     }

@@ -38,10 +38,12 @@ class FileStorage(private val context: Context) {
     }
 
     /**
-     * Moves a file this class wrote into [accountKey]'s folder and returns its new address, or [uri]
-     * itself when it isn't one of these files (a server address, say) or couldn't be moved.
+     * Copies a file this class wrote into [accountKey]'s folder and returns the copy's address, or [uri]
+     * itself when it isn't one of these files (a server address, say) or couldn't be copied. The
+     * original stays until [deleteAccountFilesExcept] removes it, so nothing is lost if the app stops
+     * halfway.
      */
-    fun moveToAccount(uri: String, accountKey: String): String {
+    fun copyToAccount(uri: String, accountKey: String): String {
         val parsed = Uri.parse(uri)
         if (parsed.scheme != "file") return uri
         val file = File(parsed.path ?: return uri)
@@ -49,16 +51,29 @@ class FileStorage(private val context: Context) {
         if (!file.exists() || !file.canonicalFile.startsWith(root)) return uri
         val target = File(accountDir(accountKey), file.name)
         if (target.canonicalPath == file.canonicalPath) return uri
-        val moved = file.renameTo(target) || runCatching {
+        val copied = runCatching {
             file.copyTo(target, overwrite = true)
-            file.delete()
-            true
+            target.length() == file.length()
         }.getOrDefault(false)
-        return if (moved) Uri.fromFile(target).toString() else uri
+        if (!copied) runCatching { target.delete() }
+        return if (copied) Uri.fromFile(target).toString() else uri
     }
 
     fun deleteAccountFiles(accountKey: String) {
         accountDir(accountKey).deleteRecursively()
+    }
+
+    /** Deletes [accountKey]'s files, except the ones [keep] (file:// addresses) still point to. */
+    fun deleteAccountFilesExcept(accountKey: String, keep: Collection<String>) {
+        val dir = accountDir(accountKey)
+        val kept = keep.mapNotNull { u ->
+            Uri.parse(u).takeIf { it.scheme == "file" }?.path?.let { runCatching { File(it).canonicalPath }.getOrNull() }
+        }.toHashSet()
+        dir.listFiles()?.forEach { f ->
+            val path = runCatching { f.canonicalPath }.getOrNull()
+            if (path == null || !kept.contains(path)) f.deleteRecursively()
+        }
+        if (dir.listFiles().isNullOrEmpty()) dir.delete()
     }
 
     companion object {
