@@ -4,6 +4,33 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.4.0 (2026-10-25)
+
+### New
+
+- **Rename and delete tags.** Long-press a tag on the Tags tab for **Show memos**, **Rename** and **Delete tag**. Before anything changes, MemoCtrl tells you how many memos have the tag and asks you to confirm.
+  - **Rename** changes `#old` to `#new` in the text of every memo that has it, archived ones included, and renames its sub-tags too (`#work/meetings` becomes `#job/meetings`). Tags inside code or links are left alone, the same way Memos ignores them.
+  - **Delete tag** takes the tag (and its sub-tags) out of the text of every memo that has it, along with the space next to it. The memos themselves stay.
+  - **Works offline:** the memos are changed on the phone straight away and sync to your server like any other edit, now or when it can be reached. Memos 0.27 and newer have no tags of their own to rename, so MemoCtrl always rewrites each memo there. On Memos 0.21 MemoCtrl uses the server's own rename when you're online and none of those memos have unsynced changes, then fetches the result; deleting a tag there also takes it off the server's tag list.
+  - A new tag name can't be empty or contain spaces or `#`.
+- **Background sync.** Under your profile picture › **Settings > Background sync**, choose **Off** (the default), **Every 15 minutes**, **Every 30 minutes**, **Every hour** or **Every 6 hours**. It's the same sync as pull to refresh, for the account you're using, and the home-screen widgets update after it.
+  - **Only on Wi-Fi** waits for Wi-Fi or another unmetered network; **Only while charging** waits until the phone is plugged in. Without either it still only runs when the phone has a connection.
+  - **Tell me when it fails** (off by default) shows a quiet "Background sync failed" notification that never contains memo text, an account or a server name. Turning it on asks for permission to show notifications (Android 13+); it disappears after the next sync that works.
+  - Android picks the exact moment so it saves battery. Background sync skips a server whose Memos version needs confirming (sync by hand to confirm it), and doesn't run while MemoCtrl is locked with the app lock, because your login stays encrypted until you unlock.
+  - MemoCtrl still syncs every time you open it, as before.
+- **Use without a server (local-only mode).** The first screen now has **Use without a server**, and **Servers and accounts** has it as an account of its own ("On this phone"). Memos you write there are kept only on the phone, with their pictures and files in MemoCtrl's private storage, and nothing is ever sent anywhere.
+  - Everything that doesn't need a server works: the editor (formatting, tasks, tags, pictures, camera, files, location), pin, archive, edit, share, copy and delete, the Tags tab with the heatmap and the new rename and delete, offline search, the Archive and Attachments pages, drafts and autosave, and the **Memos** and **Memory** widgets.
+  - Things that need a server are hidden for this account: the **Explore** tab, the sync button and sync status, who can see a memo, **Share link**, the server details and the client certificate, and the Background sync settings.
+  - Deleting a memo there deletes it (and its files) right away, since there's no server to tell.
+  - **Move memos to a server:** add a server account, then tap **Move memos to a server** on the You page of "On this phone" (or under **Servers and accounts**) and pick the server account. Every memo, with its pictures and files, becomes a new memo there, keeping its date, pinned and archived state (and its location on Memos 0.27 and newer), and is uploaded with the next sync (it waits on the phone if you're offline). "On this phone" is removed afterwards. Without a server account yet, it offers to add one first.
+  - **Delete local memos** (instead of Sign out) removes "On this phone" and everything in it for good, after asking.
+  - The app lock, Hide in screenshots and Hide in recent apps work the same with it.
+
+### Changed
+
+- The README no longer lists the local-only mode under "Planned".
+- MemoCtrl now uses WorkManager (AndroidX, open source, no Google services) to run the background sync.
+
 ## v0.3.0 (2026-10-25)
 
 ### New

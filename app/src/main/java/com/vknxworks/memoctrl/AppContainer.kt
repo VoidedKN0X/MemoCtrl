@@ -12,6 +12,7 @@ import com.vknxworks.memoctrl.data.net.CleartextPolicy
 import com.vknxworks.memoctrl.data.net.ClientCertificate
 import com.vknxworks.memoctrl.data.net.RedirectGuard
 import com.vknxworks.memoctrl.data.settings.SettingsRepository
+import com.vknxworks.memoctrl.data.sync.BackgroundSync
 import com.vknxworks.memoctrl.data.sync.SyncingRepository
 import com.vknxworks.memoctrl.ui.lock.AppLock
 import com.vknxworks.memoctrl.widget.Widgets
@@ -140,6 +141,20 @@ class AppContainer(val context: Context) {
         appScope.launch {
             sessions.active.map { it?.account?.key }.distinctUntilChanged().drop(1).collect { Widgets.updateAll(context) }
         }
+        // Periodic background sync follows its settings (and is set up again at every start).
+        appScope.launch {
+            settings.stored
+                .map { Triple(it.syncInterval, it.syncWifiOnly, it.syncCharging) }
+                .distinctUntilChanged()
+                .collect { (interval, wifi, charging) ->
+                    runCatching {
+                        BackgroundSync.apply(
+                            context,
+                            com.vknxworks.memoctrl.data.settings.AppSettings(syncInterval = interval, syncWifiOnly = wifi, syncCharging = charging),
+                        )
+                    }
+                }
+        }
     }
 
     /**
@@ -148,6 +163,7 @@ class AppContainer(val context: Context) {
      */
     fun syncInBackground() {
         val session = sessions.active.value ?: return
+        if (session.account.isLocal) return
         appScope.launch {
             try {
                 if (sessions.checkSync(automatic = true) is SyncCheck.Allowed) session.repo.sync()

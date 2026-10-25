@@ -181,6 +181,49 @@ class MemoDatabase(context: Context) : SQLiteOpenHelper(context, "memoctrl.db", 
         changed()
     }
 
+    /**
+     * Gives every memo and attachment of [fromKey] to [toKey] as new, not yet uploaded ones (no server
+     * id, waiting to sync). [moveFile] moves an attachment's file and returns its new address.
+     * Memos already deleted are dropped. Returns how many memos moved.
+     */
+    suspend fun moveAccount(fromKey: String, toKey: String, moveFile: (String) -> String): Int {
+        val memos = io { queryMemos("account_key = ?", arrayOf(fromKey)) }
+        val resources = io { queryResources("account_key = ?", arrayOf(fromKey)) }
+        // Files first: a file that can't be moved keeps its old address, which still works.
+        val moved = withContext(Dispatchers.IO) {
+            resources.map { r ->
+                val local = r.localUri?.let(moveFile)
+                val uri = if (r.uri == r.localUri && local != null) local else moveFile(r.uri)
+                r.copy(accountKey = toKey, remoteId = null, uri = uri, localUri = local)
+            }
+        }
+        var count = 0
+        io {
+            beginTransaction()
+            try {
+                for (m in memos) {
+                    if (m.isDeleted) {
+                        delete("memos", "identifier = ?", arrayOf(m.identifier))
+                        continue
+                    }
+                    update(
+                        "memos",
+                        m.copy(accountKey = toKey, remoteId = null, needsSync = true, lastSyncedAt = null).values(),
+                        "identifier = ?",
+                        arrayOf(m.identifier),
+                    )
+                    count++
+                }
+                for (r in moved) update("resources", r.values(), "identifier = ?", arrayOf(r.identifier))
+                setTransactionSuccessful()
+            } finally {
+                endTransaction()
+            }
+        }
+        changed()
+        return count
+    }
+
     suspend fun deleteAccount(accountKey: String) {
         io {
             beginTransaction()

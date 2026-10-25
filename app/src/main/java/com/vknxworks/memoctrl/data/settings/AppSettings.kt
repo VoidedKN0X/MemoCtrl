@@ -44,6 +44,15 @@ enum class LockTimeout(@StringRes val label: Int, val millis: Long) {
     RESTART(R.string.lock_again_restart, -1L),
 }
 
+/** How often MemoCtrl syncs in the background (besides when you open it). */
+enum class SyncInterval(@StringRes val label: Int, val minutes: Long) {
+    OFF(R.string.sync_interval_off, 0L),
+    MINUTES_15(R.string.sync_interval_15m, 15L),
+    MINUTES_30(R.string.sync_interval_30m, 30L),
+    HOUR_1(R.string.sync_interval_1h, 60L),
+    HOURS_6(R.string.sync_interval_6h, 360L),
+}
+
 data class AppSettings(
     val theme: ThemeChoice = ThemeChoice.SYSTEM,
     val dynamicColor: Boolean = false,
@@ -59,6 +68,14 @@ data class AppSettings(
     val hideScreenshots: Boolean = false,
     /** "Hide in recent apps": the recent-apps view shows a blank card. Screenshots still work. */
     val hideRecents: Boolean = false,
+    /** Periodic background sync. Off until you pick an interval. */
+    val syncInterval: SyncInterval = SyncInterval.OFF,
+    /** Background sync only on Wi-Fi (or another unmetered network). */
+    val syncWifiOnly: Boolean = false,
+    /** Background sync only while the phone charges. */
+    val syncCharging: Boolean = false,
+    /** A notification when a background sync fails. */
+    val syncFailureNotice: Boolean = false,
 )
 
 /** An unsent new memo, kept per account until it's posted or thrown away. */
@@ -76,6 +93,10 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val externalImages = booleanPreferencesKey("external_images")
         val hideScreenshots = booleanPreferencesKey("hide_screenshots")
         val hideRecents = booleanPreferencesKey("hide_recents")
+        val syncInterval = stringPreferencesKey("sync_interval")
+        val syncWifiOnly = booleanPreferencesKey("sync_wifi_only")
+        val syncCharging = booleanPreferencesKey("sync_charging")
+        val syncFailureNotice = booleanPreferencesKey("sync_failure_notice")
         /** 0.1.6's single "Hide in screenshots and recent apps": turned on, it turns both switches on. */
         val legacyHideContent = booleanPreferencesKey("hide_content")
     }
@@ -98,6 +119,10 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         externalImages = this[K.externalImages] ?: false,
         hideScreenshots = this[K.hideScreenshots] ?: this[K.legacyHideContent] ?: false,
         hideRecents = this[K.hideRecents] ?: this[K.legacyHideContent] ?: false,
+        syncInterval = enumOr(this[K.syncInterval], SyncInterval.OFF),
+        syncWifiOnly = this[K.syncWifiOnly] ?: false,
+        syncCharging = this[K.syncCharging] ?: false,
+        syncFailureNotice = this[K.syncFailureNotice] ?: false,
     )
 
     suspend fun update(transform: (AppSettings) -> AppSettings) {
@@ -113,6 +138,10 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             p[K.externalImages] = s.externalImages
             p[K.hideScreenshots] = s.hideScreenshots
             p[K.hideRecents] = s.hideRecents
+            p[K.syncInterval] = s.syncInterval.name
+            p[K.syncWifiOnly] = s.syncWifiOnly
+            p[K.syncCharging] = s.syncCharging
+            p[K.syncFailureNotice] = s.syncFailureNotice
             p.remove(K.legacyHideContent)
         }
     }

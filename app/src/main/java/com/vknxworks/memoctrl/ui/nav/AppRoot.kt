@@ -109,10 +109,13 @@ private fun MainScaffold() {
     val navigator = remember(navController) { Navigator(navController) }
     val backStack by navController.currentBackStackEntryAsState()
     val dest = backStack?.destination
-    val selectedIndex = topDestinations.indexOfFirst { top -> dest?.hierarchy?.any { it.hasRoute(top.route::class) } == true }
+    // Explore needs a server: a local-only account doesn't get the tab.
+    val local = c.sessions.active.collectAsStateWithLifecycle().value?.account?.isLocal == true
+    val tabs = remember(local) { if (local) topDestinations.filterNot { it.route == ExploreRoute } else topDestinations }
+    val selectedIndex = tabs.indexOfFirst { top -> dest?.hierarchy?.any { it.hasRoute(top.route::class) } == true }
 
     fun selectTab(i: Int) {
-        navController.navigate(topDestinations[i].route) {
+        navController.navigate(tabs[i].route) {
             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
             launchSingleTop = true
             restoreState = true
@@ -144,7 +147,7 @@ private fun MainScaffold() {
                         modifier = Modifier.fillMaxHeight().statusBarsPadding(),
                     ) {
                         Spacer(Modifier.weight(1f))
-                        topDestinations.forEachIndexed { i, top ->
+                        tabs.forEachIndexed { i, top ->
                             val selected = i == selectedIndex
                             NavigationRailItem(
                                 selected = selected,
@@ -165,7 +168,7 @@ private fun MainScaffold() {
                     Box(Modifier.weight(1f).fillMaxHeight().navigationBarsPadding()) { AppNavHost(navController) }
                 }
             } else {
-                PhoneLayout(navController, showTabs = selectedIndex >= 0, selectedIndex = selectedIndex, onSelect = ::selectTab)
+                PhoneLayout(navController, tabs, showTabs = selectedIndex >= 0, selectedIndex = selectedIndex, onSelect = ::selectTab)
             }
         }
     }
@@ -178,6 +181,7 @@ private fun MainScaffold() {
 @Composable
 private fun PhoneLayout(
     navController: NavHostController,
+    tabs: List<TopDest>,
     showTabs: Boolean,
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
@@ -208,7 +212,7 @@ private fun PhoneLayout(
                     enter = fadeIn() + slideInVertically { it / 2 },
                     exit = fadeOut() + slideOutVertically { it / 2 },
                 ) {
-                    CtrlBottomBar(items = topDestinations.map { it.item }, selectedIndex = selectedIndex, onSelect = onSelect)
+                    CtrlBottomBar(items = tabs.map { it.item }, selectedIndex = selectedIndex, onSelect = onSelect)
                 }
             }
         }

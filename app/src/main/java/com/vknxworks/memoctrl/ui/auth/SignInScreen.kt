@@ -29,6 +29,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.foundation.border
 import com.vknxworks.memoctrl.ui.components.CtrlSquareButton
+import com.vknxworks.memoctrl.ui.components.CtrlSecondaryButton
+import androidx.compose.material.icons.outlined.PhoneAndroid
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.vknxworks.memoctrl.ui.components.CtrlTextField
 import com.vknxworks.memoctrl.ui.components.CtrlWordmark
 import com.vknxworks.memoctrl.ui.components.ctrlSegmentColors
@@ -126,6 +129,8 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
     var newer by remember { mutableStateOf<NewerServerException?>(null) }
     var certificate by remember { mutableStateOf(ClientCertificate.selectedAlias(context)) }
     var pendingTarget by remember { mutableStateOf<String?>(null) }
+    val accounts by c.sessions.accounts.collectAsStateWithLifecycle()
+    val hasLocal = accounts.any { it.isLocal }
     val canSubmit = address.isNotBlank() && !busy &&
         (if (usePassword) username.isNotBlank() && password.isNotEmpty() else token.isNotBlank())
 
@@ -351,6 +356,35 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            // No server (yet): memos stay on the phone. Only offered when there isn't a local-only account already.
+            if (!hasLocal) {
+                CtrlSecondaryButton(
+                    stringResource(R.string.local_use_without_server),
+                    onClick = {
+                        busy = true
+                        scope.launch {
+                            try {
+                                c.sessions.useWithoutServer()
+                                onDone()
+                            } catch (e: CancellationException) {
+                                throw e
+                            } catch (e: Throwable) {
+                                error = e.friendlyMessage()
+                            } finally {
+                                busy = false
+                            }
+                        }
+                    },
+                    icon = Icons.Outlined.PhoneAndroid,
+                    enabled = !busy,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Text(
+                    stringResource(R.string.local_use_without_server_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

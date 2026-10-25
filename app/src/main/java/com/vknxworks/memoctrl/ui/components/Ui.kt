@@ -2,6 +2,7 @@ package com.vknxworks.memoctrl.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -93,7 +94,7 @@ fun ProfileButton() {
     val name = session?.account?.title.orEmpty()
     // The accent badge shows while the server is reachable (the last sync didn't fail).
     val repo = session?.repo
-    val connected = if (repo != null) {
+    val connected = if (repo != null && !repo.isLocal) {
         val status by repo.syncStatus.collectAsStateWithLifecycle()
         status.errorMessage == null
     } else false
@@ -141,6 +142,7 @@ fun GroupRow(
     titleColor: Color = MaterialTheme.colorScheme.onSurface,
     showChevron: Boolean = false,
     onClick: (() -> Unit)? = null,
+    onLongClick: (() -> Unit)? = null,
     trailing: (@Composable () -> Unit)? = null,
 ) {
     Row(
@@ -148,7 +150,13 @@ fun GroupRow(
             .fillMaxWidth()
             .topDivider()
             .heightIn(min = 62.dp)
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
+            .then(
+                when {
+                    onLongClick != null -> Modifier.combinedClickable(onClick = { onClick?.invoke() }, onLongClick = onLongClick)
+                    onClick != null -> Modifier.clickable(onClick = onClick)
+                    else -> Modifier
+                },
+            )
             .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
     <!-- App lock: fingerprint, face or the screen lock. -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- Only asked when you turn on "Tell me when background sync fails". -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Only asked when you tap "Use current location" on a memo. Satellite (GPS) fixes only. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />

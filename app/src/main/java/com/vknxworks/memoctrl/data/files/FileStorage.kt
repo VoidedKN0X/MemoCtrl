@@ -37,6 +37,26 @@ class FileStorage(private val context: Context) {
         if (file.canonicalFile.startsWith(root)) file.delete()
     }
 
+    /**
+     * Moves a file this class wrote into [accountKey]'s folder and returns its new address, or [uri]
+     * itself when it isn't one of these files (a server address, say) or couldn't be moved.
+     */
+    fun moveToAccount(uri: String, accountKey: String): String {
+        val parsed = Uri.parse(uri)
+        if (parsed.scheme != "file") return uri
+        val file = File(parsed.path ?: return uri)
+        val root = File(context.filesDir, "attachments").canonicalFile
+        if (!file.exists() || !file.canonicalFile.startsWith(root)) return uri
+        val target = File(accountDir(accountKey), file.name)
+        if (target.canonicalPath == file.canonicalPath) return uri
+        val moved = file.renameTo(target) || runCatching {
+            file.copyTo(target, overwrite = true)
+            file.delete()
+            true
+        }.getOrDefault(false)
+        return if (moved) Uri.fromFile(target).toString() else uri
+    }
+
     fun deleteAccountFiles(accountKey: String) {
         accountDir(accountKey).deleteRecursively()
     }

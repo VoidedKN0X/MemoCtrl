@@ -20,6 +20,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -44,6 +46,18 @@ import com.vknxworks.memoctrl.ui.theme.CtrlType
 import com.vknxworks.memoctrl.ui.nav.LocalNavigator
 import com.vknxworks.memoctrl.ui.theme.Gutter
 import com.vknxworks.memoctrl.util.extractTags
+import com.vknxworks.memoctrl.util.cleanTagName
+import android.widget.Toast
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
+import com.vknxworks.memoctrl.ui.components.ActionSheet
+import com.vknxworks.memoctrl.ui.components.ConfirmDialog
+import com.vknxworks.memoctrl.ui.components.CtrlAlertDialog
+import com.vknxworks.memoctrl.ui.components.SheetAction
+import com.vknxworks.memoctrl.ui.components.TextInputDialog
+import com.vknxworks.memoctrl.ui.components.runTask
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.TextStyle
@@ -63,6 +77,8 @@ fun TagsScreen() {
     val session by c.sessions.active.collectAsStateWithLifecycle()
     val repo = session?.repo ?: return
     val memos by remember(repo) { repo.observeMemos() }.collectAsStateWithLifecycle(initialValue = null)
+    var menuFor by remember { mutableStateOf<String?>(null) }
+    TagActions(menuFor, onDismiss = { menuFor = null })
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         TabTitle(stringResource(R.string.tab_tags))
@@ -114,6 +130,7 @@ fun TagsScreen() {
                                 "#$tag",
                                 icon = Icons.Outlined.Tag,
                                 onClick = { nav.tag(tag) },
+                                onLongClick = { menuFor = tag },
                                 trailing = {
                                     Text(
                                         pluralStringResource(R.plurals.tag_count, count, count).uppercase(),
@@ -190,6 +207,101 @@ private fun Heatmap(memos: List<MemoEntity>) {
                     }
                 }
             }
+        }
+    }
+}
+
+/** What you're doing to a tag after long-pressing it. */
+private enum class TagStep { MENU, RENAME, CONFIRM_RENAME, DELETE }
+
+/**
+ * Long-press a tag: rename it or delete it. Both say first how many memos change, and work offline:
+ * the memos are changed on the phone and sync like any other edit.
+ */
+@Composable
+fun TagActions(tag: String?, onDismiss: () -> Unit) {
+    if (tag == null) return
+    val context = LocalContext.current
+    val c = context.container
+    val nav = LocalNavigator.current
+    val session by c.sessions.active.collectAsStateWithLifecycle()
+    val repo = session?.repo ?: return
+    var step by remember(tag) { mutableStateOf(TagStep.MENU) }
+    var newName by remember(tag) { mutableStateOf<String?>(null) }
+    var count by remember(tag) { mutableStateOf<Int?>(null) }
+    LaunchedEffect(tag, repo) { count = runCatching { repo.countMemosWithTag(tag) }.getOrDefault(0) }
+    val n = count ?: 0
+
+    fun done(message: String) {
+        onDismiss()
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    when (step) {
+        TagStep.MENU -> ActionSheet(
+            title = "#$tag",
+            subtitle = count?.let { pluralStringResource(R.plurals.tag_count, it, it) },
+            actions = listOf(
+                // "Open" goes to the tag's memos, like a tap.
+                SheetAction(stringResource(R.string.tag_open), Icons.Outlined.Tag) { nav.tag(tag) },
+                SheetAction(stringResource(R.string.tag_rename), Icons.Outlined.Edit) { step = TagStep.RENAME },
+                SheetAction(stringResource(R.string.tag_delete), Icons.Outlined.Delete, destructive = true) { step = TagStep.DELETE },
+            ),
+            onDismiss = { if (step == TagStep.MENU) onDismiss() },
+        )
+        TagStep.RENAME -> {
+            TextInputDialog(
+                title = stringResource(R.string.tag_rename_title, tag),
+                label = stringResource(R.string.tag_rename_label),
+                confirm = stringResource(R.string.next),
+                initial = tag,
+                onDismiss = onDismiss,
+            ) { typed ->
+                val clean = cleanTagName(typed)
+                when {
+                    clean == null -> Toast.makeText(context, context.getString(R.string.tag_invalid), Toast.LENGTH_SHORT).show()
+                    clean == tag -> onDismiss()
+                    else -> {
+                        newName = clean
+                        step = TagStep.CONFIRM_RENAME
+                    }
+                }
+            }
+        }
+        TagStep.CONFIRM_RENAME -> {
+            val target = newName ?: return
+            CtrlAlertDialog(
+                onDismissRequest = onDismiss,
+                title = { Text(stringResource(R.string.tag_rename_confirm_title, tag, target)) },
+                text = {
+                    Text(
+                        if (count == null) stringResource(R.string.tag_counting)
+                        else pluralStringResource(R.plurals.tag_rename_confirm_body, n, n, tag, target),
+                    )
+                },
+                confirmButton = {
+                    TextButton(enabled = count != null && n > 0, onClick = {
+                        val msg = context.resources.getQuantityString(R.plurals.tag_renamed, n, n, target)
+                        c.runTask {
+                            repo.renameTag(tag, target)
+                        }
+                        done(msg)
+                    }) { Text(stringResource(R.string.tag_rename)) }
+                },
+                dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+            )
+        }
+        TagStep.DELETE -> ConfirmDialog(
+            stringResource(R.string.tag_delete_title, tag),
+            if (count == null) stringResource(R.string.tag_counting)
+            else pluralStringResource(R.plurals.tag_delete_body, n, n, tag),
+            stringResource(R.string.tag_delete),
+            onDismiss = onDismiss,
+        ) {
+            if (count == null) return@ConfirmDialog
+            val msg = context.resources.getQuantityString(R.plurals.tag_deleted, n, n, tag)
+            c.runTask { repo.renameTag(tag, null) }
+            done(msg)
         }
     }
 }

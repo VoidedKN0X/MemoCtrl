@@ -77,6 +77,65 @@ interface MemosRemote {
 
     /** Revokes an access token this app made, when signing out. */
     suspend fun revokeToken(tokenId: String)
+
+    /**
+     * Renames a tag in all of the user's memos on the server with one request, where the server has
+     * one (Memos 0.21). False when it doesn't, and the app rewrites each memo itself instead.
+     */
+    suspend fun renameTag(oldTag: String, newTag: String): Boolean = false
+
+    /** Removes a tag from the server's own list of tags, where it keeps one (Memos 0.21). Memos aren't changed. */
+    suspend fun deleteTag(tag: String) = Unit
+}
+
+/**
+ * The "server" of a local-only account: there is none. Memos only live in the phone's database, the
+ * repository never syncs it, and anything that would need a server says so.
+ */
+class LocalRemote : MemosRemote {
+    override val host: String = LOCAL_HOST
+    override val supportsLocation: Boolean get() = true
+
+    private fun none(): Nothing = throw ApiException(com.vknxworks.memoctrl.str(com.vknxworks.memoctrl.R.string.error_local_only))
+
+    override suspend fun serverVersion(): String = ""
+    override suspend fun currentUser(): User = none()
+    override suspend fun listMemos(): List<RemoteMemo> = emptyList()
+    override suspend fun listArchivedMemos(): List<RemoteMemo> = emptyList()
+    override suspend fun listExploreMemos(pageSize: Int, pageToken: String?): Pair<List<RemoteMemo>, String?> = none()
+    override suspend fun createMemo(
+        content: String,
+        visibility: MemoVisibility,
+        resourceRemoteIds: List<String>,
+        createdAt: Instant?,
+        location: MemoLocation?,
+    ): RemoteMemo = none()
+    override suspend fun updateMemo(
+        remoteId: String,
+        content: String?,
+        resourceRemoteIds: List<String>?,
+        visibility: MemoVisibility?,
+        pinned: Boolean?,
+        archived: Boolean?,
+        location: MemoLocationChange?,
+    ): RemoteMemo = none()
+    override suspend fun deleteMemo(remoteId: String): Unit = none()
+    override suspend fun createResource(
+        filename: String,
+        type: MediaType?,
+        contentLength: Long?,
+        openInputStream: () -> InputStream,
+        memoRemoteId: String?,
+    ): RemoteResource = none()
+    override suspend fun deleteResource(remoteId: String): Unit = none()
+    override fun memoUrl(remoteId: String): String = ""
+    override suspend fun createTokenWithPassword(username: String, password: String, description: String): IssuedToken = none()
+    override suspend fun revokeToken(tokenId: String) = Unit
+
+    companion object {
+        /** Stands in for the server address of local-only accounts. Never contacted. */
+        const val LOCAL_HOST = "local"
+    }
 }
 
 /** An access token the server made for the app. [id] is what revokes it later. */

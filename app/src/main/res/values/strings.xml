@@ -416,4 +416,83 @@ Your changes are kept on this phone and sync next time.</string>
         <item quantity="other">%1$d memos</item>
     </plurals>
     <string name="error_attachment_without_name">The server sent an attachment without a name, so MemoCtrl can\'t show it.</string>
+    <!-- Renaming and deleting tags -->
+    <string name="next">Next</string>
+    <string name="tag_open">Show memos</string>
+    <string name="tag_rename">Rename</string>
+    <string name="tag_delete">Delete tag</string>
+    <string name="tag_rename_title">Rename #%1$s</string>
+    <string name="tag_rename_label">New name</string>
+    <string name="tag_invalid">A tag can\'t be empty or have spaces or #</string>
+    <string name="tag_counting">Counting memos…</string>
+    <string name="tag_rename_confirm_title">#%1$s → #%2$s</string>
+    <plurals name="tag_rename_confirm_body">
+        <item quantity="one">%1$d memo has #%2$s. It\'s changed to #%3$s, and so are sub-tags like #%2$s/…. The change syncs to your server like any edit, also if you\'re offline now.</item>
+        <item quantity="other">%1$d memos have #%2$s. They\'re changed to #%3$s, and so are sub-tags like #%2$s/…. The change syncs to your server like any edit, also if you\'re offline now.</item>
+    </plurals>
+    <string name="tag_delete_title">Delete #%1$s?</string>
+    <plurals name="tag_delete_body">
+        <item quantity="one">#%2$s (and its sub-tags) is taken out of the text of %1$d memo. The memo itself stays. The change syncs to your server like any edit.</item>
+        <item quantity="other">#%2$s (and its sub-tags) is taken out of the text of %1$d memos. The memos themselves stay. The change syncs to your server like any edit.</item>
+    </plurals>
+    <plurals name="tag_renamed">
+        <item quantity="one">Renamed to #%2$s in %1$d memo</item>
+        <item quantity="other">Renamed to #%2$s in %1$d memos</item>
+    </plurals>
+    <plurals name="tag_deleted">
+        <item quantity="one">Removed #%2$s from %1$d memo</item>
+        <item quantity="other">Removed #%2$s from %1$d memos</item>
+    </plurals>
+
+    <!-- Background sync -->
+    <string name="group_background_sync">Background sync</string>
+    <string name="background_sync">Sync in the background</string>
+    <string name="background_sync_footer">MemoCtrl always syncs when you open it. Background sync also runs now and then while it\'s closed; Android picks the exact moment to save battery. It doesn\'t run while MemoCtrl is locked with the app lock.</string>
+    <string name="sync_interval_off">Off</string>
+    <string name="sync_interval_15m">Every 15 minutes</string>
+    <string name="sync_interval_30m">Every 30 minutes</string>
+    <string name="sync_interval_1h">Every hour</string>
+    <string name="sync_interval_6h">Every 6 hours</string>
+    <string name="sync_wifi_only">Only on Wi-Fi</string>
+    <string name="sync_wifi_only_subtitle">Wait for Wi-Fi or another network that isn\'t metered</string>
+    <string name="sync_charging">Only while charging</string>
+    <string name="sync_charging_subtitle">Wait until the phone is plugged in</string>
+    <string name="sync_failure_notice">Tell me when it fails</string>
+    <string name="sync_failure_notice_subtitle">A quiet notification when a background sync didn\'t work. It never shows your memos</string>
+    <string name="sync_failure_notice_denied">MemoCtrl isn\'t allowed to show notifications. Allow it in the app\'s settings first.</string>
+    <string name="sync_notice_channel">Background sync problems</string>
+    <string name="sync_notice_channel_description">When a background sync with your Memos server didn\'t work</string>
+    <string name="sync_notice_title">Background sync failed</string>
+    <string name="sync_notice_body">Open MemoCtrl to see why and sync again.</string>
+
+    <!-- Local-only mode -->
+    <string name="local_account_name">On this phone</string>
+    <string name="local_account_subtitle">No server · memos stay on this phone</string>
+    <string name="local_use_without_server">Use without a server</string>
+    <string name="local_use_without_server_note">Your memos, pictures and files are kept only on this phone. You can move them to a Memos server later.</string>
+    <string name="local_add_subtitle">Keep memos only on this phone</string>
+    <string name="group_local">On this phone</string>
+    <string name="local_footer">These memos aren\'t on any server and aren\'t backed up. Move them to a server account to keep them safe and see them elsewhere.</string>
+    <string name="local_move">Move memos to a server</string>
+    <plurals name="local_move_subtitle">
+        <item quantity="one">%1$d memo kept only on this phone</item>
+        <item quantity="other">%1$d memos kept only on this phone</item>
+    </plurals>
+    <string name="local_move_pick">Move to</string>
+    <string name="local_move_title">Move to %1$s?</string>
+    <plurals name="local_move_body">
+        <item quantity="one">%1$d memo, with its pictures and files, becomes a new memo on %2$s and is uploaded with the next sync. Until then it waits on this phone, also offline. \"On this phone\" is removed afterwards.</item>
+        <item quantity="other">%1$d memos, with their pictures and files, become new memos on %2$s and are uploaded with the next sync. Until then they wait on this phone, also offline. \"On this phone\" is removed afterwards.</item>
+    </plurals>
+    <string name="local_move_confirm">Move</string>
+    <plurals name="local_moved">
+        <item quantity="one">Moved %1$d memo. It uploads when the server can be reached</item>
+        <item quantity="other">Moved %1$d memos. They upload when the server can be reached</item>
+    </plurals>
+    <string name="local_move_no_server_title">Add a server first</string>
+    <string name="local_move_no_server_body">Sign in to a Memos server, then come back here to move your memos to it. Signing in doesn\'t change the memos on this phone.</string>
+    <string name="local_remove">Delete local memos</string>
+    <string name="local_remove_title">Delete memos on this phone?</string>
+    <string name="local_remove_body">Every memo, picture and file kept only on this phone is deleted for good. They aren\'t on any server, so they can\'t be brought back.</string>
+    <string name="error_local_only">This needs a Memos server.</string>
 </resources>

@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.vknxworks.memoctrl.data.api.ApiException
 import com.vknxworks.memoctrl.data.api.ApiJson
+import com.vknxworks.memoctrl.data.api.LocalRemote
 import com.vknxworks.memoctrl.data.api.MemosRemote
 import com.vknxworks.memoctrl.data.api.MemosV0
 import com.vknxworks.memoctrl.data.api.MemosV1
@@ -38,7 +39,13 @@ import com.vknxworks.memoctrl.str
 
 /** Which generation of the Memos API a server speaks. */
 @Serializable
-enum class ServerApi { V0, V1 }
+enum class ServerApi {
+    V0,
+    V1,
+
+    /** No server at all: "Use without a server". */
+    LOCAL,
+}
 
 @Serializable
 data class Account(
@@ -63,8 +70,10 @@ data class Account(
     val tokenId: String? = null,
 ) {
     val key: String get() = "memos:$host:$remoteIdentifier"
-    val serverName: String get() = Uri.parse(host).host ?: host
-    val isEncrypted: Boolean get() = host.startsWith("https://", ignoreCase = true)
+    /** A local-only account: memos stay on the phone, there's no server, login or sync. */
+    val isLocal: Boolean get() = api == ServerApi.LOCAL
+    val serverName: String get() = if (isLocal) str(R.string.local_account_name) else Uri.parse(host).host ?: host
+    val isEncrypted: Boolean get() = isLocal || host.startsWith("https://", ignoreCase = true)
     val title: String get() = label.trim().ifEmpty { displayName.trim().ifEmpty { username.trim().ifEmpty { serverName } } }
 
     fun toUser() = User(
@@ -131,6 +140,7 @@ object VersionPolicy {
                 compare(v, V1_MAX) > 0 -> Verdict.NEWER
                 else -> Verdict.SUPPORTED
             }
+            ServerApi.LOCAL -> Verdict.SUPPORTED
         }
     }
 }
@@ -275,6 +285,7 @@ class SessionManager(
     private fun clientFor(api: ServerApi, host: String, token: String?, userName: String = ""): MemosRemote = when (api) {
         ServerApi.V0 -> MemosV0(host, http, token)
         ServerApi.V1 -> MemosV1(host, http, token, userName)
+        ServerApi.LOCAL -> LocalRemote()
     }
 
     /** Finds out which Memos API and version the server at [host] runs. */
@@ -385,6 +396,7 @@ class SessionManager(
                         tokenId = tokenId,
                     )
                 }
+                ServerApi.LOCAL -> throw ApiException(str(R.string.error_not_memos_server))
                 ServerApi.V0 -> {
                     val me = MemosV0(host, http, cleanToken).me()
                     Account(
@@ -427,6 +439,49 @@ class SessionManager(
             t = t.cause
         }
         return false
+    }
+
+    /**
+     * "Use without a server": switches to the local-only account, making it the first time. There's
+     * one per phone; it has no login, so nothing about it is encrypted with the app lock.
+     */
+    suspend fun useWithoutServer(): Account = mutex.withLock {
+        _accounts.value.firstOrNull { it.isLocal }?.let { existing ->
+            persist(_accounts.value, existing.key)
+            activate(existing)
+            return@withLock existing
+        }
+        val account = Account(
+            host = LocalRemote.LOCAL_HOST,
+            api = ServerApi.LOCAL,
+            remoteIdentifier = java.util.UUID.randomUUID().toString(),
+            username = "",
+            displayName = str(R.string.local_account_name),
+            tokenEnc = "",
+            startDateEpochSecond = Instant.now().epochSecond,
+        )
+        persist(_accounts.value + account, account.key)
+        activate(account)
+        account
+    }
+
+    /**
+     * "Move memos to a server": hands every memo and attachment of the local-only account [localKey]
+     * to the server account [targetKey] as new memos waiting to be uploaded, removes the now empty
+     * local-only account, and switches to the server account, whose next sync uploads them.
+     * Returns how many memos were moved.
+     */
+    suspend fun moveLocalMemos(localKey: String, targetKey: String): Int = mutex.withLock {
+        val local = _accounts.value.firstOrNull { it.key == localKey && it.isLocal } ?: return@withLock 0
+        val target = _accounts.value.firstOrNull { it.key == targetKey && !it.isLocal } ?: return@withLock 0
+        // Stop the local-only account's repository first, so nothing writes to it while its memos move.
+        if (_active.value?.account?.key == local.key) _active.value?.repo?.close()
+        val moved = db.moveAccount(local.key, target.key) { uri -> files.moveToAccount(uri, target.key) }
+        settings.clearDraft(local.key)
+        files.deleteAccountFiles(local.key)
+        persist(_accounts.value.filterNot { it.key == local.key }, target.key)
+        activate(target)
+        moved
     }
 
     suspend fun switchTo(key: String) = mutex.withLock {
@@ -473,6 +528,8 @@ class SessionManager(
      */
     suspend fun checkSync(automatic: Boolean, allowVersion: String? = null): SyncCheck {
         val session = _active.value ?: return SyncCheck.Blocked(null)
+        // Nothing to check without a server; the sync itself does nothing.
+        if (session.account.isLocal) return SyncCheck.Allowed
         val version = try {
             session.remote.serverVersion()
         } catch (e: CancellationException) {
@@ -519,13 +576,13 @@ class SessionManager(
 
     private fun activate(acc: Account, knownToken: String? = null) {
         _active.value?.repo?.close()
-        val token = knownToken ?: tokenOf(acc)
+        val token = if (acc.isLocal) "" else knownToken ?: tokenOf(acc)
         if (token == null) {
             _active.value = null
             return
         }
         // Reconnects always use the saved address and scheme; never switch an https account to http.
-        CleartextPolicy.allowServer(acc.host)
+        if (!acc.isLocal) CleartextPolicy.allowServer(acc.host)
         val remote = clientFor(acc.api, acc.host, token, acc.remoteIdentifier)
         val repo = SyncingRepository(
             db = db,

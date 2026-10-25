@@ -14,11 +14,13 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 
 - **Timeline** of your memos, pinned ones first, with pull to sync
 - **Works offline**: memos are kept on the phone and changes sync when your server can be reached, without losing anything when both sides changed
+- **Background sync** every 15 or 30 minutes, every hour or every 6 hours (or off), optionally only on Wi-Fi or while charging, plus a sync every time you open the app and an optional notice when a background sync fails
+- **Use without a server**: a local-only mode that keeps your memos, pictures and files only on the phone, with the editor, tags, heatmap, search, archive and widgets; move them to a server account whenever you add one
 - **Editor** with formatting, tasks, tags, pictures, the camera, file attachments, a location and who can see the memo
 - **Markdown** the way Memos shows it, with tappable tasks and #tags
 - **Drafts** for unposted memos, or **autosave** while you type
 - **Pin, edit, share, copy, archive and delete** memos
-- **Tags** with a heatmap of the days you wrote and stats
+- **Tags** with a heatmap of the days you wrote and stats; long-press a tag to **rename** or **delete** it in every memo (also offline)
 - **Explore** what others shared on your server
 - **Search** that works offline, optionally in your archive too
 - **Archive** and **attachments** pages, and a full-screen picture viewer
@@ -29,10 +31,6 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Sign in with your password** (MemoCtrl makes its own access token and never keeps the password) or an access token
 - **Several servers and accounts**
 
-## Planned
-
-Not in the app yet: a local-only mode without a server.
-
 ## Screenshots
 
 Coming soon.
@@ -40,7 +38,7 @@ Coming soon.
 ## Requirements
 
 - Android 13 or newer, on a 64-bit ARM phone (nearly every phone from the last several years)
-- A Memos server: Memos 0.21, or Memos 0.27 to 0.31 (newer versions ask before you continue)
+- A Memos server: Memos 0.21, or Memos 0.27 to 0.31 (newer versions ask before you continue). Or none at all, with **Use without a server**
 - **Google-free and de-Googled:** no Google Play services, Firebase or other Google services, and the app never contacts Google. It works the same on de-Googled phones (GrapheneOS, CalyxOS, /e/OS, LineageOS without Google apps).
 
 ## Install
@@ -64,6 +62,8 @@ If the Obtainium button doesn't open the app, add `https://github.com/VoidedKN0X
 2. Sign in with your Memos username and password. MemoCtrl asks your server for an access token of its own and never keeps your password.
 3. Tap **New memo** and write something.
 
+No server? Tap **Use without a server** on the first screen. Your memos stay on the phone; later, add a server under your profile picture › **Servers and accounts** and tap **Move memos to a server**.
+
 Accounts that sign in with SSO can use **Access token** instead: make one in Memos under **Settings > My account > Access tokens** (one that never expires) and paste it in.
 
 Settings, the archive, attachments, accounts and sign out are behind your profile picture at the top right.
@@ -74,6 +74,8 @@ Settings, the archive, attachments, accounts and sign out are behind your profil
 - **"Your access token no longer works"**: the token expired or was deleted in Memos. Sign out and sign in again.
 - **Changes waiting to sync** keep a cloud icon on the memo; tap the sync button at the top to try again.
 - **Location** needs Memos 0.27 or newer, and uses the phone's GPS only.
+- **Background sync** is under your profile picture › **Settings > Background sync**. Android decides the exact moment it runs to save battery, and it waits while MemoCtrl is locked with the app lock.
+- **Renaming a tag** also renames its sub-tags (`#work/meetings` becomes `#job/meetings`). Memos has no tag list of its own on 0.27 and newer, so MemoCtrl changes the text of every memo with the tag and syncs them like any edit. On Memos 0.21 it uses the server's own rename when you're online.
 - **Pictures from other websites** in memos (in the text or attached as a link) show as a link until you turn on **Load pictures from other websites** (your profile picture › **Settings > Privacy and security**).
 
 ## App lock
@@ -103,7 +105,8 @@ The sign-in screen and the lock and PIN screens are always kept out of screensho
 - **Servers:** only the Memos servers you sign in to. Pictures that memos link or attach from other websites are only loaded after you turn on **Load pictures from other websites** (your profile picture › **Settings > Privacy and security**); until then they show as a link.
 - **Links:** links in memos, a memo's location (OpenStreetMap) and the Support, Report a bug, Source code and Licence rows in About open in your browser only when you tap them; the app itself doesn't contact those sites.
 - **Location** comes from the phone's GPS only, and only when you tap **Use current location** on a memo.
-- **No backups:** Android doesn't back up MemoCtrl's data or move it to a new phone. Your memos live on your own server.
+- **No backups:** Android doesn't back up MemoCtrl's data or move it to a new phone. Your memos live on your own server; memos of **Use without a server** only live on the phone, so move them to a server to keep them safe.
+- **Notifications:** only the optional "Background sync failed" notice, which never shows memo text, and only after you allow notifications.
 
 ## Build from source
 

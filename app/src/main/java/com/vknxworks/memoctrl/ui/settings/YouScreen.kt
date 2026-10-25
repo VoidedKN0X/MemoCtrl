@@ -108,8 +108,8 @@ fun YouScreen() {
                 Spacer(Modifier.width(16.dp))
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(acc.title, style = MaterialTheme.typography.headlineSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(acc.host, style = CtrlType.Mono, color = CtrlColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    val meta = listOfNotNull(
+                    Text(if (acc.isLocal) stringResource(R.string.local_account_subtitle) else acc.host, style = CtrlType.Mono, color = CtrlColors.Muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    val meta = if (acc.isLocal) "" else listOfNotNull(
                         "@${acc.username}".takeIf { acc.username.isNotBlank() && acc.username != acc.title },
                         acc.serverName,
                         acc.serverVersion?.let { stringResource(R.string.memos_version, it.removePrefix("v")) },
@@ -118,7 +118,11 @@ fun YouScreen() {
                 }
             }
 
-            Group(stringResource(R.string.group_sync)) {
+            if (acc.isLocal) {
+                Group(stringResource(R.string.group_local), footer = stringResource(R.string.local_footer)) {
+                    MoveLocalMemosRow(acc.key)
+                }
+            } else Group(stringResource(R.string.group_sync)) {
                 GroupRow(
                     when {
                         status.syncing -> stringResource(R.string.sync_syncing)
@@ -139,7 +143,7 @@ fun YouScreen() {
                 GroupRow(stringResource(R.string.attachments_title), stringResource(R.string.attachments_subtitle), icon = Icons.Outlined.Attachment, showChevron = true, onClick = { nav.navigate(AttachmentsRoute) })
             }
 
-            Group(stringResource(R.string.group_server)) {
+            if (!acc.isLocal) Group(stringResource(R.string.group_server)) {
                 GroupRow(
                     acc.host,
                     listOfNotNull(
@@ -155,7 +159,7 @@ fun YouScreen() {
                 GroupRow(stringResource(R.string.settings), icon = Icons.Outlined.Tune, showChevron = true, onClick = { nav.navigate(SettingsRoute) })
                 GroupRow(stringResource(R.string.accounts_title), icon = Icons.Outlined.SwapHoriz, showChevron = true, onClick = { nav.navigate(AccountsRoute) })
                 GroupRow(
-                    stringResource(R.string.sign_out),
+                    stringResource(if (acc.isLocal) R.string.local_remove else R.string.sign_out),
                     icon = Icons.AutoMirrored.Outlined.Logout,
                     iconTint = MaterialTheme.colorScheme.error,
                     titleColor = MaterialTheme.colorScheme.error,
@@ -199,7 +203,15 @@ fun YouScreen() {
     }
 
     if (confirmSignOut) {
-        ConfirmDialog(
+        if (acc.isLocal) ConfirmDialog(
+            stringResource(R.string.local_remove_title),
+            stringResource(R.string.local_remove_body),
+            stringResource(R.string.local_remove),
+            onDismiss = { confirmSignOut = false },
+        ) {
+            confirmSignOut = false
+            c.appScope.launch { c.sessions.signOut(acc.key) }
+        } else ConfirmDialog(
             stringResource(R.string.sign_out_title, acc.serverName),
             if (status.unsyncedCount > 0) pluralStringResource(R.plurals.sign_out_unsynced, status.unsyncedCount, status.unsyncedCount)
             else stringResource(R.string.sign_out_body),

@@ -17,6 +17,9 @@ import com.vknxworks.memoctrl.data.model.ResourceEntity
 import com.vknxworks.memoctrl.data.model.SyncStatus
 import com.vknxworks.memoctrl.data.model.User
 import com.vknxworks.memoctrl.util.extractTags
+import com.vknxworks.memoctrl.util.hasTag
+import com.vknxworks.memoctrl.util.rewriteTag
+import com.vknxworks.memoctrl.data.api.LocalRemote
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -35,6 +38,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okhttp3.MediaType
@@ -72,6 +76,12 @@ class SyncingRepository(
 
     val user: User get() = currentUser
 
+    /** A local-only account ("Use without a server"): memos only live on the phone and nothing syncs. */
+    val isLocal: Boolean get() = remote is LocalRemote
+
+    /** Whether a change still has to reach the server. Never for a local-only account. */
+    private val pending: Boolean get() = !isLocal
+
     init {
         scope.launch { refreshUnsyncedCount() }
     }
@@ -107,6 +117,82 @@ class SyncingRepository(
 
     suspend fun listResources(): List<ResourceEntity> = db.getAllResources(accountKey)
 
+    /** Memos (archived ones too) that have [tag] or one of its sub-tags. */
+    private suspend fun memosWithTag(tag: String): List<MemoEntity> {
+        val all = db.getAllMemosForSync(accountKey)
+        // Every memo's text is parsed: off the main thread.
+        return withContext(Dispatchers.Default) { all.filter { !it.isDeleted && hasTag(it.content, tag) } }
+    }
+
+    /** How many memos renaming or deleting [tag] would change, for the confirmation. */
+    suspend fun countMemosWithTag(tag: String): Int = memosWithTag(tag).size
+
+    // ---------- Tags ----------
+
+    /**
+     * Renames [oldTag] to [newTag] (and its sub-tags with it), or removes it from every memo when
+     * [newTag] is null. Memos has no tag of its own to rename on the servers the app supports, except
+     * Memos 0.21, which can rename a tag in all its memos with one request; that's used when it can
+     * be (online, and no memo with the tag has changes still waiting). Otherwise every memo is rewritten
+     * here and synced like any other edit, so it works offline too. Returns how many memos changed.
+     */
+    suspend fun renameTag(oldTag: String, newTag: String?): Int {
+        val affected = memosWithTag(oldTag)
+        if (affected.isEmpty()) return 0
+        // The server only renames the tag itself, not its sub-tags.
+        val hasSubTags = withContext(Dispatchers.Default) {
+            affected.any { m -> extractTags(m.content).any { it.startsWith("$oldTag/") } }
+        }
+        if (newTag != null && !isLocal && affected.none { it.needsSync } && !hasSubTags && renameOnServer(oldTag, newTag)) {
+            // The server changed the memos: fetch them. If that doesn't work now, the next sync does.
+            try {
+                sync()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (_: Throwable) {
+            }
+            return affected.size
+        }
+        var changed = 0
+        for (memo in affected) if (rewriteTagIn(memo.identifier, oldTag, newTag)) changed++
+        if (newTag == null && !isLocal) {
+            // Memos 0.21 also keeps a list of tags; take it off there too. Nothing to do on newer servers.
+            scope.launch {
+                operationMutex.withLock { tryRemote { remote.deleteTag(oldTag) } }
+            }
+        }
+        return changed
+    }
+
+    private suspend fun renameOnServer(oldTag: String, newTag: String): Boolean = operationMutex.withLock {
+        try {
+            remote.renameTag(oldTag, newTag)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Throwable) {
+            false
+        }
+    }
+
+    private suspend fun rewriteTagIn(identifier: String, oldTag: String, newTag: String?): Boolean {
+        while (true) {
+            val existing = db.getMemoById(identifier, accountKey) ?: return false
+            if (existing.isDeleted) return false
+            val content = withContext(Dispatchers.Default) { rewriteTag(existing.content, oldTag, newTag) }
+            if (content == existing.content) return false
+            val updated = existing.copy(
+                content = content,
+                needsSync = pending,
+                lastModified = nextLastModified(existing),
+                resources = emptyList(),
+            )
+            if (db.insertMemoIfUnchanged(updated, existing.lastModified)) break
+        }
+        refreshUnsyncedCount()
+        enqueuePushMemo(identifier)
+        return true
+    }
+
     // ---------- Writing ----------
 
     suspend fun createMemo(
@@ -127,7 +213,7 @@ class SyncingRepository(
             visibility = visibility,
             pinned = false,
             archived = false,
-            needsSync = true,
+            needsSync = pending,
             isDeleted = false,
             lastModified = now,
             lastSyncedAt = null,
@@ -158,7 +244,7 @@ class SyncingRepository(
                 location = if (location != null) location.value else existing.location,
                 visibility = visibility ?: existing.visibility,
                 pinned = pinned ?: existing.pinned,
-                needsSync = true,
+                needsSync = pending,
                 isDeleted = false,
                 lastModified = nextLastModified(existing),
                 resources = emptyList(),
@@ -185,6 +271,12 @@ class SyncingRepository(
 
     suspend fun deleteMemo(identifier: String) {
         val memo = db.getMemoById(identifier, accountKey) ?: return
+        if (isLocal) {
+            // Nothing to tell a server: gone for good straight away, with its files.
+            deferred.cancel(identifier)
+            permanentlyDeleteMemo(identifier)
+            return
+        }
         db.insertMemo(memo.copy(isDeleted = true, needsSync = true, lastModified = nextLastModified(memo)))
         refreshUnsyncedCount()
         deferred.cancel(identifier)
@@ -197,7 +289,7 @@ class SyncingRepository(
 
     private suspend fun setArchived(identifier: String, archived: Boolean) {
         val memo = db.getMemoById(identifier, accountKey) ?: return
-        db.insertMemo(memo.copy(archived = archived, needsSync = true, lastModified = nextLastModified(memo)))
+        db.insertMemo(memo.copy(archived = archived, needsSync = pending, lastModified = nextLastModified(memo)))
         refreshUnsyncedCount()
         enqueuePushMemo(identifier)
     }
@@ -220,7 +312,7 @@ class SyncingRepository(
         db.insertResource(resource)
         if (resource.memoId != null) {
             db.getMemoById(resource.memoId, accountKey)?.let { memo ->
-                db.insertMemo(memo.copy(needsSync = true, lastModified = nextLastModified(memo)))
+                db.insertMemo(memo.copy(needsSync = pending, lastModified = nextLastModified(memo)))
             }
             enqueuePushMemo(resource.memoId)
         } else {
@@ -237,7 +329,7 @@ class SyncingRepository(
         db.deleteResource(resource.identifier)
         if (!memoId.isNullOrBlank()) {
             db.getMemoById(memoId, accountKey)?.let { memo ->
-                db.insertMemo(memo.copy(needsSync = true, lastModified = nextLastModified(memo)))
+                db.insertMemo(memo.copy(needsSync = pending, lastModified = nextLastModified(memo)))
             }
         }
         resource.remoteId?.let { enqueueDeleteRemoteResource(it) }
@@ -265,6 +357,7 @@ class SyncingRepository(
 
     /** Pulls everything from the server and pushes what changed here. Throws when it didn't fully work. */
     suspend fun sync() {
+        if (isLocal) return
         operationMutex.withLock {
             setSyncing(true)
             pendingDetailedError = null
@@ -651,6 +744,7 @@ class SyncingRepository(
         enqueue(str(R.string.error_delete_attachment)) { tryRemote { remote.deleteResource(remoteId) } }
 
     private fun enqueue(defaultError: String, block: suspend () -> Boolean) {
+        if (isLocal) return
         scope.launch {
             operationMutex.withLock {
                 setSyncing(true)

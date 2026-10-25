@@ -50,7 +50,21 @@ import com.vknxworks.memoctrl.data.net.ClientCertificate
 import com.vknxworks.memoctrl.data.settings.AppSettings
 import com.vknxworks.memoctrl.data.settings.EditGesture
 import com.vknxworks.memoctrl.data.settings.LockTimeout
+import com.vknxworks.memoctrl.data.settings.SyncInterval
+import com.vknxworks.memoctrl.data.sync.BackgroundSync
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.icons.outlined.BatteryChargingFull
+import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material.icons.outlined.Sync
+import androidx.compose.material.icons.outlined.PhoneAndroid
+import androidx.compose.material.icons.outlined.CloudUpload
+import com.vknxworks.memoctrl.ui.components.ChoiceSheet
+import androidx.compose.material.icons.outlined.Wifi
 import com.vknxworks.memoctrl.ui.components.ConfirmDialog
+import com.vknxworks.memoctrl.ui.components.CtrlAlertDialog
+import com.vknxworks.memoctrl.ui.components.runTask
 import com.vknxworks.memoctrl.ui.components.Group
 import com.vknxworks.memoctrl.ui.components.GroupChoice
 import com.vknxworks.memoctrl.ui.components.GroupRow
@@ -87,6 +101,12 @@ fun SettingsScreen() {
     val bioAvailable = remember { AppLock.biometricAvailable(context) }
     var certificate by remember { mutableStateOf(ClientCertificate.selectedAlias(context)) }
     var removingCertificate by remember { mutableStateOf(false) }
+    val session by c.sessions.active.collectAsStateWithLifecycle()
+    val local = session?.account?.isLocal == true
+    val notifyPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) update { it.copy(syncFailureNotice = true) }
+        else Toast.makeText(context, context.getString(R.string.sync_failure_notice_denied), Toast.LENGTH_SHORT).show()
+    }
 
     Column(Modifier.fillMaxSize()) {
         ScreenTopBar(stringResource(R.string.settings))
@@ -159,7 +179,7 @@ fun SettingsScreen() {
                     s.externalImages,
                     icon = Icons.Outlined.Image,
                 ) { v -> update { it.copy(externalImages = v) } }
-                GroupRow(
+                if (!local) GroupRow(
                     stringResource(R.string.client_certificate),
                     certificate?.let { stringResource(R.string.client_certificate_using, it) }
                         ?: stringResource(R.string.client_certificate_subtitle),
@@ -170,7 +190,7 @@ fun SettingsScreen() {
                         ClientCertificate.choose(activity) { ok -> if (ok) certificate = ClientCertificate.selectedAlias(context) }
                     },
                 )
-                if (certificate != null) {
+                if (certificate != null && !local) {
                     GroupRow(
                         stringResource(R.string.client_certificate_stop),
                         icon = Icons.Outlined.Lock,
@@ -178,6 +198,44 @@ fun SettingsScreen() {
                         titleColor = MaterialTheme.colorScheme.error,
                         onClick = { removingCertificate = true },
                     )
+                }
+            }
+
+            if (!local) {
+                Group(stringResource(R.string.group_background_sync), footer = stringResource(R.string.background_sync_footer)) {
+                    GroupChoice(
+                        stringResource(R.string.background_sync),
+                        SyncInterval.entries.map { it to stringResource(it.label) },
+                        s.syncInterval,
+                        icon = Icons.Outlined.Sync,
+                    ) { v -> update { it.copy(syncInterval = v) } }
+                    if (s.syncInterval != SyncInterval.OFF) {
+                        GroupSwitch(
+                            stringResource(R.string.sync_wifi_only),
+                            stringResource(R.string.sync_wifi_only_subtitle),
+                            s.syncWifiOnly,
+                            icon = Icons.Outlined.Wifi,
+                        ) { v -> update { it.copy(syncWifiOnly = v) } }
+                        GroupSwitch(
+                            stringResource(R.string.sync_charging),
+                            stringResource(R.string.sync_charging_subtitle),
+                            s.syncCharging,
+                            icon = Icons.Outlined.BatteryChargingFull,
+                        ) { v -> update { it.copy(syncCharging = v) } }
+                        GroupSwitch(
+                            stringResource(R.string.sync_failure_notice),
+                            stringResource(R.string.sync_failure_notice_subtitle),
+                            s.syncFailureNotice && BackgroundSync.canNotify(context),
+                            icon = Icons.Outlined.NotificationsNone,
+                        ) { v ->
+                            if (v && !BackgroundSync.canNotify(context)) {
+                                AppLock.expectReturn()
+                                notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                            } else {
+                                update { it.copy(syncFailureNotice = v) }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -239,7 +297,7 @@ fun AccountsScreen() {
                     val isActive = a.key == active?.account?.key
                     GroupRow(
                         a.title,
-                        listOfNotNull(
+                        if (a.isLocal) stringResource(R.string.local_account_subtitle) else listOfNotNull(
                             a.username.takeIf { it.isNotBlank() && it != a.title }?.let { "@$it" },
                             a.host,
                             if (a.isEncrypted) null else stringResource(R.string.not_encrypted),
@@ -258,6 +316,20 @@ fun AccountsScreen() {
             }
             Group {
                 GroupRow(stringResource(R.string.account_add), icon = Icons.Outlined.Add, showChevron = true, onClick = { nav.navigate(AddAccountRoute) })
+                // "Use without a server" as an account of its own, when there isn't one yet.
+                if (accounts.none { it.isLocal }) {
+                    GroupRow(
+                        stringResource(R.string.local_use_without_server),
+                        stringResource(R.string.local_add_subtitle),
+                        icon = Icons.Outlined.PhoneAndroid,
+                        onClick = { scope.launch { c.sessions.useWithoutServer() }; Unit },
+                    )
+                }
+            }
+            accounts.firstOrNull { it.isLocal }?.let { local ->
+                Group(stringResource(R.string.group_local), footer = stringResource(R.string.local_footer)) {
+                    MoveLocalMemosRow(local.key)
+                }
             }
         }
     }
@@ -265,9 +337,10 @@ fun AccountsScreen() {
     removing?.let { key ->
         val acc = accounts.firstOrNull { it.key == key }
         ConfirmDialog(
-            stringResource(R.string.sign_out_title, acc?.serverName ?: stringResource(R.string.this_server)),
-            stringResource(R.string.sign_out_account_body),
-            stringResource(R.string.sign_out),
+            if (acc?.isLocal == true) stringResource(R.string.local_remove_title)
+            else stringResource(R.string.sign_out_title, acc?.serverName ?: stringResource(R.string.this_server)),
+            stringResource(if (acc?.isLocal == true) R.string.local_remove_body else R.string.sign_out_account_body),
+            stringResource(if (acc?.isLocal == true) R.string.local_remove else R.string.sign_out),
             onDismiss = { removing = null },
         ) {
             removing = null
@@ -337,5 +410,78 @@ fun AttachmentsScreen() {
                 }
             }
         }
+    }
+}
+
+/**
+ * "Move memos to a server": pick one of your server accounts, and every memo kept only on this phone
+ * (with its pictures and files) becomes a new memo there, uploaded by the next sync. Without a server
+ * account yet, it offers to add one first.
+ */
+@Composable
+fun MoveLocalMemosRow(localKey: String) {
+    val context = LocalContext.current
+    val c = context.container
+    val nav = LocalNavigator.current
+    val accounts by c.sessions.accounts.collectAsStateWithLifecycle()
+    val servers = accounts.filterNot { it.isLocal }
+    var picking by remember { mutableStateOf(false) }
+    var noServer by remember { mutableStateOf(false) }
+    var target by remember { mutableStateOf<String?>(null) }
+    var count by remember { mutableStateOf<Int?>(null) }
+    val changes by c.db.changes.collectAsStateWithLifecycle()
+    androidx.compose.runtime.LaunchedEffect(localKey, changes) {
+        count = runCatching { c.db.getAllMemosForSync(localKey).count { !it.isDeleted } }.getOrNull()
+    }
+
+    GroupRow(
+        stringResource(R.string.local_move),
+        count?.let { androidx.compose.ui.res.pluralStringResource(R.plurals.local_move_subtitle, it, it) },
+        icon = Icons.Outlined.CloudUpload,
+        showChevron = true,
+        onClick = { if (servers.isEmpty()) noServer = true else picking = true },
+    )
+
+    if (picking) {
+        ChoiceSheet(
+            stringResource(R.string.local_move_pick),
+            servers.map { it.key to listOf(it.title, it.username.takeIf { u -> u.isNotBlank() && u != it.title }?.let { u -> "@$u" }, it.host).filterNotNull().distinct().joinToString("  ·  ") },
+            null,
+            onDismiss = { picking = false },
+        ) { key ->
+            picking = false
+            target = key
+        }
+    }
+    target?.let { key ->
+        val acc = servers.firstOrNull { it.key == key }
+        val n = count ?: 0
+        ConfirmDialog(
+            stringResource(R.string.local_move_title, acc?.title ?: stringResource(R.string.this_server)),
+            androidx.compose.ui.res.pluralStringResource(R.plurals.local_move_body, n, n, acc?.serverName ?: ""),
+            stringResource(R.string.local_move_confirm),
+            onDismiss = { target = null },
+        ) {
+            target = null
+            c.runTask {
+                val moved = c.sessions.moveLocalMemos(localKey, key)
+                Toast.makeText(context, context.resources.getQuantityString(R.plurals.local_moved, moved, moved), Toast.LENGTH_LONG).show()
+                c.syncInBackground()
+            }
+        }
+    }
+    if (noServer) {
+        CtrlAlertDialog(
+            onDismissRequest = { noServer = false },
+            title = { Text(stringResource(R.string.local_move_no_server_title)) },
+            text = { Text(stringResource(R.string.local_move_no_server_body)) },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = {
+                    noServer = false
+                    nav.navigate(AddAccountRoute)
+                }) { Text(stringResource(R.string.account_add)) }
+            },
+            dismissButton = { androidx.compose.material3.TextButton(onClick = { noServer = false }) { Text(stringResource(R.string.cancel)) } },
+        )
     }
 }

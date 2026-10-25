@@ -122,6 +122,8 @@ fun SyncButton(sync: ManualSync) {
     val c = LocalContext.current.container
     val session by c.sessions.active.collectAsStateWithLifecycle()
     val repo = session?.repo ?: return
+    // Nothing to sync without a server.
+    if (repo.isLocal) return
     val status by repo.syncStatus.collectAsStateWithLifecycle()
     IconButton(onClick = { sync.start() }, enabled = !status.syncing && !sync.running) {
         when {

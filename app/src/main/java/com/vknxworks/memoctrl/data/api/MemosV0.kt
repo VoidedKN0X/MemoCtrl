@@ -113,6 +113,9 @@ private data class V0SignIn(val username: String, val password: String, val reme
 private data class V0CreateToken(val description: String)
 
 @Serializable
+private data class V0TagName(val name: String)
+
+@Serializable
 private data class V0AccessToken(val accessToken: String = "")
 
 @Serializable
@@ -304,6 +307,27 @@ class MemosV0(
         )
         val token = created.accessToken?.accessToken?.takeIf { it.isNotBlank() } ?: throw ApiException(str(R.string.error_no_token))
         return IssuedToken(token, "users/${user.id}")
+    }
+
+    // Memos 0.21 has a tag service that rewrites every memo of the user with one request.
+    override suspend fun renameTag(oldTag: String, newTag: String): Boolean {
+        val user = me()
+        // The route has no body: grpc-gateway reads the request from the query.
+        val url = base.path("api/v2/tags:rename")
+            .addQueryParameter("user", "users/${user.id}")
+            .addQueryParameter("oldName", oldTag)
+            .addQueryParameter("newName", newTag)
+            .build()
+        http.fetchText(request(url).patch(jsonBody("{}")).build())
+        return true
+    }
+
+    override suspend fun deleteTag(tag: String) {
+        http.fetchText(
+            request(base.path("api/v1/tag/delete").build())
+                .post(jsonBody(ApiJson.encodeToString(V0TagName.serializer(), V0TagName(tag))))
+                .build(),
+        )
     }
 
     override suspend fun revokeToken(tokenId: String) {

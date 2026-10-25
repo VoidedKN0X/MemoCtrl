@@ -75,6 +75,47 @@ fun extractTags(text: String): Set<String> {
 /** Whether a memo has [tag] or one of its sub-tags ("work" matches "#work/meetings"). Case-sensitive. */
 fun hasTag(text: String, tag: String): Boolean = extractTags(text).any { it == tag || it.startsWith("$tag/") }
 
+/** A tag name someone typed, without the leading '#'; null when it can't be a tag (empty, spaces or '#'). */
+fun cleanTagName(input: String): String? {
+    val name = input.trim().removePrefix("#").trim('/')
+    if (name.isEmpty() || name.any { it.isWhitespace() || it == '#' }) return null
+    return name
+}
+
+/**
+ * Renames (or, with a null [newTag], removes) [oldTag] and its sub-tags in [text], the same places
+ * [extractTags] finds them: not inside code or links. "#work/meetings" becomes "#job/meetings" when
+ * "work" is renamed to "job". Removing a tag also takes away one space next to it, so no double
+ * spaces are left behind. Returns [text] unchanged when it doesn't have the tag.
+ */
+fun rewriteTag(text: String, oldTag: String, newTag: String?): String {
+    if ('#' !in text) return text
+    val tree = parseMarkdown(text)
+    val hits = findTagMatches(text).filter { m ->
+        val name = tagName(m)
+        (name == oldTag || name.startsWith("$oldTag/")) && tree.findNodeAt(m.range.first)?.let(::isTagAllowedAt) == true
+    }.toList()
+    if (hits.isEmpty()) return text
+    val out = StringBuilder(text)
+    // From the end, so earlier offsets stay valid.
+    for (m in hits.asReversed()) {
+        val start = m.range.first
+        val end = m.range.last + 1
+        if (newTag != null) {
+            out.replace(start, end, "#" + newTag + tagName(m).removePrefix(oldTag))
+        } else {
+            val before = if (start > 0) out[start - 1] else '\n'
+            val after = if (end < out.length) out[end] else '\n'
+            when {
+                (before == ' ' || before == '\t') && (after == ' ' || after == '\t' || after == '\n') -> out.delete(start - 1, end)
+                before == '\n' && (after == ' ' || after == '\t') -> out.delete(start, end + 1)
+                else -> out.delete(start, end)
+            }
+        }
+    }
+    return out.toString()
+}
+
 fun matchesSearch(content: String, query: String?): Boolean =
     query.isNullOrEmpty() || content.contains(query, ignoreCase = true)
 
