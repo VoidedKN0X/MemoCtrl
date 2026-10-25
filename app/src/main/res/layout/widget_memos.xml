@@ -28,7 +28,7 @@
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif-medium"
                 android:text="@string/widget_memos_title"
-                android:textColor="#FFECEEF2"
+                android:textColor="#FFF4F4F2"
                 android:textSize="18sp" />
 
             <TextView
@@ -37,7 +37,7 @@
                 android:layout_height="wrap_content"
                 android:ellipsize="end"
                 android:maxLines="1"
-                android:textColor="#FF9AA1AD"
+                android:textColor="#FFA3A3AB"
                 android:textSize="12sp"
                 android:visibility="gone" />
         </LinearLayout>
@@ -78,7 +78,7 @@
         android:layout_weight="1"
         android:gravity="center"
         android:text="@string/widget_empty"
-        android:textColor="#FF9AA1AD"
+        android:textColor="#FFA3A3AB"
         android:textSize="14sp"
         android:visibility="gone" />
 </LinearLayout>

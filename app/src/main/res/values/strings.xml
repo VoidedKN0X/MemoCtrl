@@ -20,6 +20,7 @@
     <string name="source_subtitle">github.com/VoidedKN0X/MemoCtrl</string>
     <string name="licence_title">Licence</string>
     <string name="licence_subtitle">GNU General Public License v3.0</string>
+    <string name="ctrl_footer" translatable="false">GOOGLE-FREE · TELEMETRY-FREE · ARM64</string>
     <string name="about_footer">MemoCtrl %1$s · VKNXWorks</string>
 
     <!-- Errors and empty states -->
@@ -44,6 +45,8 @@
 
     <!-- App lock -->
     <string name="lock_title">MemoCtrl is locked</string>
+    <string name="lock_locked">Locked</string>
+    <string name="lock_brand" translatable="false">VKNXWORKS · CTRL</string>
     <string name="lock_subtitle">Confirm it\'s you to choose an app PIN</string>
     <string name="lock_legacy_title">Unlock MemoCtrl</string>
     <string name="lock_legacy_body">Unlock with your fingerprint, face or screen lock one last time, then choose an app PIN.</string>

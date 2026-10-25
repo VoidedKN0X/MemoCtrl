@@ -70,6 +70,7 @@ import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import androidx.compose.ui.res.stringResource
 import com.vknxworks.memoctrl.R
+import com.vknxworks.memoctrl.ui.theme.JetBrainsMono
 
 /** What tapping things inside a memo does. */
 class MarkdownActions(
@@ -172,11 +173,12 @@ private fun CodeBlock(code: String) {
         Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.small)
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .background(MaterialTheme.colorScheme.background)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.small)
             .horizontalScroll(rememberScrollState())
             .padding(12.dp),
     ) {
-        Text(code, style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace))
+        Text(code, style = MaterialTheme.typography.bodyMedium.copy(fontFamily = JetBrainsMono))
     }
 }
 
@@ -368,7 +370,7 @@ private fun rememberInline(src: String, actions: MarkdownActions): InlineBuilder
             src = src,
             linkStyle = TextLinkStyles(SpanStyle(color = colors.primary, textDecoration = TextDecoration.Underline)),
             tagStyle = TextLinkStyles(SpanStyle(color = colors.primary, fontWeight = FontWeight.SemiBold)),
-            codeStyle = SpanStyle(fontFamily = FontFamily.Monospace, background = colors.surfaceContainerHighest),
+            codeStyle = SpanStyle(fontFamily = JetBrainsMono, background = colors.surfaceContainerHighest),
             onTag = actions.onTag,
             openUrl = { openLink(context, it) },
         )

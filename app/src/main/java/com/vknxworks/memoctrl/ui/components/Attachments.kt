@@ -8,6 +8,8 @@ import android.net.Uri
 import android.webkit.MimeTypeMap
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -138,7 +140,7 @@ fun ImageGrid(images: List<ResourceEntity>, serverUrl: String? = null, onRemove:
                                 IconButton(
                                     onClick = { onRemove(images[i]) },
                                     modifier = Modifier.align(Alignment.TopEnd).padding(4.dp).size(28.dp)
-                                        .clip(MaterialTheme.shapes.extraLarge)
+                                        .clip(RoundedCornerShape(9.dp))
                                         .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.55f)),
                                 ) {
                                     Icon(Icons.Outlined.Close, stringResource(R.string.attachment_remove, images[i].filename), Modifier.size(16.dp), tint = MaterialTheme.colorScheme.inverseOnSurface)
@@ -166,8 +168,9 @@ fun AttachmentChips(files: List<ResourceEntity>, onRemove: ((ResourceEntity) -> 
             Row(
                 Modifier
                     .widthIn(max = 280.dp)
-                    .clip(MaterialTheme.shapes.extraLarge)
+                    .clip(RoundedCornerShape(10.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(10.dp))
                     .clickable(enabled = opening == null) {
                         opening = f.identifier
                         scope.launch {

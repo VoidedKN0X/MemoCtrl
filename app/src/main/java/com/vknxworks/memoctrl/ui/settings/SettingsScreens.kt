@@ -14,9 +14,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Attachment
 import androidx.compose.material.icons.outlined.Edit
@@ -51,7 +50,6 @@ import com.vknxworks.memoctrl.data.net.ClientCertificate
 import com.vknxworks.memoctrl.data.settings.AppSettings
 import com.vknxworks.memoctrl.data.settings.EditGesture
 import com.vknxworks.memoctrl.data.settings.LockTimeout
-import com.vknxworks.memoctrl.data.settings.ThemeChoice
 import com.vknxworks.memoctrl.ui.components.ConfirmDialog
 import com.vknxworks.memoctrl.ui.components.Group
 import com.vknxworks.memoctrl.ui.components.GroupChoice
@@ -62,6 +60,9 @@ import com.vknxworks.memoctrl.ui.components.AttachmentChips
 import com.vknxworks.memoctrl.ui.components.LoadingView
 import com.vknxworks.memoctrl.ui.components.MessageView
 import com.vknxworks.memoctrl.ui.components.ScreenTopBar
+import com.vknxworks.memoctrl.ui.components.ctrlSegmentColors
+import com.vknxworks.memoctrl.ui.components.CtrlStatus
+import com.vknxworks.memoctrl.ui.components.ctrlSegmentShape
 import com.vknxworks.memoctrl.ui.lock.AppLock
 import com.vknxworks.memoctrl.ui.lock.PinRequest
 import com.vknxworks.memoctrl.data.lock.LockVault
@@ -73,8 +74,6 @@ import com.vknxworks.memoctrl.ui.theme.Gutter
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import com.vknxworks.memoctrl.R
-import androidx.compose.material.icons.outlined.DarkMode
-import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.Layers
 
@@ -92,21 +91,7 @@ fun SettingsScreen() {
     Column(Modifier.fillMaxSize()) {
         ScreenTopBar(stringResource(R.string.settings))
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)) {
-            Group(stringResource(R.string.group_appearance)) {
-                GroupChoice(
-                    stringResource(R.string.theme),
-                    ThemeChoice.entries.map { it to stringResource(it.label) },
-                    s.theme,
-                    icon = Icons.Outlined.DarkMode,
-                ) { v -> update { it.copy(theme = v) } }
-                GroupSwitch(
-                    stringResource(R.string.dynamic_colour),
-                    stringResource(R.string.dynamic_colour_subtitle),
-                    s.dynamicColor,
-                    icon = Icons.Outlined.Palette,
-                ) { v -> update { it.copy(dynamicColor = v) } }
-            }
-
+            // No Appearance group: Ctrl / Signal is dark only, so there's no theme or Material You colour to pick.
             Group(stringResource(R.string.group_privacy), footer = stringResource(R.string.privacy_footer)) {
                 val lockOn = c.vault.enabled
                 GroupSwitch(
@@ -264,15 +249,15 @@ fun AccountsScreen() {
                         },
                         trailing = {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                if (isActive) Icon(Icons.Filled.CheckCircle, stringResource(R.string.account_active), tint = MaterialTheme.colorScheme.primary)
-                                IconButton(onClick = { removing = a.key }) { Icon(Icons.AutoMirrored.Filled.Logout, stringResource(R.string.account_sign_out)) }
+                                if (isActive) CtrlStatus(stringResource(R.string.account_active), active = true)
+                                IconButton(onClick = { removing = a.key }) { Icon(Icons.AutoMirrored.Outlined.Logout, stringResource(R.string.account_sign_out), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
                             }
                         },
                     )
                 }
             }
             Group {
-                GroupRow(stringResource(R.string.account_add), icon = Icons.Filled.Add, showChevron = true, onClick = { nav.navigate(AddAccountRoute) })
+                GroupRow(stringResource(R.string.account_add), icon = Icons.Outlined.Add, showChevron = true, onClick = { nav.navigate(AddAccountRoute) })
             }
         }
     }
@@ -331,8 +316,8 @@ fun AttachmentsScreen() {
     Column(Modifier.fillMaxSize()) {
         ScreenTopBar(stringResource(R.string.attachments_title))
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 8.dp)) {
-            SegmentedButton(selected = tab == 0, onClick = { tab = 0 }, shape = SegmentedButtonDefaults.itemShape(0, 2)) { Text(stringResource(R.string.attachments_pictures)) }
-            SegmentedButton(selected = tab == 1, onClick = { tab = 1 }, shape = SegmentedButtonDefaults.itemShape(1, 2)) { Text(stringResource(R.string.attachments_files)) }
+            SegmentedButton(selected = tab == 0, onClick = { tab = 0 }, shape = ctrlSegmentShape(0, 2), colors = ctrlSegmentColors(), icon = {}) { Text(stringResource(R.string.attachments_pictures)) }
+            SegmentedButton(selected = tab == 1, onClick = { tab = 1 }, shape = ctrlSegmentShape(1, 2), colors = ctrlSegmentColors(), icon = {}) { Text(stringResource(R.string.attachments_files)) }
         }
         val list = all
         when {

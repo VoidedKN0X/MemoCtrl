@@ -9,9 +9,13 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.FloatingActionButtonDefaults
+import com.vknxworks.memoctrl.ui.theme.CtrlColors
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -119,14 +123,16 @@ private fun MemoTimeline(sync: ManualSync, filter: ((MemoEntity) -> Boolean)?, n
         ExtendedFloatingActionButton(
             onClick = { nav.navigate(EditorRoute(text = newMemoText)) },
             expanded = expandedFab,
-            icon = { Icon(Icons.Filled.Add, null) },
-            text = { Text(stringResource(R.string.new_memo)) },
-            shape = CircleShape,
-            containerColor = MaterialTheme.colorScheme.primary,
-            contentColor = MaterialTheme.colorScheme.onPrimary,
+            icon = { Icon(Icons.Outlined.Add, null, Modifier.size(22.dp)) },
+            text = { Text(stringResource(R.string.new_memo), style = MaterialTheme.typography.titleMedium) },
+            shape = RoundedCornerShape(18.dp),
+            containerColor = CtrlColors.Accent,
+            contentColor = CtrlColors.OnAccent,
+            elevation = FloatingActionButtonDefaults.elevation(0.dp, 0.dp, 0.dp, 0.dp),
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(end = 20.dp, bottom = if (clearance > 0.dp) clearance + 12.dp else 16.dp),
+                .padding(end = 20.dp, bottom = if (clearance > 0.dp) clearance + 12.dp else 16.dp)
+                .heightIn(min = 56.dp),
         )
     }
 }

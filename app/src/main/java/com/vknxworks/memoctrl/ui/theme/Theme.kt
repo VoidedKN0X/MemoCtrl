@@ -1,17 +1,12 @@
 package com.vknxworks.memoctrl.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -23,139 +18,163 @@ import androidx.compose.ui.unit.sp
 import com.vknxworks.memoctrl.R
 import com.vknxworks.memoctrl.data.settings.ThemeChoice
 
-// Graphite base shared by the Ctrl apps. MemoCtrl's own accent is marigold, the colour of a sticky note.
-private val Graphite = Color(0xFF121418)
-private val Marigold = Color(0xFFF4C76B)
+/**
+ * Ctrl / Signal: the shared look of the Ctrl series. Dark only, near-black background,
+ * graphite cards with hairline borders and one accent colour.
+ */
+object CtrlColors {
+    /** The one accent colour. Change it here and the whole app follows. */
+    val Accent = Color(0xFFB48CFF)
+    val OnAccent = Color(0xFF08080A)
 
-/** Default accent. */
-val MemoAccent = Marigold
+    val Background = Color(0xFF08080A)
+    val Surface = Color(0xFF141417)
+    val Raised = Color(0xFF1C1C21)
+    /** Card borders. */
+    val Outline = Color(0xFF232328)
+    /** Borders on controls: buttons, fields, the top bar avatar, the tab bar. */
+    val ControlOutline = Color(0xFF2A2A2F)
+    /** Dividers between list rows. */
+    val Divider = Color(0xFF1E1E23)
+    val Text = Color(0xFFF4F4F2)
+    val Muted = Color(0xFFA3A3AB)
+    /** Disabled or inactive things. */
+    val Inactive = Color(0xFF8C8C94)
+    val SwitchOffTrack = Color(0xFF2A2A30)
+    val ProgressTrack = Color(0xFF26262C)
+    val PinEmpty = Color(0xFF3A3A41)
+    val Error = Color(0xFFFF6B6B)
+}
 
-private val Dark = darkColorScheme(
-    primary = Marigold,
-    onPrimary = Color(0xFF3D2A00),
-    primaryContainer = Color(0xFF57400F),
-    onPrimaryContainer = Color(0xFFFFE3A8),
-    secondary = Color(0xFFC9CED8),
-    onSecondary = Color(0xFF1B1E24),
-    secondaryContainer = Color(0xFF2B3038),
-    onSecondaryContainer = Color(0xFFECEEF2),
-    tertiary = Color(0xFF8BD8C6),
-    onTertiary = Color(0xFF00382D),
-    background = Graphite,
-    onBackground = Color(0xFFECEEF2),
-    surface = Graphite,
-    onSurface = Color(0xFFECEEF2),
-    surfaceVariant = Color(0xFF23272E),
-    onSurfaceVariant = Color(0xFF9AA1AD),
-    surfaceContainerLowest = Color(0xFF0D0F12),
-    surfaceContainerLow = Color(0xFF171A1F),
-    surfaceContainer = Color(0xFF1C1F25),
-    surfaceContainerHigh = Color(0xFF23272E),
-    surfaceContainerHighest = Color(0xFF2B3038),
-    outline = Color(0xFF5A616C),
-    outlineVariant = Color(0xFF2E333B),
-    error = Color(0xFFFF8A80),
-    onError = Color(0xFF3B0907),
-    errorContainer = Color(0xFF5C1A16),
-    onErrorContainer = Color(0xFFFFDAD6),
+/** Kept for code that refers to the app's accent by its old name. */
+val MemoAccent = CtrlColors.Accent
+
+private val Scheme = darkColorScheme(
+    primary = CtrlColors.Accent,
+    onPrimary = CtrlColors.OnAccent,
+    primaryContainer = CtrlColors.Accent,
+    onPrimaryContainer = CtrlColors.OnAccent,
+    inversePrimary = CtrlColors.Accent,
+    secondary = CtrlColors.Text,
+    onSecondary = CtrlColors.OnAccent,
+    secondaryContainer = CtrlColors.Raised,
+    onSecondaryContainer = CtrlColors.Text,
+    tertiary = CtrlColors.Accent,
+    onTertiary = CtrlColors.OnAccent,
+    tertiaryContainer = CtrlColors.Raised,
+    onTertiaryContainer = CtrlColors.Text,
+    background = CtrlColors.Background,
+    onBackground = CtrlColors.Text,
+    surface = CtrlColors.Background,
+    onSurface = CtrlColors.Text,
+    surfaceVariant = CtrlColors.Raised,
+    onSurfaceVariant = CtrlColors.Muted,
+    surfaceTint = Color.Transparent,
+    inverseSurface = CtrlColors.Text,
+    inverseOnSurface = CtrlColors.Background,
+    surfaceBright = CtrlColors.Raised,
+    surfaceDim = CtrlColors.Background,
+    surfaceContainerLowest = CtrlColors.Background,
+    surfaceContainerLow = CtrlColors.Surface,
+    surfaceContainer = CtrlColors.Surface,
+    surfaceContainerHigh = CtrlColors.Raised,
+    surfaceContainerHighest = CtrlColors.Raised,
+    outline = CtrlColors.ControlOutline,
+    outlineVariant = CtrlColors.Outline,
+    error = CtrlColors.Error,
+    onError = CtrlColors.OnAccent,
+    errorContainer = Color(0xFF3A1416),
+    onErrorContainer = CtrlColors.Error,
+    scrim = Color.Black,
 )
 
-private val Light = lightColorScheme(
-    primary = Color(0xFF7C5800),
-    onPrimary = Color.White,
-    primaryContainer = Color(0xFFFFE3A8),
-    onPrimaryContainer = Color(0xFF271900),
-    secondary = Color(0xFF4A505B),
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFE4E7EC),
-    onSecondaryContainer = Color(0xFF15181D),
-    tertiary = Color(0xFF0F6E5B),
-    background = Color(0xFFF6F7F9),
-    onBackground = Color(0xFF15181D),
-    surface = Color(0xFFF6F7F9),
-    onSurface = Color(0xFF15181D),
-    surfaceVariant = Color(0xFFE4E7EC),
-    onSurfaceVariant = Color(0xFF5B626E),
-    surfaceContainerLowest = Color.White,
-    surfaceContainerLow = Color(0xFFF0F2F5),
-    surfaceContainer = Color(0xFFEBEDF1),
-    surfaceContainerHigh = Color(0xFFE4E7EC),
-    surfaceContainerHighest = Color(0xFFDCE0E6),
-    outline = Color(0xFF8A919C),
-    outlineVariant = Color(0xFFD3D7DE),
-)
+// ---------- Type ----------
 
-private fun manrope(weight: Int) = Font(
-    R.font.manrope,
+private fun grotesk(weight: Int) = Font(
+    R.font.space_grotesk,
     FontWeight(weight),
     variationSettings = FontVariation.Settings(FontVariation.weight(weight)),
 )
 
-val Manrope = FontFamily(
-    manrope(400), manrope(500), manrope(600), manrope(700), manrope(800),
+/** Space Grotesk: all UI text and headings. */
+val SpaceGrotesk = FontFamily(grotesk(400), grotesk(500), grotesk(600), grotesk(700))
+
+/** JetBrains Mono: numbers, data, section labels and the wordmark. */
+val JetBrainsMono = FontFamily(
+    Font(R.font.jetbrains_mono_regular, FontWeight.Normal),
+    Font(R.font.jetbrains_mono_medium, FontWeight.Medium),
+    Font(R.font.jetbrains_mono_semibold, FontWeight.SemiBold),
 )
 
-private fun style(size: Int, line: Int, weight: Int, tracking: Double = 0.0) = TextStyle(
-    fontFamily = Manrope,
+private fun style(size: Int, line: Int, weight: Int, tracking: Double = 0.0, family: FontFamily = SpaceGrotesk) = TextStyle(
+    fontFamily = family,
     fontSize = size.sp,
     lineHeight = line.sp,
     fontWeight = FontWeight(weight),
     letterSpacing = tracking.em,
 )
 
+/** Extra styles of the Ctrl series that Material's type scale has no slot for. */
+object CtrlType {
+    /** Section labels: mono, uppercase, wide tracking, muted. Uppercase the text yourself. */
+    val Label = style(11, 14, 500, 0.16, JetBrainsMono)
+    /** "MEMO/CTRL" in the top bar. */
+    val Wordmark = style(13, 16, 600, 0.14, JetBrainsMono)
+    /** Small mono readouts: times, counts, addresses. */
+    val Mono = style(12, 16, 400, 0.0, JetBrainsMono)
+    val MonoStrong = style(11, 14, 600, 0.1, JetBrainsMono)
+    /** Giant numbers on a hero card. */
+    val Readout = style(64, 60, 700, -0.05)
+    val ReadoutSmall = style(30, 34, 600, -0.03)
+}
+
 private val AppTypography = Typography(
-    displayLarge = style(52, 56, 800, -0.03),
-    displayMedium = style(44, 48, 800, -0.03),
-    displaySmall = style(36, 40, 800, -0.025),
-    headlineLarge = style(32, 38, 800, -0.02),
-    headlineMedium = style(28, 34, 700, -0.015),
-    headlineSmall = style(24, 30, 700, -0.01),
-    titleLarge = style(20, 26, 700, -0.005),
-    titleMedium = style(16, 22, 700),
+    displayLarge = style(56, 54, 700, -0.04),
+    displayMedium = style(48, 48, 700, -0.04),
+    displaySmall = style(40, 42, 700, -0.035),
+    headlineLarge = style(40, 42, 700, -0.035),
+    headlineMedium = style(30, 34, 700, -0.03),
+    headlineSmall = style(24, 30, 700, -0.02),
+    titleLarge = style(18, 24, 600),
+    titleMedium = style(16, 22, 600),
     titleSmall = style(14, 20, 600),
     bodyLarge = style(16, 24, 400),
     bodyMedium = style(14, 21, 400),
-    bodySmall = style(12, 17, 500),
+    bodySmall = style(12, 17, 400),
     labelLarge = style(14, 20, 600),
-    labelMedium = style(12, 16, 600),
-    labelSmall = style(11, 14, 600, 0.01),
+    labelMedium = style(12, 16, 500),
+    labelSmall = style(11, 14, 500, 0.02),
 )
 
+// ---------- Shapes ----------
+
+object CtrlShapes {
+    val Card = RoundedCornerShape(22.dp)
+    val Hero = RoundedCornerShape(26.dp)
+    val Control = RoundedCornerShape(14.dp)
+    val Button = RoundedCornerShape(16.dp)
+    val Chip = RoundedCornerShape(9.dp)
+    val Dot = RoundedCornerShape(2.dp)
+    val Sheet = RoundedCornerShape(26.dp)
+}
+
 private val AppShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
+    extraSmall = RoundedCornerShape(9.dp),
     small = RoundedCornerShape(12.dp),
     medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(24.dp),
-    extraLarge = RoundedCornerShape(32.dp),
+    large = RoundedCornerShape(22.dp),
+    extraLarge = RoundedCornerShape(26.dp),
 )
 
 /** Horizontal page margin used everywhere. */
 val Gutter = 20.dp
 
+/**
+ * The app theme. Ctrl / Signal is dark only: [choice] and [dynamic] are kept so old settings still
+ * load, but no longer change anything (no light theme, no Material You colours).
+ */
+@Suppress("UNUSED_PARAMETER")
 @Composable
-fun MemoCtrlTheme(choice: ThemeChoice = ThemeChoice.SYSTEM, dynamic: Boolean = false, content: @Composable () -> Unit) {
-    val dark = when (choice) {
-        ThemeChoice.SYSTEM -> isSystemInDarkTheme()
-        ThemeChoice.LIGHT -> false
-        ThemeChoice.DARK, ThemeChoice.BLACK -> true
-    }
-    val ctx = LocalContext.current
-    var scheme = when {
-        dynamic && dark -> dynamicDarkColorScheme(ctx)
-        dynamic -> dynamicLightColorScheme(ctx)
-        dark -> Dark
-        else -> Light
-    }
-    if (choice == ThemeChoice.BLACK) {
-        scheme = scheme.copy(
-            background = Color.Black,
-            surface = Color.Black,
-            surfaceContainerLowest = Color.Black,
-            surfaceContainerLow = Color(0xFF0B0C0E),
-            surfaceContainer = Color(0xFF131518),
-            surfaceContainerHigh = Color(0xFF1A1C20),
-            surfaceContainerHighest = Color(0xFF22252A),
-        )
-    }
-    MaterialTheme(colorScheme = scheme, typography = AppTypography, shapes = AppShapes, content = content)
+fun MemoCtrlTheme(choice: ThemeChoice = ThemeChoice.DARK, dynamic: Boolean = false, content: @Composable () -> Unit) {
+    MaterialTheme(colorScheme = Scheme, typography = AppTypography, shapes = AppShapes, content = content)
 }

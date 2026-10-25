@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -37,6 +36,11 @@ import com.vknxworks.memoctrl.ui.components.GroupRow
 import com.vknxworks.memoctrl.ui.components.LoadingView
 import com.vknxworks.memoctrl.ui.components.LocalBottomClearance
 import com.vknxworks.memoctrl.ui.components.TabTitle
+import com.vknxworks.memoctrl.ui.components.CtrlCard
+import com.vknxworks.memoctrl.ui.components.CtrlHeroCard
+import com.vknxworks.memoctrl.ui.components.CtrlLabel
+import com.vknxworks.memoctrl.ui.theme.CtrlColors
+import com.vknxworks.memoctrl.ui.theme.CtrlType
 import com.vknxworks.memoctrl.ui.nav.LocalNavigator
 import com.vknxworks.memoctrl.ui.theme.Gutter
 import com.vknxworks.memoctrl.util.extractTags
@@ -78,17 +82,17 @@ fun TagsScreen() {
 
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
             item(key = "stats") {
-                Surface(
-                    shape = MaterialTheme.shapes.large,
-                    color = MaterialTheme.colorScheme.surfaceContainer,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 8.dp),
-                ) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceAround) {
-                            Stat(list.size.toString(), pluralStringResource(R.plurals.stat_memos, list.size))
-                            Stat(tagCounts.size.toString(), pluralStringResource(R.plurals.stat_tags, tagCounts.size))
-                            Stat(days.toString(), pluralStringResource(R.plurals.stat_days, days.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()))
-                        }
+                Column(Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    // The one big number: how many memos you've written.
+                    CtrlHeroCard(
+                        label = pluralStringResource(R.plurals.stat_memos, list.size),
+                        value = list.size.toString(),
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        StatCard(tagCounts.size.toString(), pluralStringResource(R.plurals.stat_tags, tagCounts.size), Modifier.weight(1f))
+                        StatCard(days.toString(), pluralStringResource(R.plurals.stat_days, days.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()), Modifier.weight(1f))
+                    }
+                    CtrlCard {
                         Heatmap(list)
                     }
                 }
@@ -108,10 +112,16 @@ fun TagsScreen() {
                         tagCounts.forEach { (tag, count) ->
                             GroupRow(
                                 "#$tag",
-                                pluralStringResource(R.plurals.tag_count, count, count),
                                 icon = Icons.Outlined.Tag,
-                                showChevron = true,
                                 onClick = { nav.tag(tag) },
+                                trailing = {
+                                    Text(
+                                        pluralStringResource(R.plurals.tag_count, count, count).uppercase(),
+                                        style = CtrlType.MonoStrong,
+                                        color = CtrlColors.Muted,
+                                        maxLines = 1,
+                                    )
+                                },
                             )
                         }
                     }
@@ -122,10 +132,10 @@ fun TagsScreen() {
 }
 
 @Composable
-private fun Stat(value: String, label: String) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, style = MaterialTheme.typography.headlineSmall)
-        Text(label.uppercase(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun StatCard(value: String, label: String, modifier: Modifier = Modifier) {
+    CtrlCard(modifier) {
+        CtrlLabel(label)
+        Text(value, style = CtrlType.ReadoutSmall, color = CtrlColors.Text, maxLines = 1, modifier = Modifier.padding(top = 10.dp))
     }
 }
 
@@ -140,15 +150,15 @@ private fun Heatmap(memos: List<MemoEntity>) {
     val dayNames = remember(firstDay) {
         List(7) { i -> firstDay.plus(i.toLong()).getDisplayName(TextStyle.SHORT, Locale.getDefault()) }
     }
-    val accent = MaterialTheme.colorScheme.primary
-    val empty = MaterialTheme.colorScheme.surfaceContainerHighest
-    val todayRing = MaterialTheme.colorScheme.onSurface
+    val accent = CtrlColors.Accent
+    val empty = CtrlColors.Raised
+    val todayRing = CtrlColors.Text
 
     Row(Modifier.fillMaxWidth().height(118.dp)) {
         Column(Modifier.padding(end = 6.dp).height(118.dp), verticalArrangement = Arrangement.SpaceBetween) {
-            Text(dayNames[0], style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(dayNames[3], style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(dayNames[6], style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(dayNames[0].uppercase(), style = CtrlType.Label, color = CtrlColors.Muted)
+            Text(dayNames[3].uppercase(), style = CtrlType.Label, color = CtrlColors.Muted)
+            Text(dayNames[6].uppercase(), style = CtrlType.Label, color = CtrlColors.Muted)
         }
         BoxWithConstraints(Modifier.weight(1f).height(118.dp)) {
             val gap = 3.dp
@@ -169,14 +179,14 @@ private fun Heatmap(memos: List<MemoEntity>) {
                         val n = counts[day] ?: 0
                         val color = when (n) {
                             0 -> empty
-                            1 -> accent.copy(alpha = 0.35f)
-                            2 -> accent.copy(alpha = 0.55f)
-                            in 3..4 -> accent.copy(alpha = 0.78f)
+                            1 -> accent.copy(alpha = 0.30f)
+                            2 -> accent.copy(alpha = 0.52f)
+                            in 3..4 -> accent.copy(alpha = 0.76f)
                             else -> accent
                         }
                         val topLeft = Offset(left + col * (c + g), row * (c + g))
-                        drawRoundRect(color, topLeft, Size(c, c), CornerRadius(c * 0.22f))
-                        if (day == today) drawRoundRect(todayRing, topLeft, Size(c, c), CornerRadius(c * 0.22f), style = Stroke(width = 1.dp.toPx()))
+                        drawRoundRect(color, topLeft, Size(c, c), CornerRadius(c * 0.2f))
+                        if (day == today) drawRoundRect(todayRing, topLeft, Size(c, c), CornerRadius(c * 0.2f), style = Stroke(width = 1.dp.toPx()))
                     }
                 }
             }

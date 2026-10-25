@@ -4,6 +4,34 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.2.0 (2026-10-25)
+
+MemoCtrl gets the new **Ctrl / Signal** look shared by the whole Ctrl series. Only the look changes: every screen, feature, setting and gesture works as before.
+
+### Changed
+
+- **New dark look everywhere**: a near-black background (#08080A), graphite cards (#141417) with thin borders, light text and one lilac accent colour (#B48CFF) instead of the marigold yellow. Buttons, switches, the selected tab, links, #tags, the memo heatmap and the lock screen all use that accent.
+- **New fonts, built into the app**: Space Grotesk for all text and headings, and JetBrains Mono for times, counts, labels and code. They replace Manrope. Both are free fonts (SIL Open Font License 1.1, licence files included) and ship inside the app, so nothing is downloaded.
+- **New top bar**: the main tabs show the MEMO/CTRL wordmark (the slash in the accent colour) with your profile picture on the right, then the tab's name in big type. Your profile picture is now a rounded square with your initials and a small accent square in its corner while the server is reachable (the last sync didn't fail). Tapping it still opens the You page and settings.
+- **Other screens** (a memo, a tag, the editor, You, Settings, Accounts, Archive, Attachments) get a square back button next to the title instead of the plain arrow bar.
+- **Memo cards**: graphite cards with a thin border, the time in mono capitals, and the memo's #tags as small chips underneath (tap one to open that tag, same as tapping the #tag in the text). Pinned memos keep an accent border. Explore cards and the memo page show the tag chips too.
+- **New memo button**: an accent rounded rectangle instead of a round pill.
+- **Editor**: the Post / Save button is an accent button in the new top bar (the close button is a square X). The text sits in a bordered card, the H1/H2/H3 buttons use the mono font, and the visibility button shows its name in accent mono capitals.
+- **Tags tab**: your number of memos is now a big accent card at the top, with the number of tags and days in two cards next to each other below it, and the heatmap in its own card in shades of the accent. Each tag shows its memo count on the right in mono.
+- **Bottom tabs**: a floating bar with a thin border and square corners. The selected tab is an accent block with its icon and name; the others show just their icon. Tablets keep the side rail, in the new colours.
+- **Switches**: a new rounded-square switch (accent with a dark knob when on, grey when off). They still work with TalkBack as switches.
+- **Settings and You**: grouped settings sit in bordered cards with small mono section labels and thin lines between rows; row icons are outlined and grey. The You page shows a large accent square with your initials, your name and the server address in mono. **Support MemoCtrl** is now an accent button at the bottom, followed by the version and a "GOOGLE-FREE · TELEMETRY-FREE · ARM64" footer.
+- **Lock screen**: an accent square with a lock, "VKNXWORKS · CTRL" above a big "Locked", square PIN dots, and a keypad of rounded keys with mono digits. The fingerprint key (outlined in accent) sits left of 0 when fingerprint unlock is on; when a longer PIN or a new PIN needs confirming, that spot becomes the accent OK / Next / Done key. The lock itself, the PIN rules, fingerprint unlock and "Forgot PIN?" work exactly as before.
+- **Sign-in, search, dialogs and menus**: text fields are bordered cards whose border turns accent while you type; the password/token choice uses accent segments; dialogs and bottom menus use the graphite surface with rounded corners and a thin border.
+- **Empty and error screens** show their icon in the accent colour on a bordered square, and the Retry button is a bordered button.
+- **Home-screen widgets** use the new colours and corner shapes too.
+- **Status and navigation bars** always use light icons on the app's dark background, edge to edge.
+
+### Removed
+
+- **Theme and Material You colour settings**: Ctrl / Signal is dark only, so **Settings > Appearance** (Theme: System / Light / Dark / Black, and Material You colours) is gone. If you had picked Light, System or Black, or turned Material You on, MemoCtrl now shows the dark look anyway; the old choice is kept but does nothing.
+- **Frosted-glass blur behind the tab bar**: the bar is now a solid, slightly see-through graphite. The blur library (Haze) is no longer part of the app.
+
 ## v0.1.10 (2026-10-21)
 
 ### Fixed

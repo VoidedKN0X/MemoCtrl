@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.SearchOff
 import androidx.compose.material3.Icon
@@ -72,7 +72,7 @@ fun MemoDetailScreen(id: String) {
         val memo = (lookup as? Lookup.Found)?.memo
         ScreenTopBar(stringResource(R.string.memo)) {
             if (memo != null && !memo.archived) IconButton(onClick = { nav.edit(memo.identifier) }) { Icon(Icons.Outlined.Edit, stringResource(R.string.edit)) }
-            if (memo != null) IconButton(onClick = { menu = true }) { Icon(Icons.Filled.MoreVert, stringResource(R.string.more)) }
+            if (memo != null) IconButton(onClick = { menu = true }) { Icon(Icons.Outlined.MoreVert, stringResource(R.string.more)) }
         }
         when (val l = lookup) {
             Lookup.Loading -> LoadingView()
@@ -90,6 +90,7 @@ fun MemoDetailScreen(id: String) {
                         visibility = m.visibility,
                     )
                     MemoBody(m, preview = false, selectable = true)
+                    TagChips(m.content)
                     Text(
                         listOfNotNull(
                             DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.SHORT).format(Date(m.date.toEpochMilli())),
@@ -97,7 +98,7 @@ fun MemoDetailScreen(id: String) {
                             if (m.archived) stringResource(R.string.archived) else null,
                             if (m.needsSync) stringResource(R.string.not_synced) else null,
                         ).joinToString("  ·  "),
-                        style = MaterialTheme.typography.bodySmall,
+                        style = com.vknxworks.memoctrl.ui.theme.CtrlType.Mono,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                     )

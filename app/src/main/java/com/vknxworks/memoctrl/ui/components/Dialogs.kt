@@ -12,7 +12,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.layout.size
+import com.vknxworks.memoctrl.ui.theme.CtrlColors
+import com.vknxworks.memoctrl.ui.theme.CtrlShapes
+import com.vknxworks.memoctrl.ui.theme.CtrlType
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -65,8 +68,8 @@ fun ActionItem(icon: ImageVector, label: String, tint: Color = MaterialTheme.col
         Modifier.fillMaxWidth().heightIn(min = 52.dp).clickable(onClick = onClick).padding(horizontal = 24.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(icon, null, tint = tint)
-        Spacer(Modifier.width(20.dp))
+        Icon(icon, null, Modifier.size(22.dp), tint = tint)
+        Spacer(Modifier.width(18.dp))
         Text(label, style = MaterialTheme.typography.bodyLarge, color = textColor)
     }
 }
@@ -77,14 +80,17 @@ fun ActionSheet(title: String?, subtitle: String?, actions: List<SheetAction>, o
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = CtrlColors.Surface,
+        shape = CtrlSheetShape,
+        tonalElevation = 0.dp,
+        modifier = Modifier.sheetBorder(),
     ) {
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 8.dp)) {
             if (title != null) {
                 Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)) {
                     Text(title, style = MaterialTheme.typography.titleMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     if (!subtitle.isNullOrBlank()) {
-                        Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        Text(subtitle.uppercase(), style = CtrlType.Mono, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
@@ -111,10 +117,10 @@ fun TextInputDialog(
     onConfirm: (String) -> Unit,
 ) {
     var text by remember { mutableStateOf(initial) }
-    AlertDialog(
+    CtrlAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
-        text = { OutlinedTextField(text, { text = it }, label = { Text(label) }, singleLine = true, modifier = Modifier.fillMaxWidth()) },
+        text = { OutlinedTextField(text, { text = it }, label = { Text(label) }, singleLine = true, shape = CtrlShapes.Button, colors = ctrlOutlinedFieldColors(), modifier = Modifier.fillMaxWidth()) },
         confirmButton = { TextButton(onClick = { onConfirm(text.trim()) }, enabled = text.isNotBlank()) { Text(confirm) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
@@ -123,7 +129,7 @@ fun TextInputDialog(
 /** Asks before something that can't be undone. The confirm button is red. */
 @Composable
 fun ConfirmDialog(title: String, body: String?, confirm: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
-    AlertDialog(
+    CtrlAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = if (body != null) { { Text(body) } } else null,
@@ -135,7 +141,7 @@ fun ConfirmDialog(title: String, body: String?, confirm: String, onDismiss: () -
 /** Just tells the user something, with one button to close it. */
 @Composable
 fun InfoDialog(title: String, body: String, onDismiss: () -> Unit) {
-    AlertDialog(
+    CtrlAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(body) },

@@ -19,10 +19,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Tag
 import androidx.compose.material.icons.outlined.GridView
 import androidx.compose.material.icons.outlined.Public
 import androidx.compose.material.icons.outlined.Search
@@ -31,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,7 +59,6 @@ import com.vknxworks.memoctrl.container
 import com.vknxworks.memoctrl.ui.auth.SignInScreen
 import com.vknxworks.memoctrl.ui.components.LoadingView
 import com.vknxworks.memoctrl.ui.components.LocalBottomClearance
-import com.vknxworks.memoctrl.ui.components.LocalHazeState
 import com.vknxworks.memoctrl.ui.editor.EditorScreen
 import com.vknxworks.memoctrl.ui.explore.ExploreScreen
 import com.vknxworks.memoctrl.ui.memos.MemoDetailScreen
@@ -75,8 +71,7 @@ import com.vknxworks.memoctrl.ui.settings.AttachmentsScreen
 import com.vknxworks.memoctrl.ui.settings.SettingsScreen
 import com.vknxworks.memoctrl.ui.settings.YouScreen
 import com.vknxworks.memoctrl.ui.tags.TagsScreen
-import dev.chrisbanes.haze.hazeSource
-import dev.chrisbanes.haze.rememberHazeState
+import com.vknxworks.memoctrl.ui.theme.CtrlColors
 import androidx.compose.ui.res.stringResource
 import com.vknxworks.memoctrl.R
 
@@ -101,10 +96,10 @@ fun AppRoot() {
 private data class TopDest(val route: Any, val item: TabItem)
 
 private val topDestinations = listOf(
-    TopDest(MemosRoute, TabItem(R.string.tab_memos, Icons.Outlined.GridView, Icons.Filled.GridView)),
-    TopDest(TagsRoute, TabItem(R.string.tab_tags, Icons.Outlined.Tag, Icons.Filled.Tag)),
-    TopDest(ExploreRoute, TabItem(R.string.tab_explore, Icons.Outlined.Public, Icons.Filled.Public)),
-    TopDest(SearchRoute, TabItem(R.string.tab_search, Icons.Outlined.Search, Icons.Filled.Search)),
+    TopDest(MemosRoute, TabItem(R.string.tab_memos, Icons.Outlined.GridView, Icons.Outlined.GridView)),
+    TopDest(TagsRoute, TabItem(R.string.tab_tags, Icons.Outlined.Tag, Icons.Outlined.Tag)),
+    TopDest(ExploreRoute, TabItem(R.string.tab_explore, Icons.Outlined.Public, Icons.Outlined.Public)),
+    TopDest(SearchRoute, TabItem(R.string.tab_search, Icons.Outlined.Search, Icons.Outlined.Search)),
 )
 
 @Composable
@@ -156,6 +151,13 @@ private fun MainScaffold() {
                                 onClick = { selectTab(i) },
                                 icon = { Icon(if (selected) top.item.selectedIcon else top.item.icon, contentDescription = stringResource(top.item.label)) },
                                 label = { Text(stringResource(top.item.label)) },
+                                colors = NavigationRailItemDefaults.colors(
+                                    selectedIconColor = CtrlColors.OnAccent,
+                                    selectedTextColor = CtrlColors.Accent,
+                                    indicatorColor = CtrlColors.Accent,
+                                    unselectedIconColor = CtrlColors.Muted,
+                                    unselectedTextColor = CtrlColors.Muted,
+                                ),
                             )
                         }
                         Spacer(Modifier.weight(1f))
@@ -170,8 +172,8 @@ private fun MainScaffold() {
 }
 
 /**
- * Phones: content runs edge to edge and scrolls under a floating glass island.
- * The island shows on the main tabs; pushed screens get the full height.
+ * Phones: content runs edge to edge and scrolls under the floating Ctrl tab bar.
+ * The bar shows on the main tabs; pushed screens get the full height.
  */
 @Composable
 private fun PhoneLayout(
@@ -180,17 +182,15 @@ private fun PhoneLayout(
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
 ) {
-    val hazeState = rememberHazeState()
     val density = LocalDensity.current
     var overlayHeight by remember { mutableStateOf(0.dp) }
 
     CompositionLocalProvider(
-        LocalHazeState provides hazeState,
         LocalBottomClearance provides if (showTabs) overlayHeight else 0.dp,
     ) {
         Box(Modifier.fillMaxSize()) {
-            // Pushed screens stop above the navigation bar; the tabs scroll under the glass island.
-            Box(Modifier.fillMaxSize().hazeSource(hazeState).then(if (showTabs) Modifier else Modifier.navigationBarsPadding())) {
+            // Pushed screens stop above the navigation bar; the tabs scroll under the floating bar.
+            Box(Modifier.fillMaxSize().then(if (showTabs) Modifier else Modifier.navigationBarsPadding())) {
                 AppNavHost(navController)
             }
             Column(
@@ -199,7 +199,7 @@ private fun PhoneLayout(
                     .fillMaxWidth()
                     .onSizeChanged { overlayHeight = with(density) { it.height.toDp() } }
                     .navigationBarsPadding()
-                    .padding(bottom = 12.dp),
+                    .padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
@@ -208,7 +208,7 @@ private fun PhoneLayout(
                     enter = fadeIn() + slideInVertically { it / 2 },
                     exit = fadeOut() + slideOutVertically { it / 2 },
                 ) {
-                    GlassTabBar(items = topDestinations.map { it.item }, selectedIndex = selectedIndex, onSelect = onSelect)
+                    CtrlBottomBar(items = topDestinations.map { it.item }, selectedIndex = selectedIndex, onSelect = onSelect)
                 }
             }
         }

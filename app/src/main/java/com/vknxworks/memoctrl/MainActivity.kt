@@ -9,12 +9,9 @@ import android.view.WindowManager
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.core.content.IntentCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.vknxworks.memoctrl.data.settings.ThemeChoice
 import androidx.compose.runtime.LaunchedEffect
 import com.vknxworks.memoctrl.ui.components.ScreenPrivacy
 import com.vknxworks.memoctrl.ui.components.WindowPrivacy
@@ -27,23 +24,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // Ctrl / Signal is dark only: edge to edge with light status and navigation bar icons.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
+        )
         val c = container
         if (savedInstanceState == null) handleIntent(intent)
         setContent {
             val settings by c.settings.settings.collectAsStateWithLifecycle()
-            val dark = when (settings.theme) {
-                ThemeChoice.SYSTEM -> isSystemInDarkTheme()
-                ThemeChoice.LIGHT -> false
-                ThemeChoice.DARK, ThemeChoice.BLACK -> true
-            }
-            // Keep status and navigation bar icons readable when the app theme differs from the system's.
-            DisposableEffect(dark) {
-                val style = if (dark) SystemBarStyle.dark(Color.TRANSPARENT)
-                else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
-                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
-                onDispose { }
-            }
             // "Hide in screenshots" (off by default); always on for signing in and the lock and PIN screens.
             val covered = (settings.appLock && !c.vault.enabled) || (c.vault.enabled && !AppLock.unlocked) || AppLock.request != null
             val secure = settings.hideScreenshots || covered || ScreenPrivacy.forced > 0

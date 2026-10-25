@@ -20,7 +20,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.LocationOn
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import com.vknxworks.memoctrl.ui.components.CtrlAlertDialog
+import com.vknxworks.memoctrl.ui.components.ctrlOutlinedFieldColors
+import com.vknxworks.memoctrl.ui.theme.CtrlColors
+import com.vknxworks.memoctrl.ui.theme.CtrlShapes
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -130,13 +134,15 @@ fun LocationDialog(location: MemoLocation?, onConfirm: (MemoLocation?) -> Unit, 
         else error = context.getString(R.string.location_denied)
     }
 
-    AlertDialog(
+    CtrlAlertDialog(
         onDismissRequest = onDismiss,
         icon = { Icon(Icons.Outlined.LocationOn, null) },
         title = { Text(stringResource(R.string.location_title)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 FilledTonalButton(
+                    shape = CtrlShapes.Button,
+                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = CtrlColors.Accent, contentColor = CtrlColors.OnAccent),
                     enabled = !locating,
                     onClick = {
                         if (hasLocationPermission(context)) locate()
@@ -155,7 +161,7 @@ fun LocationDialog(location: MemoLocation?, onConfirm: (MemoLocation?) -> Unit, 
                         Text(stringResource(R.string.location_settings))
                     }
                 }
-                OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.location_place)) }, singleLine = true, enabled = !locating, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.location_place)) }, singleLine = true, enabled = !locating, shape = CtrlShapes.Button, colors = ctrlOutlinedFieldColors(), modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(
                     lat, { lat = it },
                     label = { Text(stringResource(R.string.location_latitude)) },
@@ -163,6 +169,8 @@ fun LocationDialog(location: MemoLocation?, onConfirm: (MemoLocation?) -> Unit, 
                     singleLine = true,
                     enabled = !locating,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = CtrlShapes.Button,
+                    colors = ctrlOutlinedFieldColors(),
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
@@ -172,6 +180,8 @@ fun LocationDialog(location: MemoLocation?, onConfirm: (MemoLocation?) -> Unit, 
                     singleLine = true,
                     enabled = !locating,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = CtrlShapes.Button,
+                    colors = ctrlOutlinedFieldColors(),
                     modifier = Modifier.fillMaxWidth(),
                 )
                 if (location != null) {

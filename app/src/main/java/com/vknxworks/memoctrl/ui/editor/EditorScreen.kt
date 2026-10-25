@@ -23,13 +23,20 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.PaddingValues
+import com.vknxworks.memoctrl.ui.components.CtrlAlertDialog
+import com.vknxworks.memoctrl.ui.components.CtrlBackBar
+import com.vknxworks.memoctrl.ui.components.topDivider
+import com.vknxworks.memoctrl.ui.theme.CtrlColors
+import com.vknxworks.memoctrl.ui.theme.CtrlType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Send
+import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material.icons.automirrored.outlined.FormatListBulleted
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Attachment
 import androidx.compose.material.icons.outlined.CheckBox
 import androidx.compose.material.icons.outlined.Code
@@ -55,8 +62,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberUpdatedState
@@ -464,24 +469,30 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
     val canSubmit = initialized && !busy && (text.text.isNotBlank() || model.resources.isNotEmpty())
 
     Column(Modifier.fillMaxSize().imePadding()) {
-        TopAppBar(
-            title = { Text(stringResource(if (isEdit) R.string.editor_edit_title else R.string.new_memo), style = MaterialTheme.typography.titleLarge) },
-            navigationIcon = { IconButton(onClick = ::exit) { Icon(Icons.Filled.Close, stringResource(R.string.close)) } },
-            actions = {
-                Button(
-                    onClick = ::submit,
-                    enabled = canSubmit,
-                    shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary),
-                    modifier = Modifier.padding(end = 8.dp),
-                ) {
-                    if (busy) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
-                    else Icon(Icons.AutoMirrored.Filled.Send, null, Modifier.size(18.dp))
-                    Text(stringResource(if (isEdit) R.string.save else R.string.post), modifier = Modifier.padding(start = 8.dp))
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-        )
+        CtrlBackBar(
+            stringResource(if (isEdit) R.string.editor_edit_title else R.string.new_memo),
+            onBack = ::exit,
+            backIcon = Icons.Outlined.Close,
+            backLabel = stringResource(R.string.close),
+        ) {
+            Button(
+                onClick = ::submit,
+                enabled = canSubmit,
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = CtrlColors.Accent,
+                    contentColor = CtrlColors.OnAccent,
+                    disabledContainerColor = CtrlColors.Raised,
+                    disabledContentColor = CtrlColors.Inactive,
+                ),
+                contentPadding = PaddingValues(horizontal = 18.dp),
+                modifier = Modifier.padding(start = 8.dp, end = 8.dp).heightIn(min = 44.dp),
+            ) {
+                if (busy) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp, color = CtrlColors.OnAccent)
+                else Icon(Icons.AutoMirrored.Outlined.Send, null, Modifier.size(18.dp))
+                Text(stringResource(if (isEdit) R.string.save else R.string.post), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 8.dp))
+            }
+        }
 
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = Gutter)) {
             TextField(
@@ -502,13 +513,22 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                 placeholder = { Text(stringResource(R.string.editor_placeholder)) },
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
                 textStyle = MaterialTheme.typography.bodyLarge,
+                shape = RoundedCornerShape(22.dp),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
+                    focusedContainerColor = CtrlColors.Surface,
+                    unfocusedContainerColor = CtrlColors.Surface,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
+                    cursorColor = CtrlColors.Accent,
+                    focusedPlaceholderColor = CtrlColors.Muted,
+                    unfocusedPlaceholderColor = CtrlColors.Muted,
                 ),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 220.dp).focusRequester(focus),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 4.dp, bottom = 12.dp)
+                    .heightIn(min = 220.dp)
+                    .border(1.dp, CtrlColors.Outline, RoundedCornerShape(22.dp))
+                    .focusRequester(focus),
             )
             val images = model.resources.filter { it.isImage }
             val files = model.resources.filterNot { it.isImage }
@@ -519,7 +539,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
             }
         }
 
-        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        HorizontalDivider(color = CtrlColors.Divider)
         // Formatting
         Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             FormatText(stringResource(R.string.format_h1)) { text = applyFormat(text, MarkdownFormat.H1) }
@@ -535,7 +555,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
         }
         // Content
         Row(
-            Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerLow).padding(horizontal = 8.dp, vertical = 4.dp),
+            Modifier.fillMaxWidth().background(CtrlColors.Surface).topDivider(CtrlColors.Outline).padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()), verticalAlignment = Alignment.CenterVertically) {
@@ -568,9 +588,9 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                 }
                 if (s.remote.supportsLocation) ToolButton(Icons.Outlined.LocationOn, stringResource(R.string.editor_location)) { showLocation = true }
             }
-            TextButton(onClick = { showVisibility = true }) {
-                Icon(visibility.icon, null, Modifier.size(18.dp))
-                Text(visibility.label, modifier = Modifier.padding(start = 6.dp))
+            TextButton(onClick = { showVisibility = true }, shape = RoundedCornerShape(14.dp)) {
+                Icon(visibility.icon, null, Modifier.size(18.dp), tint = CtrlColors.Accent)
+                Text(visibility.label.uppercase(), style = CtrlType.MonoStrong, color = CtrlColors.Accent, modifier = Modifier.padding(start = 6.dp))
             }
         }
     }
@@ -597,7 +617,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
 
     if (showExitDialog) {
         if (isEdit) {
-            androidx.compose.material3.AlertDialog(
+            CtrlAlertDialog(
                 onDismissRequest = { showExitDialog = false },
                 title = { Text(stringResource(R.string.editor_save_changes_title)) },
                 text = { Text(stringResource(R.string.editor_save_changes_body)) },
@@ -610,7 +630,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                 },
             )
         } else {
-            androidx.compose.material3.AlertDialog(
+            CtrlAlertDialog(
                 onDismissRequest = { showExitDialog = false },
                 title = { Text(stringResource(if (usesDraft) R.string.editor_keep_draft_title else R.string.editor_post_title)) },
                 text = {
@@ -651,12 +671,12 @@ private fun removeResource(c: AppContainer, model: EditorModel, r: ResourceEntit
 
 @Composable
 private fun ToolButton(icon: ImageVector, label: String, onClick: () -> Unit) {
-    IconButton(onClick = onClick) { Icon(icon, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+    IconButton(onClick = onClick) { Icon(icon, label, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant) }
 }
 
 @Composable
 private fun FormatText(label: String, onClick: () -> Unit) {
     TextButton(onClick = onClick, modifier = Modifier.size(width = 48.dp, height = 40.dp), contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
-        Text(label, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(label, style = CtrlType.MonoStrong, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

@@ -4,6 +4,18 @@ import android.content.Context
 import android.content.Intent
 import android.text.format.DateUtils
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.em
+import com.vknxworks.memoctrl.ui.theme.CtrlColors
+import com.vknxworks.memoctrl.ui.theme.CtrlShapes
+import com.vknxworks.memoctrl.ui.theme.CtrlType
+import com.vknxworks.memoctrl.util.extractTags
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,7 +27,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Archive
 import androidx.compose.material.icons.outlined.Badge
 import androidx.compose.material.icons.outlined.CloudOff
@@ -127,12 +139,12 @@ fun MemoCard(
     val edit = { nav.edit(memo.identifier) }
 
     Surface(
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        border = if (memo.pinned) BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)) else null,
+        shape = CtrlShapes.Card,
+        color = CtrlColors.Surface,
+        border = BorderStroke(1.dp, if (memo.pinned) CtrlColors.Accent else CtrlColors.Outline),
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = Gutter, vertical = 6.dp),
+            .padding(horizontal = Gutter, vertical = 5.dp),
     ) {
         Column(
             Modifier
@@ -141,7 +153,7 @@ fun MemoCard(
                     onDoubleClick = if (gesture == EditGesture.DOUBLE) edit else null,
                     onLongClick = if (gesture == EditGesture.LONG) edit else { { menu = true } },
                 )
-                .padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 14.dp),
+                .padding(start = 18.dp, end = 4.dp, top = 4.dp, bottom = 16.dp),
         ) {
             MemoHeader(
                 time = relativeTime(memo.date.toEpochMilli()),
@@ -150,8 +162,9 @@ fun MemoCard(
                 visibility = memo.visibility.takeIf { it != defaultVisibility },
                 onMenu = { menu = true },
             )
-            Column(Modifier.padding(end = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.padding(end = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 MemoBody(memo, preview = preview, onShowMore = onOpen)
+                TagChips(memo.content)
             }
         }
     }
@@ -169,18 +182,18 @@ fun MemoHeader(
     onMenu: (() -> Unit)? = null,
 ) {
     Row(Modifier.fillMaxWidth().padding(vertical = if (onMenu == null) 10.dp else 0.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(time, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(time.uppercase(), style = CtrlType.Mono.copy(letterSpacing = 0.06.em), color = CtrlColors.Muted, maxLines = 1)
         if (author != null) {
             Spacer(Modifier.width(10.dp))
-            Text("@$author", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("@$author", style = CtrlType.Mono, color = CtrlColors.Accent, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         if (pinned) {
             Spacer(Modifier.width(8.dp))
-            Icon(Icons.Outlined.PushPin, stringResource(R.string.pinned), Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
+            Icon(Icons.Outlined.PushPin, stringResource(R.string.pinned), Modifier.size(16.dp), tint = CtrlColors.Accent)
         }
         if (visibility != null) {
             Spacer(Modifier.width(8.dp))
-            Icon(visibility.icon, visibility.label, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(visibility.icon, visibility.label, Modifier.size(16.dp), tint = CtrlColors.Muted)
         }
         if (unsynced) {
             Spacer(Modifier.width(8.dp))
@@ -189,7 +202,7 @@ fun MemoHeader(
         Spacer(Modifier.weight(1f))
         if (onMenu != null) {
             IconButton(onClick = onMenu) {
-                Icon(Icons.Filled.MoreVert, stringResource(R.string.more), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                Icon(Icons.Outlined.MoreVert, stringResource(R.string.more), Modifier.size(20.dp), tint = CtrlColors.Muted)
             }
         }
     }
@@ -299,11 +312,12 @@ fun copyText(context: Context, text: String) {
 fun ExploreCard(memo: RemoteMemo, serverUrl: String?) {
     val nav = LocalNavigator.current
     Surface(
-        shape = MaterialTheme.shapes.large,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-        modifier = Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 6.dp),
+        shape = CtrlShapes.Card,
+        color = CtrlColors.Surface,
+        border = BorderStroke(1.dp, CtrlColors.Outline),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 5.dp),
     ) {
-        Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(Modifier.padding(start = 18.dp, end = 18.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             MemoHeader(
                 time = relativeTime(memo.date.toEpochMilli()),
                 pinned = false,
@@ -313,6 +327,7 @@ fun ExploreCard(memo: RemoteMemo, serverUrl: String?) {
             )
             val actions = remember { MarkdownActions(onTag = { nav.tag(it) }) }
             if (memo.content.isNotBlank()) Markdown(memo.content, serverUrl = serverUrl, actions = actions)
+            TagChips(memo.content)
             val asEntities = remember(memo) {
                 memo.resources.map { r ->
                     com.vknxworks.memoctrl.data.model.ResourceEntity(
@@ -329,6 +344,32 @@ fun ExploreCard(memo: RemoteMemo, serverUrl: String?) {
             ImageGrid(asEntities.filter { it.isImage }, serverUrl = serverUrl)
             AttachmentChips(asEntities.filterNot { it.isImage })
             memo.location?.let { LocationRow(it) }
+        }
+    }
+}
+
+/** A memo's #tags as small chips (9dp corners, mono); tapping one opens that tag. */
+@Composable
+fun TagChips(content: String, modifier: Modifier = Modifier) {
+    val tags = remember(content) { extractTags(content).toList() }
+    if (tags.isEmpty()) return
+    val nav = LocalNavigator.current
+    FlowRow(modifier, horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        tags.forEach { tag ->
+            Text(
+                "#$tag",
+                style = CtrlType.Mono.copy(fontWeight = FontWeight.Medium),
+                color = CtrlColors.Accent,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .widthIn(max = 220.dp)
+                    .clip(CtrlShapes.Chip)
+                    .background(CtrlColors.Accent.copy(alpha = 0.12f))
+                    .border(1.dp, CtrlColors.Accent.copy(alpha = 0.28f), CtrlShapes.Chip)
+                    .clickable(role = Role.Button) { nav.tag(tag) }
+                    .padding(horizontal = 10.dp, vertical = 5.dp),
+            )
         }
     }
 }

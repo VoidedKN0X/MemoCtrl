@@ -26,10 +26,18 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.foundation.border
+import com.vknxworks.memoctrl.ui.components.CtrlSquareButton
+import com.vknxworks.memoctrl.ui.components.CtrlTextField
+import com.vknxworks.memoctrl.ui.components.CtrlWordmark
+import com.vknxworks.memoctrl.ui.components.ctrlSegmentColors
+import com.vknxworks.memoctrl.ui.components.ctrlSegmentShape
+import com.vknxworks.memoctrl.ui.theme.CtrlColors
+import com.vknxworks.memoctrl.ui.theme.CtrlShapes
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.Visibility
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material.icons.outlined.Badge
 import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material3.CircularProgressIndicator
@@ -213,8 +221,12 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Box(Modifier.height(48.dp)) {
-                if (onCancel != null) IconButton(onClick = onCancel) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back)) }
+            Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (onCancel != null) {
+                    CtrlSquareButton(Icons.AutoMirrored.Outlined.ArrowBack, stringResource(R.string.back), onClick = onCancel)
+                    Spacer(Modifier.width(14.dp))
+                }
+                CtrlWordmark()
             }
             Text(if (onCancel == null) stringResource(R.string.app_name) else stringResource(R.string.signin_add_server), style = MaterialTheme.typography.displaySmall)
             Text(
@@ -232,7 +244,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
             )
             if (address.trim().startsWith("http://", ignoreCase = true)) {
                 Row(
-                    Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceContainer).padding(14.dp),
+                    Modifier.fillMaxWidth().clip(CtrlShapes.Button).background(CtrlColors.Surface).border(1.dp, CtrlColors.Error.copy(alpha = 0.5f), CtrlShapes.Button).padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(Icons.Outlined.LockOpen, null, tint = MaterialTheme.colorScheme.error)
@@ -245,10 +257,10 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
                 }
             }
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                SegmentedButton(selected = usePassword, onClick = { usePassword = true }, shape = SegmentedButtonDefaults.itemShape(0, 2), enabled = !busy) {
+                SegmentedButton(selected = usePassword, onClick = { usePassword = true }, shape = ctrlSegmentShape(0, 2), colors = ctrlSegmentColors(), icon = {}, enabled = !busy) {
                     Text(stringResource(R.string.signin_password_tab))
                 }
-                SegmentedButton(selected = !usePassword, onClick = { usePassword = false }, shape = SegmentedButtonDefaults.itemShape(1, 2), enabled = !busy) {
+                SegmentedButton(selected = !usePassword, onClick = { usePassword = false }, shape = ctrlSegmentShape(1, 2), colors = ctrlSegmentColors(), icon = {}, enabled = !busy) {
                     Text(stringResource(R.string.signin_token_tab))
                 }
             }
@@ -267,7 +279,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
                     enabled = !busy,
                     trailing = {
                         IconButton(onClick = { showToken = !showToken }) {
-                            Icon(if (showToken) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, stringResource(if (showToken) R.string.signin_hide_password else R.string.signin_show_password))
+                            Icon(if (showToken) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility, stringResource(if (showToken) R.string.signin_hide_password else R.string.signin_show_password))
                         }
                     },
                 )
@@ -285,7 +297,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
                     enabled = !busy,
                     trailing = {
                         IconButton(onClick = { showToken = !showToken }) {
-                            Icon(if (showToken) Icons.Filled.VisibilityOff else Icons.Filled.Visibility, stringResource(if (showToken) R.string.signin_hide_token else R.string.signin_show_token))
+                            Icon(if (showToken) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility, stringResource(if (showToken) R.string.signin_hide_token else R.string.signin_show_token))
                         }
                     },
                 )
@@ -306,8 +318,9 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .clip(CtrlShapes.Button)
+                    .background(CtrlColors.Surface)
+                    .border(1.dp, CtrlColors.ControlOutline, CtrlShapes.Button)
                     .clickable(enabled = !busy) {
                         val activity = context.findActivity() ?: return@clickable
                         ClientCertificate.choose(activity) { ok -> if (ok) certificate = ClientCertificate.selectedAlias(context) }
@@ -329,7 +342,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
             if (busy) {
-                Box(Modifier.fillMaxWidth().height(52.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(28.dp)) }
+                Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(28.dp), color = CtrlColors.Accent) }
             } else {
                 PillButton(stringResource(R.string.signin_button), onClick = ::submit, enabled = canSubmit, modifier = Modifier.fillMaxWidth())
             }
@@ -355,26 +368,17 @@ private fun Field(
     visual: VisualTransformation = VisualTransformation.None,
     trailing: (@Composable () -> Unit)? = null,
 ) {
-    TextField(
+    CtrlTextField(
         value = value,
         onValueChange = onChange,
-        label = { Text(label) },
-        placeholder = if (placeholder != null) { { Text(placeholder) } } else null,
+        label = label,
+        placeholder = placeholder,
         singleLine = true,
         enabled = enabled,
         keyboardOptions = keyboard,
         keyboardActions = actions,
         visualTransformation = visual,
         trailingIcon = trailing,
-        shape = MaterialTheme.shapes.medium,
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-            disabledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent,
-        ),
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier,
     )
 }

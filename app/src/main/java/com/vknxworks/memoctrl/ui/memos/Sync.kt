@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Sync
-import androidx.compose.material3.AlertDialog
+import com.vknxworks.memoctrl.ui.components.CtrlAlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
@@ -89,13 +89,13 @@ fun rememberManualSync(): ManualSync {
 private fun SyncDialogs(sync: ManualSync) {
     when (val a = sync.alert) {
         null -> Unit
-        is SyncAlert.Blocked -> AlertDialog(
+        is SyncAlert.Blocked -> CtrlAlertDialog(
             onDismissRequest = { sync.alert = null },
             title = { Text(stringResource(R.string.sync_unsupported_title)) },
             text = { Text(a.message) },
             confirmButton = { TextButton(onClick = { sync.alert = null }) { Text(stringResource(R.string.close)) } },
         )
-        is SyncAlert.Confirm -> AlertDialog(
+        is SyncAlert.Confirm -> CtrlAlertDialog(
             onDismissRequest = { sync.alert = null },
             title = { Text(stringResource(R.string.sync_newer_title)) },
             text = { Text(a.message) },
@@ -107,7 +107,7 @@ private fun SyncDialogs(sync: ManualSync) {
             },
             dismissButton = { TextButton(onClick = { sync.alert = null }) { Text(stringResource(R.string.cancel)) } },
         )
-        is SyncAlert.Failed -> AlertDialog(
+        is SyncAlert.Failed -> CtrlAlertDialog(
             onDismissRequest = { sync.alert = null },
             title = { Text(stringResource(R.string.sync_failed_title)) },
             text = { Text(stringResource(R.string.sync_failed_body, a.message)) },
@@ -126,10 +126,10 @@ fun SyncButton(sync: ManualSync) {
     IconButton(onClick = { sync.start() }, enabled = !status.syncing && !sync.running) {
         when {
             status.syncing || sync.running -> Box(contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.primary)
             }
             status.errorMessage != null -> Icon(Icons.Outlined.CloudOff, stringResource(R.string.sync_failed_now), tint = MaterialTheme.colorScheme.error)
-            status.unsyncedCount > 0 -> BadgedBox(badge = { Badge { Text(status.unsyncedCount.coerceAtMost(99).toString()) } }) {
+            status.unsyncedCount > 0 -> BadgedBox(badge = { Badge(containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) { Text(status.unsyncedCount.coerceAtMost(99).toString()) } }) {
                 Icon(Icons.Outlined.Sync, pluralStringResource(R.plurals.sync_pending_now, status.unsyncedCount, status.unsyncedCount))
             }
             else -> Icon(Icons.Outlined.Sync, stringResource(R.string.sync_now), tint = MaterialTheme.colorScheme.onSurfaceVariant)

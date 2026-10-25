@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif-medium"
         android:text="@string/widget_memory_title"
-        android:textColor="#FFF4C76B"
+        android:textColor="#FFB48CFF"
         android:textSize="13sp" />
 
     <TextView
@@ -21,7 +21,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:textColor="#FF9AA1AD"
+        android:textColor="#FFA3A3AB"
         android:textSize="12sp" />
 
     <TextView
@@ -32,6 +32,6 @@
         android:layout_weight="1"
         android:ellipsize="end"
         android:text="@string/widget_empty"
-        android:textColor="#FFECEEF2"
+        android:textColor="#FFF4F4F2"
         android:textSize="14sp" />
 </LinearLayout>

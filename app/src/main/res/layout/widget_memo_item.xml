@@ -17,7 +17,7 @@
             android:id="@+id/item_date"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#FF9AA1AD"
+            android:textColor="#FFA3A3AB"
             android:textSize="12sp" />
 
         <ImageView
@@ -37,6 +37,6 @@
         android:layout_marginTop="6dp"
         android:ellipsize="end"
         android:maxLines="4"
-        android:textColor="#FFECEEF2"
+        android:textColor="#FFF4F4F2"
         android:textSize="14sp" />
 </LinearLayout>
