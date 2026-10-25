@@ -88,10 +88,11 @@ fun CtrlLabel(text: String, modifier: Modifier = Modifier, color: Color = CtrlCo
 /** "MEMO/CTRL" with the slash in the accent colour. */
 @Composable
 fun CtrlWordmark(modifier: Modifier = Modifier, name: String = "MEMO") {
-    val text = remember(name) {
+    val slash = CtrlColors.AccentText
+    val text = remember(name, slash) {
         buildAnnotatedString {
             append(name)
-            withStyle(SpanStyle(color = CtrlColors.Accent)) { append("/") }
+            withStyle(SpanStyle(color = slash)) { append("/") }
             append("CTRL")
         }
     }
@@ -107,7 +108,7 @@ fun CtrlDot(color: Color, modifier: Modifier = Modifier) {
 /** Trailing mono status, accent when active, grey when not, with its dot. */
 @Composable
 fun CtrlStatus(text: String, active: Boolean, modifier: Modifier = Modifier) {
-    val color = if (active) CtrlColors.Accent else CtrlColors.Inactive
+    val color = if (active) CtrlColors.AccentText else CtrlColors.Inactive
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         Text(text.uppercase(), style = CtrlType.MonoStrong, color = color, maxLines = 1)
         Spacer(Modifier.width(8.dp))
@@ -316,6 +317,7 @@ fun CtrlHeroCard(
 }
 
 /** Draws the 1dp row divider along the top edge. */
+@Composable
 fun Modifier.topDivider(color: Color = CtrlColors.Divider): Modifier = drawBehind {
     drawRect(color, size = Size(size.width, 1.dp.toPx()))
 }
@@ -342,7 +344,7 @@ fun CtrlSwitch(
 ) {
     val knobX by animateDpAsState(if (checked) 20.dp else 0.dp, label = "knob")
     val track by animateColorAsState(if (checked) CtrlColors.Accent else CtrlColors.SwitchOffTrack, label = "track")
-    val knob by animateColorAsState(if (checked) CtrlColors.OnAccent else CtrlColors.Inactive, label = "knob-color")
+    val knob by animateColorAsState(if (checked) CtrlColors.OnAccent else CtrlColors.SwitchOffKnob, label = "knob-color")
     val toggle = if (onCheckedChange != null) {
         Modifier.toggleable(value = checked, enabled = enabled, role = Role.Switch, onValueChange = onCheckedChange)
     } else Modifier
@@ -425,11 +427,11 @@ fun ctrlOutlinedFieldColors() = OutlinedTextFieldDefaults.colors(
     focusedContainerColor = CtrlColors.Surface,
     unfocusedContainerColor = CtrlColors.Surface,
     disabledContainerColor = CtrlColors.Surface,
-    focusedBorderColor = CtrlColors.Accent,
+    focusedBorderColor = CtrlColors.AccentText,
     unfocusedBorderColor = CtrlColors.ControlOutline,
     disabledBorderColor = CtrlColors.Outline,
-    cursorColor = CtrlColors.Accent,
-    focusedLabelColor = CtrlColors.Accent,
+    cursorColor = CtrlColors.AccentText,
+    focusedLabelColor = CtrlColors.AccentText,
     unfocusedLabelColor = CtrlColors.Muted,
 )
 
@@ -475,8 +477,8 @@ fun CtrlTextField(
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent,
-            cursorColor = CtrlColors.Accent,
-            focusedLabelColor = CtrlColors.Accent,
+            cursorColor = CtrlColors.AccentText,
+            focusedLabelColor = CtrlColors.AccentText,
             unfocusedLabelColor = CtrlColors.Muted,
             focusedLeadingIconColor = CtrlColors.Muted,
             unfocusedLeadingIconColor = CtrlColors.Muted,
@@ -485,7 +487,7 @@ fun CtrlTextField(
         ),
         modifier = modifier
             .fillMaxWidth()
-            .border(1.dp, if (focused) CtrlColors.Accent else CtrlColors.ControlOutline, shape),
+            .border(1.dp, if (focused) CtrlColors.AccentText else CtrlColors.ControlOutline, shape),
     )
 }
 
@@ -527,7 +529,7 @@ fun CtrlAlertDialog(
         text = text,
         shape = CtrlShapes.Sheet,
         containerColor = CtrlColors.Surface,
-        iconContentColor = CtrlColors.Accent,
+        iconContentColor = CtrlColors.AccentText,
         titleContentColor = CtrlColors.Text,
         textContentColor = CtrlColors.Muted,
         tonalElevation = 0.dp,
@@ -539,13 +541,14 @@ fun CtrlAlertDialog(
 val CtrlSheetShape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)
 
 /** Hairline border along a bottom sheet's rounded top. */
+@Composable
 fun Modifier.sheetBorder(): Modifier = border(1.dp, CtrlColors.Outline, CtrlSheetShape)
 
 // ---------- Progress ----------
 
 /** A 6dp progress bar: [fraction] of the track filled. */
 @Composable
-fun CtrlProgressBar(fraction: Float, modifier: Modifier = Modifier, color: Color = CtrlColors.Text) {
+fun CtrlProgressBar(fraction: Float, modifier: Modifier = Modifier, color: Color = CtrlColors.ProgressFill) {
     Box(modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(CtrlColors.ProgressTrack)) {
         Box(Modifier.fillMaxWidth(fraction.coerceIn(0f, 1f)).height(6.dp).clip(RoundedCornerShape(3.dp)).background(color))
     }

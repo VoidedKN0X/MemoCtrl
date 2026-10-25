@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Ctrl / Signal background -->
-    <color name="window_bg">#FF08080A</color>
+    <!-- Ctrl / Signal Light. The dark values are in values-night/colors.xml. -->
+    <color name="window_bg">#FFF5F5F1</color>
     <color name="ic_bg">#FF121418</color>
+    <color name="ctrl_surface">#FFFFFFFF</color>
+    <color name="ctrl_outline">#FFDEDED7</color>
+    <color name="ctrl_control_outline">#FFD2D2CA</color>
+    <color name="ctrl_text">#FF0B0B0D</color>
+    <color name="ctrl_muted">#FF5C5C64</color>
+    <!-- Accent as text and icons (the #B48CFF fill is too pale on white). -->
+    <color name="ctrl_accent_text">#FF6A3BDB</color>
+    <color name="widget_bg">#F2F5F5F1</color>
 </resources>

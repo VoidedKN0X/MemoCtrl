@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ctrl / Signal Dark -->
+    <color name="window_bg">#FF08080A</color>
+    <color name="ctrl_surface">#FF141417</color>
+    <color name="ctrl_outline">#FF232328</color>
+    <color name="ctrl_control_outline">#FF2A2A2F</color>
+    <color name="ctrl_text">#FFF4F4F2</color>
+    <color name="ctrl_muted">#FFA3A3AB</color>
+    <color name="ctrl_accent_text">#FFB48CFF</color>
+    <color name="widget_bg">#F208080A</color>
+</resources>

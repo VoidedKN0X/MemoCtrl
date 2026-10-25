@@ -10,6 +10,8 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.getValue
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.DisposableEffect
 import androidx.core.content.IntentCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.LaunchedEffect
@@ -24,22 +26,28 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Ctrl / Signal is dark only: edge to edge with light status and navigation bar icons.
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
-            navigationBarStyle = SystemBarStyle.dark(Color.TRANSPARENT),
-        )
+        // Edge to edge; the bar icons follow the phone's dark/light setting (set again below when it changes).
+        enableEdgeToEdge()
         val c = container
         if (savedInstanceState == null) handleIntent(intent)
         setContent {
             val settings by c.settings.settings.collectAsStateWithLifecycle()
+            // MainActivity handles uiMode changes itself, so switch the bar icons here when the phone's theme flips:
+            // light icons on the dark theme, dark icons on the light one.
+            val dark = isSystemInDarkTheme()
+            DisposableEffect(dark) {
+                val style = if (dark) SystemBarStyle.dark(Color.TRANSPARENT)
+                else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+                onDispose { }
+            }
             // "Hide in screenshots" (off by default); always on for signing in and the lock and PIN screens.
             val covered = (settings.appLock && !c.vault.enabled) || (c.vault.enabled && !AppLock.unlocked) || AppLock.request != null
             val secure = settings.hideScreenshots || covered || ScreenPrivacy.forced > 0
             // "Hide in recent apps" (off by default). With the app lock on, Recents always shows a blank
             // card: a preview there would show your memos without the PIN.
             WindowPrivacy(this, secure, hideRecents = settings.hideRecents || settings.appLock || c.vault.enabled)
-            MemoCtrlTheme(settings.theme, settings.dynamicColor) {
+            MemoCtrlTheme(settings.theme, settings.dynamicColor, dark = dark) {
                 AppLockGate { AppRoot() }
             }
         }

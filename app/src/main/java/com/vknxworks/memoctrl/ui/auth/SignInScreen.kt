@@ -342,7 +342,7 @@ fun SignInScreen(onDone: () -> Unit, onCancel: (() -> Unit)?) {
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
             if (busy) {
-                Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(28.dp), color = CtrlColors.Accent) }
+                Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(Modifier.size(28.dp), color = CtrlColors.AccentText) }
             } else {
                 PillButton(stringResource(R.string.signin_button), onClick = ::submit, enabled = canSubmit, modifier = Modifier.fillMaxWidth())
             }

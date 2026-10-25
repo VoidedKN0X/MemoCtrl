@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <solid android:color="#FF141417" />
+    <solid android:color="@color/ctrl_surface" />
     <corners android:radius="22dp" />
-    <stroke android:width="1dp" android:color="#FFB48CFF" />
+    <stroke android:width="1dp" android:color="@color/ctrl_accent_text" />
 </shape>

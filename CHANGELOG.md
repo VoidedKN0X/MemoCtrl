@@ -4,6 +4,26 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.3.0 (2026-10-25)
+
+### New
+
+- **Light mode that follows the device theme.** MemoCtrl now switches between the dark Ctrl / Signal look and a new light one ("Signal Light") on its own, following your phone's dark theme setting (and its schedule, if you use one). It changes straight away, even while the app is open. There's still no theme setting in the app, and no Material You colours: it just follows the phone.
+
+### Changed
+
+- **Signal Light colours**: a warm off-white background (#F5F5F1), white cards and sheets with soft grey borders, near-black text and grey secondary text.
+- **Accent in light mode**: hero cards, the main buttons (Post, Save, New memo, Sign in, Support MemoCtrl), the selected tab, switches that are on, the PIN dots and the lock badge keep the same lilac fill (#B48CFF) with dark content. Text and icons in the accent colour use a deeper violet (#6A3BDB) on light backgrounds so they stay readable: the slash in MEMO/CTRL, #tag chips, @authors, the pinned icon and pinned-memo border, links and #tags in memo text, the visibility button in the editor, focused text-field borders and cursors, spinners, the outlined fingerprint key and the accent icons on empty screens. In dark mode these stay #B48CFF as before.
+- **Switches in light mode**: grey (#DCDCD5) with a darker grey knob when off, lilac with a dark knob when on.
+- **Memo heatmap on the Tags tab** uses shades that show on both backgrounds: in light mode it goes from pale lilac (one memo) to deep violet (five or more), and empty days are light grey.
+- **Lock screen in light mode**: white keys with a thin grey border, empty PIN squares with a grey outline, the lilac lock badge and PIN dots.
+- **Floating tab bar in light mode**: white at 92% with a thin grey border; the selected tab stays a lilac block.
+- **Errors in light mode** use a deeper red (#D93636) so they're readable on white.
+- **Status and navigation bar icons** switch with the theme: light icons in dark mode, dark icons in light mode, always on the app's own background.
+- **Home-screen widgets** follow the phone's theme too: white cards on a light background in light mode, the dark look in dark mode, with violet or lilac accents to match.
+- **The full-screen picture viewer stays black in both themes**, so photos are shown on a neutral dark background.
+- Every screen, dialog, menu and sheet now picks its colours from the current theme (internally: two palettes, `CtrlColors.Dark` and `CtrlColors.Light`, with the accent still defined in one place).
+
 ## v0.2.0 (2026-10-25)
 
 MemoCtrl gets the new **Ctrl / Signal** look shared by the whole Ctrl series. Only the look changes: every screen, feature, setting and gesture works as before.

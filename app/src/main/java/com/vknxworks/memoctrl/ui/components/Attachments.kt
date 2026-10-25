@@ -143,7 +143,7 @@ fun ImageGrid(images: List<ResourceEntity>, serverUrl: String? = null, onRemove:
                                         .clip(RoundedCornerShape(9.dp))
                                         .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.55f)),
                                 ) {
-                                    Icon(Icons.Outlined.Close, stringResource(R.string.attachment_remove, images[i].filename), Modifier.size(16.dp), tint = MaterialTheme.colorScheme.inverseOnSurface)
+                                    Icon(Icons.Outlined.Close, stringResource(R.string.attachment_remove, images[i].filename), Modifier.size(16.dp), tint = androidx.compose.ui.graphics.Color.White)
                                 }
                             }
                         }

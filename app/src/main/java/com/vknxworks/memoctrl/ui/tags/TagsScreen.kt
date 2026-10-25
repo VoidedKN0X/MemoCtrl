@@ -150,8 +150,8 @@ private fun Heatmap(memos: List<MemoEntity>) {
     val dayNames = remember(firstDay) {
         List(7) { i -> firstDay.plus(i.toLong()).getDisplayName(TextStyle.SHORT, Locale.getDefault()) }
     }
-    val accent = CtrlColors.Accent
-    val empty = CtrlColors.Raised
+    // Shades of the accent from the current palette: they read on the dark and the light card.
+    val heat = CtrlColors.Heat
     val todayRing = CtrlColors.Text
 
     Row(Modifier.fillMaxWidth().height(118.dp)) {
@@ -178,11 +178,11 @@ private fun Heatmap(memos: List<MemoEntity>) {
                         if (day.isAfter(today)) continue
                         val n = counts[day] ?: 0
                         val color = when (n) {
-                            0 -> empty
-                            1 -> accent.copy(alpha = 0.30f)
-                            2 -> accent.copy(alpha = 0.52f)
-                            in 3..4 -> accent.copy(alpha = 0.76f)
-                            else -> accent
+                            0 -> heat[0]
+                            1 -> heat[1]
+                            2 -> heat[2]
+                            in 3..4 -> heat[3]
+                            else -> heat[4]
                         }
                         val topLeft = Offset(left + col * (c + g), row * (c + g))
                         drawRoundRect(color, topLeft, Size(c, c), CornerRadius(c * 0.2f))

@@ -519,7 +519,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                     unfocusedContainerColor = CtrlColors.Surface,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
-                    cursorColor = CtrlColors.Accent,
+                    cursorColor = CtrlColors.AccentText,
                     focusedPlaceholderColor = CtrlColors.Muted,
                     unfocusedPlaceholderColor = CtrlColors.Muted,
                 ),
@@ -589,8 +589,8 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                 if (s.remote.supportsLocation) ToolButton(Icons.Outlined.LocationOn, stringResource(R.string.editor_location)) { showLocation = true }
             }
             TextButton(onClick = { showVisibility = true }, shape = RoundedCornerShape(14.dp)) {
-                Icon(visibility.icon, null, Modifier.size(18.dp), tint = CtrlColors.Accent)
-                Text(visibility.label.uppercase(), style = CtrlType.MonoStrong, color = CtrlColors.Accent, modifier = Modifier.padding(start = 6.dp))
+                Icon(visibility.icon, null, Modifier.size(18.dp), tint = CtrlColors.AccentText)
+                Text(visibility.label.uppercase(), style = CtrlType.MonoStrong, color = CtrlColors.AccentText, modifier = Modifier.padding(start = 6.dp))
             }
         }
     }

@@ -75,7 +75,7 @@ fun MessageView(
                 Modifier.size(72.dp).clip(RoundedCornerShape(24.dp)).background(CtrlColors.Surface).border(1.dp, CtrlColors.Outline, RoundedCornerShape(24.dp)),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(icon, null, Modifier.size(30.dp), tint = CtrlColors.Accent)
+                Icon(icon, null, Modifier.size(30.dp), tint = CtrlColors.AccentText)
             }
             Text(title, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
             if (body != null) {

@@ -256,8 +256,8 @@ fun PillButton(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     enabled: Boolean = true,
-    container: Color = MaterialTheme.colorScheme.primary,
-    content: Color = MaterialTheme.colorScheme.onPrimary,
+    container: Color = CtrlColors.Accent,
+    content: Color = CtrlColors.OnAccent,
 ) {
     CtrlButton(text, onClick, modifier, icon = icon, enabled = enabled, container = container, content = content)
 }

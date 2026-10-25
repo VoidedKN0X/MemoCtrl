@@ -141,7 +141,7 @@ fun MemoCard(
     Surface(
         shape = CtrlShapes.Card,
         color = CtrlColors.Surface,
-        border = BorderStroke(1.dp, if (memo.pinned) CtrlColors.Accent else CtrlColors.Outline),
+        border = BorderStroke(1.dp, if (memo.pinned) CtrlColors.AccentText else CtrlColors.Outline),
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = Gutter, vertical = 5.dp),
@@ -185,11 +185,11 @@ fun MemoHeader(
         Text(time.uppercase(), style = CtrlType.Mono.copy(letterSpacing = 0.06.em), color = CtrlColors.Muted, maxLines = 1)
         if (author != null) {
             Spacer(Modifier.width(10.dp))
-            Text("@$author", style = CtrlType.Mono, color = CtrlColors.Accent, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text("@$author", style = CtrlType.Mono, color = CtrlColors.AccentText, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         if (pinned) {
             Spacer(Modifier.width(8.dp))
-            Icon(Icons.Outlined.PushPin, stringResource(R.string.pinned), Modifier.size(16.dp), tint = CtrlColors.Accent)
+            Icon(Icons.Outlined.PushPin, stringResource(R.string.pinned), Modifier.size(16.dp), tint = CtrlColors.AccentText)
         }
         if (visibility != null) {
             Spacer(Modifier.width(8.dp))
@@ -359,14 +359,14 @@ fun TagChips(content: String, modifier: Modifier = Modifier) {
             Text(
                 "#$tag",
                 style = CtrlType.Mono.copy(fontWeight = FontWeight.Medium),
-                color = CtrlColors.Accent,
+                color = CtrlColors.AccentText,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
                     .widthIn(max = 220.dp)
                     .clip(CtrlShapes.Chip)
-                    .background(CtrlColors.Accent.copy(alpha = 0.12f))
-                    .border(1.dp, CtrlColors.Accent.copy(alpha = 0.28f), CtrlShapes.Chip)
+                    .background(CtrlColors.ChipFill)
+                    .border(1.dp, CtrlColors.ChipBorder, CtrlShapes.Chip)
                     .clickable(role = Role.Button) { nav.tag(tag) }
                     .padding(horizontal = 10.dp, vertical = 5.dp),
             )

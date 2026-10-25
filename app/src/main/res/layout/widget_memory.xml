@@ -13,7 +13,7 @@
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif-medium"
         android:text="@string/widget_memory_title"
-        android:textColor="#FFB48CFF"
+        android:textColor="@color/ctrl_accent_text"
         android:textSize="13sp" />
 
     <TextView
@@ -21,7 +21,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:textColor="#FFA3A3AB"
+        android:textColor="@color/ctrl_muted"
         android:textSize="12sp" />
 
     <TextView
@@ -32,6 +32,6 @@
         android:layout_weight="1"
         android:ellipsize="end"
         android:text="@string/widget_empty"
-        android:textColor="#FFF4F4F2"
+        android:textColor="@color/ctrl_text"
         android:textSize="14sp" />
 </LinearLayout>
