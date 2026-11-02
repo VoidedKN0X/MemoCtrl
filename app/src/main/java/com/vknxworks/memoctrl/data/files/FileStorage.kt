@@ -29,6 +29,11 @@ class FileStorage(private val context: Context) {
         return Uri.fromFile(file)
     }
 
+    /** Whether [file] is inside the attachments folder, i.e. a file this class wrote. */
+    fun isOwnFile(file: File): Boolean = runCatching {
+        file.canonicalFile.startsWith(File(context.filesDir, "attachments").canonicalFile)
+    }.getOrDefault(false)
+
     /** Deletes a file this class wrote. Anything outside the attachments folder is left alone. */
     fun deleteFile(uri: Uri) {
         val path = uri.path ?: return

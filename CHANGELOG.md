@@ -13,6 +13,7 @@ Safer handling of pictures and attachments from the server, and a friendlier Git
 - **Pictures in a memo are only loaded from web addresses.** A picture in the memo text that points to a file on the phone (a `file:` or `content:` address) or any other non-web address is no longer loaded; it shows as a link instead, like pictures from other websites.
 - **Attachment links from the server must be web addresses.** An attachment whose external link isn't an `http://` or `https://` address is now treated as a normal file on your Memos server, so a memo can never make MemoCtrl open, share or show a file from the phone.
 - **Attachment file names are cleaned in full** when an attachment is downloaded to open it in another app, so an odd name sent by the server can't end up outside MemoCtrl's own folder.
+- **Only MemoCtrl's own attachment files are kept during sync.** When syncing, an attachment's saved copy on the phone is only reused, opened or uploaded if it's inside MemoCtrl's private attachments folder. A file address left behind by an older version that points anywhere else is ignored, and the attachment is downloaded from your server again when needed.
 
 ### Project
 

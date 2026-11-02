@@ -801,7 +801,8 @@ class SyncingRepository(
     private fun fileOf(uri: String): File? {
         val u = uri.toUri()
         if (u.scheme != "file") return null
-        return u.path?.let(::File)
+        // Only files MemoCtrl wrote itself count; a file:// address from anywhere else is ignored.
+        return u.path?.let(::File)?.takeIf { files.isOwnFile(it) }
     }
 
     private fun existingLocalFile(resource: ResourceEntity): File? =
