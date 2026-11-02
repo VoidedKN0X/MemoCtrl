@@ -52,8 +52,8 @@ import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import com.vknxworks.memoctrl.ui.components.CtrlDropdownMenu
+import com.vknxworks.memoctrl.ui.components.CtrlDropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -564,13 +564,13 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                     ToolButton(Icons.Outlined.Tag, stringResource(R.string.editor_tag)) {
                         if (tags.isEmpty()) text = replaceSelection(text, "#") else showTags = true
                     }
-                    DropdownMenu(expanded = showTags, onDismissRequest = { showTags = false }) {
-                        DropdownMenuItem(text = { Text(stringResource(R.string.editor_new_tag)) }, onClick = {
+                    CtrlDropdownMenu(expanded = showTags, onDismissRequest = { showTags = false }) {
+                        CtrlDropdownMenuItem(stringResource(R.string.editor_new_tag), onClick = {
                             showTags = false
                             text = replaceSelection(text, "#")
                         })
                         tags.forEach { t ->
-                            DropdownMenuItem(text = { Text("#$t") }, onClick = {
+                            CtrlDropdownMenuItem("#$t", onClick = {
                                 showTags = false
                                 text = replaceSelection(text, "#$t ")
                             })

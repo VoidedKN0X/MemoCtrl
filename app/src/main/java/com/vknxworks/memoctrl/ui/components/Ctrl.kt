@@ -31,6 +31,10 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -552,4 +556,63 @@ fun CtrlProgressBar(fraction: Float, modifier: Modifier = Modifier, color: Color
     Box(modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(CtrlColors.ProgressTrack)) {
         Box(Modifier.fillMaxWidth(fraction.coerceIn(0f, 1f)).height(6.dp).clip(RoundedCornerShape(3.dp)).background(color))
     }
+}
+
+// ---------- Popup menus ----------
+
+/**
+ * Popup menu in the Signal look: flat surface, 16dp corners, a 1dp card border and no shadow or tonal
+ * tint (Material's popup shadow showed as a grey box). Use instead of DropdownMenu everywhere.
+ */
+@Composable
+fun CtrlDropdownMenu(
+    expanded: Boolean,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    offset: DpOffset = DpOffset(0.dp, 0.dp),
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    DropdownMenu(
+        expanded = expanded,
+        onDismissRequest = onDismissRequest,
+        modifier = modifier,
+        offset = offset,
+        shape = RoundedCornerShape(16.dp),
+        containerColor = CtrlColors.Surface,
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        border = BorderStroke(1.dp, CtrlColors.Outline),
+        content = content,
+    )
+}
+
+/** Menu item colours from the current palette: text, muted icons, greyed-out when disabled. */
+@Composable
+fun ctrlMenuItemColors(destructive: Boolean = false) = MenuDefaults.itemColors(
+    textColor = if (destructive) CtrlColors.Error else CtrlColors.Text,
+    leadingIconColor = if (destructive) CtrlColors.Error else CtrlColors.Muted,
+    trailingIconColor = CtrlColors.Muted,
+    disabledTextColor = CtrlColors.Inactive,
+    disabledLeadingIconColor = CtrlColors.Inactive,
+    disabledTrailingIconColor = CtrlColors.Inactive,
+)
+
+/** One row of a [CtrlDropdownMenu]. */
+@Composable
+fun CtrlDropdownMenuItem(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    leadingIcon: (@Composable () -> Unit)? = null,
+    enabled: Boolean = true,
+    destructive: Boolean = false,
+) {
+    DropdownMenuItem(
+        text = { Text(text, style = MaterialTheme.typography.bodyLarge) },
+        onClick = onClick,
+        modifier = modifier,
+        leadingIcon = leadingIcon,
+        enabled = enabled,
+        colors = ctrlMenuItemColors(destructive),
+    )
 }

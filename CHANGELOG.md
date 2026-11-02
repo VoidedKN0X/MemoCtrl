@@ -4,6 +4,14 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.4.2 (2026-11-02)
+
+### Fixed
+
+- **Popup menus no longer show a grey box.** The tag picker in the editor (the **#** button: "New tag" and your existing tags) had a grey, square-ish shadow edge around it, most visible in light mode. It's now a flat Signal surface (white in light mode, graphite in dark mode) with 16dp rounded corners, a thin card border and no shadow.
+- **Menu text and icons follow the theme**: menu entries use the normal text colour, icons the grey secondary colour, and disabled entries are greyed out, in both light and dark mode.
+- All popup menus in MemoCtrl now share this one style, so any menu added later looks the same. Nothing else about how the menus work has changed.
+
 ## v0.4.1 (2026-10-25)
 
 ### Fixed
