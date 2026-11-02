@@ -137,7 +137,9 @@ class MemosV0(
     }
 
     private fun fileUrl(r: V0Resource): String {
-        if (!r.externalLink.isNullOrBlank()) return r.externalLink
+        // Only a web address counts as an external link: a file: or content: address from the server must
+        // never make the app open or show a file on the phone.
+        r.externalLink?.takeIf { it.startsWith("https://", ignoreCase = true) || it.startsWith("http://", ignoreCase = true) }?.let { return it }
         val b = base.newBuilder().addPathSegment("o").addPathSegment("r")
         when {
             !r.uid.isNullOrEmpty() -> b.addPathSegment(r.uid)

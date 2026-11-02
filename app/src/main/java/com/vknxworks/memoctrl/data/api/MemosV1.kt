@@ -156,7 +156,9 @@ class MemosV1(
     private fun nameOf(identifier: String) = identifier.substringBefore('|')
 
     private fun fileUrl(a: V1Attachment): String {
-        if (!a.externalLink.isNullOrBlank()) return a.externalLink
+        // Only a web address counts as an external link: a file: or content: address from the server must
+        // never make the app open or show a file on the phone.
+        a.externalLink?.takeIf { it.startsWith("https://", ignoreCase = true) || it.startsWith("http://", ignoreCase = true) }?.let { return it }
         return base.newBuilder()
             .addPathSegment("file")
             .addPathSegments(a.name.orEmpty())

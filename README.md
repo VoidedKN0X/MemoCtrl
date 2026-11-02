@@ -31,10 +31,6 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Sign in with your password** (MemoCtrl makes its own access token and never keeps the password) or an access token
 - **Several servers and accounts**
 
-## Screenshots
-
-Coming soon.
-
 ## Requirements
 
 - Android 13 or newer, on a 64-bit ARM phone (nearly every phone from the last several years)
@@ -43,8 +39,8 @@ Coming soon.
 
 ## Install
 
-1. Download the latest `.apk` file from the [Releases page](https://github.com/VoidedKN0X/MemoCtrl/releases/latest).
-2. Open it on your phone. Android may ask you to allow installing apps from your browser or file manager.
+1. On your phone, open the [latest release](https://github.com/VoidedKN0X/MemoCtrl/releases/latest). Scroll down to **Assets** and tap the file that ends in `.apk` (for example `MemoCtrl-v0.4.4.apk`). The "Source code" zip and tar.gz files are not the app.
+2. Open the downloaded file. Android may ask you to allow installing apps from your browser or file manager.
 3. Updates install over the old version. Your settings and login are kept.
 
 **Automatic updates:** on your phone, tap one of the buttons below.
@@ -67,6 +63,32 @@ No server? Tap **Use without a server** on the first screen. Your memos stay on 
 Accounts that sign in with SSO can use **Access token** instead: make one in Memos under **Settings > My account > Access tokens** (one that never expires) and paste it in.
 
 Settings, the archive, attachments, accounts and sign out are behind your profile picture at the top right.
+
+## Is it safe to install?
+
+- **Open source:** all of MemoCtrl's code is in this repo, under the GPL-3.0 licence.
+- **Built by GitHub, not on a personal computer:** every release on the [Releases page](https://github.com/VoidedKN0X/MemoCtrl/releases) is built by [the build workflow](.github/workflows/build.yml) from the code in this repo.
+- **Always signed with the same key:** Android refuses to install an update signed with a different key, so nobody else can replace MemoCtrl with their own version. The [CtrlF-Droid repo](https://voidedkn0x.github.io/CtrlF-Droid/) only accepts APKs signed with this key. The SHA-256 fingerprint of the signing certificate is:
+
+  ```
+  7A:28:90:70:08:4E:0F:F1:11:A7:C2:DB:73:38:5C:EC:79:8C:4B:A3:AC:45:A5:72:3F:EB:76:E1:8F:25:66:4D
+  ```
+
+  Advanced users can compare it with [AppVerifier](https://github.com/soupslurpr/AppVerifier).
+
+**Permissions**
+
+| Permission | What MemoCtrl uses it for |
+| --- | --- |
+| Internet | Talking to your own Memos server |
+| Local network | Reaching a Memos server on your home network (Android 17+ asks only for such an address) |
+| Biometrics | Unlocking the app lock with your fingerprint, if you turn that on |
+| Notifications | The optional "Background sync failed" notice, only asked when you turn it on |
+| Approximate and precise location | Adding your location to a memo, only asked when you tap **Use current location** (GPS only) |
+
+Android's background-work library (used for background sync) also adds its usual permissions to check the network, keep the phone awake during a sync and set sync up again after a restart.
+
+See [Privacy](#privacy) for what MemoCtrl sends and where.
 
 ## Tips and troubleshooting
 
@@ -108,6 +130,10 @@ The sign-in screen and the lock and PIN screens are always kept out of screensho
 - **No backups:** Android doesn't back up MemoCtrl's data or move it to a new phone. Your memos live on your own server; memos of **Use without a server** only live on the phone, so move them to a server to keep them safe.
 - **Notifications:** only the optional "Background sync failed" notice, which never shows memo text, and only after you allow notifications.
 
+## How MemoCtrl is made
+
+MemoCtrl is a one-person project by VoidedKN0X (VKNXWorks). Much of the code is written with the help of AI (Claude, by Anthropic). I decide what the app does, review the changes and use the app myself. Every change is listed in the [changelog](CHANGELOG.md), and you can read every line of code here.
+
 ## Build from source
 
 You need [Android Studio](https://developer.android.com/studio), or JDK 17 and the Android SDK.
@@ -128,7 +154,9 @@ Or open the folder in Android Studio and press **Run** with your phone connected
 
 ## Support the project
 
-MemoCtrl is free and open source. If it's useful to you, tap **Support MemoCtrl** under **About** on the You page (tap your profile picture) to sponsor development on [GitHub Sponsors](https://github.com/sponsors/VoidedKN0X). Found a problem or have an idea? Tap **Report a bug** in the same section, or [open an issue](https://github.com/VoidedKN0X/MemoCtrl/issues). Starring the repo helps too.
+MemoCtrl is free and open source. If it's useful to you, tap **Support MemoCtrl** under **About** on the You page (tap your profile picture) to sponsor development on [GitHub Sponsors](https://github.com/sponsors/VoidedKN0X). Found a problem or have an idea? Tap **Report a bug** in the same section, or [open an issue](https://github.com/VoidedKN0X/MemoCtrl/issues/new/choose) and pick the bug report or feature request form. Starring the repo helps too.
+
+Found a security problem? Please don't open a public issue; see [SECURITY.md](SECURITY.md).
 
 ## The Ctrl series
 
@@ -150,11 +178,16 @@ Native Android apps for self-hosted services and everyday tools, all with the sa
 | [PaperCtrl](https://github.com/VoidedKN0X/PaperCtrl) | Scan and browse documents on Paperless-ngx |
 | [PrintCtrl](https://github.com/VoidedKN0X/PrintCtrl) | Bambu Lab printers through Bambuddy, and Spoolman spools |
 | [ProxCtrl](https://github.com/VoidedKN0X/ProxCtrl) | Manage your Proxmox VE server |
+| [RideCtrl](https://github.com/VoidedKN0X/RideCtrl) | Offline maintenance, fuel and mod log for your vehicles |
 | [SeerrCtrl](https://github.com/VoidedKN0X/SeerrCtrl) | Request movies and shows on Seerr / Jellyseerr |
+| [SynapseCtrl](https://github.com/VoidedKN0X/SynapseCtrl) | Administer your Matrix Synapse server |
 | [TrueCtrl](https://github.com/VoidedKN0X/TrueCtrl) | Monitor and manage your TrueNAS server |
+| [WrtCtrl](https://github.com/VoidedKN0X/WrtCtrl) | Manage your OpenWrt router |
 
 ## License
 
 MemoCtrl is licensed under the [GNU General Public License v3.0](LICENSE). © VKNXWorks
+
+MemoCtrl is an independent app and isn't made by or affiliated with the Memos project.
 
 The bundled fonts are licensed under the SIL Open Font License 1.1: [Space Grotesk](https://github.com/floriankarsten/space-grotesk) (see `FONT-LICENSE-SpaceGrotesk.txt`) and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) (see `FONT-LICENSE-JetBrainsMono.txt`).

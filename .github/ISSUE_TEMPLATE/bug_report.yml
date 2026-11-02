@@ -1,0 +1,63 @@
+name: Bug report
+description: Something in MemoCtrl doesn't work as it should
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please remove server addresses, passwords, access tokens, memo text and other personal info from everything you post here, including screenshots.
+        Found a security problem? Please don't post it here; see [SECURITY.md](https://github.com/VoidedKN0X/MemoCtrl/blob/main/SECURITY.md).
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Tell us what went wrong.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Tap ...
+        3. See ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+  - type: input
+    id: app-version
+    attributes:
+      label: MemoCtrl version
+      placeholder: "Profile picture > bottom of the page, e.g. 0.4.4"
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android version and phone
+      placeholder: "Android 15, Pixel 8"
+    validations:
+      required: true
+  - type: input
+    id: server-version
+    attributes:
+      label: Memos version
+      placeholder: "e.g. 0.25.0 (or \"none\" for Use without a server)"
+  - type: dropdown
+    id: installed-from
+    attributes:
+      label: Installed from
+      options:
+        - GitHub Releases
+        - Obtainium
+        - CtrlF-Droid
+        - Built it myself
+  - type: textarea
+    id: logs
+    attributes:
+      label: Screenshots or logs
+      description: Drag images here. Remember to hide server addresses and personal info.

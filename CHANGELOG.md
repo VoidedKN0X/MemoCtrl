@@ -4,6 +4,22 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.4.4 (2026-11-02)
+
+Safer handling of pictures and attachments from the server, and a friendlier GitHub page.
+
+### Security
+
+- **Pictures in a memo are only loaded from web addresses.** A picture in the memo text that points to a file on the phone (a `file:` or `content:` address) or any other non-web address is no longer loaded; it shows as a link instead, like pictures from other websites.
+- **Attachment links from the server must be web addresses.** An attachment whose external link isn't an `http://` or `https://` address is now treated as a normal file on your Memos server, so a memo can never make MemoCtrl open, share or show a file from the phone.
+- **Attachment file names are cleaned in full** when an attachment is downloaded to open it in another app, so an odd name sent by the server can't end up outside MemoCtrl's own folder.
+
+### Project
+
+- New **SECURITY.md**: how to report a security problem privately, and the release key's fingerprint.
+- New **issue forms** for bug reports and feature requests, with a reminder to remove server addresses, tokens and personal info.
+- **README**: clearer install steps for people new to GitHub, a new "Is it safe to install?" section with every permission explained, "How MemoCtrl is made", the full Ctrl series list, and the empty Screenshots section removed.
+
 ## v0.4.3 (2026-11-02)
 
 ### Fixed

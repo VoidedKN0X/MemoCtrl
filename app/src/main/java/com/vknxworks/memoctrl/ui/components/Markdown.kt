@@ -301,7 +301,10 @@ private fun MarkdownImage(image: InlineImage, serverUrl: String?) {
     val settings by context.container.settings.settings.collectAsStateWithLifecycle()
     val resolved = remember(image.url, serverUrl) { resolveUrl(image.url, serverUrl) }
     val external = remember(resolved, serverUrl) { isExternal(resolved, serverUrl) }
-    if (external && !settings.externalImages) {
+    // Only web pictures are loaded: a file:, content: or other address in a memo must never show a file
+    // from the phone.
+    val web = remember(resolved) { resolved.toHttpUrlOrNull() != null }
+    if (!web || (external && !settings.externalImages)) {
         // Not loaded: fetching it would tell another website you're reading this memo.
         val host = resolved.toHttpUrlOrNull()?.host ?: resolved
         Row(

@@ -244,7 +244,7 @@ suspend fun ensureLocalFile(context: Context, c: AppContainer, resource: Resourc
     if (!resource.uri.startsWith("http://") && !resource.uri.startsWith("https://")) return null
     val downloaded = withContext(Dispatchers.IO) {
         val dir = File(context.cacheDir, "open").also { it.mkdirs() }
-        val target = File(dir, "${resource.identifier}_${FileStorage.safeName(resource.filename.ifBlank { "attachment" })}")
+        val target = File(dir, FileStorage.safeName("${resource.identifier}_${resource.filename.ifBlank { "attachment" }}"))
         c.http.newCall(Request.Builder().url(resource.uri).build()).await().use { response ->
             if (!response.isSuccessful) return@withContext null
             val body = response.body ?: return@withContext null
