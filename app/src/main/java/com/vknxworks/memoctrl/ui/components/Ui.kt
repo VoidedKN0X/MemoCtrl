@@ -231,7 +231,6 @@ fun <T> ChoiceSheet(
         containerColor = CtrlColors.Surface,
         shape = CtrlSheetShape,
         tonalElevation = 0.dp,
-        modifier = Modifier.sheetBorder(),
     ) {
         CtrlLabel(title, Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
         LazyColumn(Modifier.navigationBarsPadding(), contentPadding = PaddingValues(bottom = 16.dp)) {

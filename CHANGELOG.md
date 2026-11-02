@@ -4,6 +4,16 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.4.3 (2026-11-02)
+
+### Fixed
+
+- **Bottom sheets no longer show a stray grey box or outline.** Sheets that slide up from the bottom had a thin grey rectangle drawn partway down the open sheet, sometimes cutting across the first row, plus a stray rounded outline near the top of the screen. The outline was drawn at the sheet's starting position rather than where the sheet actually is. Sheets are now a plain surface with rounded top corners and no outline; the dimmed background already sets them apart. This fixes every bottom sheet in MemoCtrl:
+  - the ⋮ menu of a memo (pin, edit, share, copy, archive, delete…)
+  - choice sheets in Settings (Lock again, Edit gesture) and in the widget setup (tag, number of memos)
+  - the visibility picker in the editor (Private, Protected, Public)
+- Dialogs keep their thin border, and popup menus keep the flat look from 0.4.2. Nothing else about how sheets work has changed.
+
 ## v0.4.2 (2026-11-02)
 
 ### Fixed

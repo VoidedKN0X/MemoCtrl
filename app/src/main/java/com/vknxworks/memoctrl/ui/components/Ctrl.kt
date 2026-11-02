@@ -544,9 +544,6 @@ fun CtrlAlertDialog(
 /** Shape of bottom sheets: 26dp top corners. */
 val CtrlSheetShape = RoundedCornerShape(topStart = 26.dp, topEnd = 26.dp)
 
-/** Hairline border along a bottom sheet's rounded top. */
-@Composable
-fun Modifier.sheetBorder(): Modifier = border(1.dp, CtrlColors.Outline, CtrlSheetShape)
 
 // ---------- Progress ----------
 

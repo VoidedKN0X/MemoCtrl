@@ -83,7 +83,6 @@ fun ActionSheet(title: String?, subtitle: String?, actions: List<SheetAction>, o
         containerColor = CtrlColors.Surface,
         shape = CtrlSheetShape,
         tonalElevation = 0.dp,
-        modifier = Modifier.sheetBorder(),
     ) {
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(bottom = 8.dp)) {
             if (title != null) {
