@@ -4,6 +4,12 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Project updates (2026-11-03)
+
+### Project
+
+- **README:** the Ctrl series list now links to ChatCtrl, the Matrix chat app in the series. No app changes, so no new version.
+
 ## v0.4.4 (2026-11-02)
 
 Safer handling of pictures and attachments from the server, and a friendlier GitHub page.
