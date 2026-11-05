@@ -4,6 +4,21 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.4.5 (2026-11-05)
+
+A security and privacy check of the whole app and its repo. MemoCtrl works exactly as before.
+
+### Security
+
+- **Release builds no longer write debug or info messages to the phone's log**, from MemoCtrl or from the libraries it uses. MemoCtrl itself never logged your memos, server address or token, and now nothing from its libraries ends up there either.
+- **One less entry point for other tools.** A receiver that the baseline-profile library adds for adb and app-store tooling is removed. Only the system could use it, but MemoCtrl doesn't need it.
+
+### Project
+
+- **Build checks:** every build now verifies that the Gradle wrapper is an official Gradle release, and checks that no Google Play services, Firebase, ML Kit, Play Core or Tink library has made it into the app.
+- **Repo:** signing keys, keystore settings and Google service files are ignored by git, so they can't be committed by accident.
+- **README:** the permissions table now lists every permission the app has (network state, keeping the phone awake during a sync and setting sync up again after a restart were only mentioned in a sentence), the Privacy section says MemoCtrl is Google-free and has no update check, and the Ctrl series list has every app in the series, including CallCtrl, ClockCtrl, ContactCtrl, DateCtrl, LijnCtrl, MailCtrl, RecorderCtrl and TextCtrl.
+
 ## Project updates (2026-11-03)
 
 ### Project

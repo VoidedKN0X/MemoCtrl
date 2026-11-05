@@ -105,9 +105,13 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- WorkManager's debugging receiver (it dumps the app's scheduled work on request): not needed. -->
+        <!-- WorkManager's debugging receiver (it dumps the app's scheduled work on request) and the baseline
+             profile installer's receiver for adb and app-store tooling: not needed. -->
         <receiver
             android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"
+            tools:node="remove" />
+        <receiver
+            android:name="androidx.profileinstaller.ProfileInstallReceiver"
             tools:node="remove" />
 
         <!-- No downloadable emoji font: androidx.emoji2 would look one up from a font provider on start.
