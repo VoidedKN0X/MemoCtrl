@@ -4,6 +4,16 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Project updates (2026-11-05)
+
+### Project
+
+- **Releases can be checked against this repo.** From the next release on, the release notes list the APK's SHA-256 checksum, and each APK gets a signed build provenance attestation from GitHub: `gh attestation verify <apk> -R VoidedKN0X/MemoCtrl` shows it was built by this repo's build workflow from the tagged commit. The release is now published with GitHub's own `gh` tool instead of a third-party action.
+- **Least privilege in CI:** every workflow starts with no permissions, and each job gets only what it needs. Only the job that publishes a release can write to the repo, and only it can create attestations.
+- **Workflow security check:** a new workflow runs zizmor, a security linter for GitHub Actions, on every change to the workflows. zizmor is installed at one pinned version, checked against its published file hashes.
+- **Code scanning:** GitHub's CodeQL analyses the Kotlin code weekly and on every app change; results go to the repo's Security tab and never block a release.
+- **Dependency verification:** a new, manually started workflow records the SHA-256 checksum of every library and plugin the build downloads, so the build can refuse anything that doesn't match. No app changes, so no new version.
+
 ## v0.4.6 (2026-11-05)
 
 A small security fix. MemoCtrl works exactly as before, including plain HTTP to your own Memos server on your home network or over Tailscale.
