@@ -128,6 +128,8 @@ fun TextInputDialog(
 /** Asks before something that can't be undone. The confirm button is red. */
 @Composable
 fun ConfirmDialog(title: String, body: String?, confirm: String, onDismiss: () -> Unit, onConfirm: () -> Unit) {
+    // A confirmation of something that can't be undone: no other app's floating window over it.
+    ShieldScreen(sensitiveData = false)
     CtrlAlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },

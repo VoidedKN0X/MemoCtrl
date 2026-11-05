@@ -73,6 +73,7 @@ import com.vknxworks.memoctrl.data.settings.AppSettings
 import com.vknxworks.memoctrl.ui.components.ConfirmDialog
 import com.vknxworks.memoctrl.ui.components.LoadingView
 import com.vknxworks.memoctrl.ui.components.PillButton
+import com.vknxworks.memoctrl.ui.components.ShieldScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -411,6 +412,7 @@ private fun LegacyLockedScreen() {
 
 @Composable
 private fun LockFrame(title: String, message: String, error: String?, actions: @Composable () -> Unit) {
+    ShieldScreen()
     val activity = LocalContext.current.findActivity()
     BackHandler { activity?.moveTaskToBack(true) }
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -685,6 +687,7 @@ private fun PinPadScreen(
     onBiometric: (() -> Unit)? = null,
     bottom: @Composable () -> Unit,
 ) {
+    ShieldScreen()
     val cs = MaterialTheme.colorScheme
     val haptics = LocalHapticFeedback.current
     Surface(Modifier.fillMaxSize(), color = cs.background) {
