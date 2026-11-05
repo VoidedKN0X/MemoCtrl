@@ -34,14 +34,17 @@ object ScreenPrivacy {
     internal fun release() { forced = (forced - 1).coerceAtLeast(0) }
 }
 
-/** Keeps FLAG_SECURE (and [ShieldScreen]) on for as long as the calling screen is shown. */
+/**
+ * Keeps FLAG_SECURE and the overlay hiding of [ShieldScreen] on for as long as the calling screen is shown.
+ * Not accessibility-sensitive: password managers that fill through accessibility must keep working here.
+ */
 @Composable
 fun SecureScreen() {
     DisposableEffect(Unit) {
         ScreenPrivacy.acquire()
         onDispose { ScreenPrivacy.release() }
     }
-    ShieldScreen()
+    ShieldScreen(sensitiveData = false)
 }
 
 /**

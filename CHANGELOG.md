@@ -4,6 +4,14 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.4.8 (2026-11-05)
+
+Password managers work on the sign-in screen again.
+
+### Fixed
+
+- Password managers can fill the sign-in screen (address, username, password or access token) again. 0.4.7 hid it from every app that reads the screen through accessibility, which also blocked password managers that fill that way; now only the lock screen, the PIN screens and "Forgot PIN?" are hidden from them. Other apps' floating windows are still kept off the sign-in screen, and screen readers such as TalkBack keep working everywhere.
+
 ## v0.4.7 (2026-11-05)
 
 More protection for the PIN screen and for what other apps hand to MemoCtrl. MemoCtrl works exactly as before.

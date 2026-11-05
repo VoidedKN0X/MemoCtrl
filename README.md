@@ -125,7 +125,7 @@ Two more switches in the same section work with or without the app lock, and are
 
 The sign-in screen and the lock and PIN screens are always kept out of screenshots and recordings, whatever these switches say.
 
-While the lock, PIN or sign-in screen or a "can't be undone" confirmation is showing, other apps' floating windows (chat heads, overlays) are hidden so nothing can cover it, and on Android 14+ apps that read the screen through accessibility can't see the PIN, lock or sign-in screen; real accessibility tools such as screen readers still work.
+While the lock, PIN or sign-in screen or a "can't be undone" confirmation is showing, other apps' floating windows (chat heads, overlays) are hidden so nothing can cover it, and on Android 14+ apps that read the screen through accessibility can't see the PIN or lock screen; real accessibility tools such as screen readers still work, and password managers can still fill the sign-in screen.
 
 ## Privacy
 
