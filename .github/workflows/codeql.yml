@@ -42,11 +42,12 @@ jobs:
           languages: java-kotlin
           build-mode: manual
 
-      # A debug build without secrets, so the Kotlin code is compiled and analysed.
+      # A debug build without secrets, so the Kotlin code is compiled and analysed. CI and GITHUB_ACTIONS
+      # are unset for Gradle only: on CI the build refuses to configure without the release key.
       - name: Build
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon --no-build-cache assembleDebug
+          env -u CI -u GITHUB_ACTIONS ./gradlew --no-daemon --no-build-cache assembleDebug
 
       - uses: github/codeql-action/analyze@f3bbb05694c2f74569081c28664c0866d64dec21 # v4.39.3
         with:

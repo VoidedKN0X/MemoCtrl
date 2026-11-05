@@ -33,10 +33,7 @@ jobs:
 
       - name: Write verification metadata
         # No signing key here: the release build is signed with the debug key, which needs the same
-        # libraries and plugins. CI/GITHUB_ACTIONS are cleared only so Gradle allows that.
-        env:
-          CI: "false"
-          GITHUB_ACTIONS: "false"
+        # libraries and plugins. CI and GITHUB_ACTIONS are unset for Gradle only so it allows that.
         run: |
           chmod +x gradlew
           cat > gradle/verification-metadata.xml <<'XML'
@@ -54,7 +51,7 @@ jobs:
           </verification-metadata>
           XML
           sed -i 's/^          //' gradle/verification-metadata.xml
-          ./gradlew --no-daemon --write-verification-metadata sha256 \
+          env -u CI -u GITHUB_ACTIONS ./gradlew --no-daemon --write-verification-metadata sha256 \
             assembleRelease assembleDebug :app:dependencies --configuration releaseRuntimeClasspath
 
       - name: Print verification metadata
