@@ -2,7 +2,7 @@
 
 **Your self-hosted Memos, on your phone.**
 
-[![Latest release](https://img.shields.io/github/v/release/VoidedKN0X/MemoCtrl?label=download)](https://github.com/VoidedKN0X/MemoCtrl/releases/latest) ![Android 13+](https://img.shields.io/badge/Android-13%2B-3DDC84?logo=android&logoColor=white) [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE) ![Telemetry-free](https://img.shields.io/badge/telemetry-none-brightgreen) [![Sponsor](https://img.shields.io/badge/sponsor-GitHub-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/VoidedKN0X)
+[![Latest release](https://img.shields.io/github/v/release/VoidedKN0X/MemoCtrl?label=download)](https://github.com/VoidedKN0X/MemoCtrl/releases/latest) ![Android 15+](https://img.shields.io/badge/Android-15%2B-3DDC84?logo=android&logoColor=white) [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE) ![Telemetry-free](https://img.shields.io/badge/telemetry-none-brightgreen) [![Sponsor](https://img.shields.io/badge/sponsor-GitHub-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/VoidedKN0X)
 
 MemoCtrl is an Android app for self-hosted [Memos](https://usememos.com/) servers: capture thoughts, links and to-dos like tweeting to yourself.
 
@@ -33,7 +33,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 
 ## Requirements
 
-- Android 13 or newer, on a 64-bit ARM phone (nearly every phone from the last several years)
+- Android 15 or newer, on a 64-bit ARM phone (nearly every phone from the last several years)
 - A Memos server: Memos 0.21, or Memos 0.27 to 0.31 (newer versions ask before you continue). Or none at all, with **Use without a server**
 - **Google-free and de-Googled:** no Google Play services, Firebase or other Google services, and the app never contacts Google. It works the same on de-Googled phones (GrapheneOS, CalyxOS, /e/OS, LineageOS without Google apps).
 
@@ -125,7 +125,7 @@ Two more switches in the same section work with or without the app lock, and are
 
 The sign-in screen and the lock and PIN screens are always kept out of screenshots and recordings, whatever these switches say.
 
-While the lock, PIN or sign-in screen or a "can't be undone" confirmation is showing, other apps' floating windows (chat heads, overlays) are hidden so nothing can cover it, and on Android 14+ apps that read the screen through accessibility can't see the PIN or lock screen; real accessibility tools such as screen readers still work, and password managers can still fill the sign-in screen.
+While the lock, PIN or sign-in screen or a "can't be undone" confirmation is showing, other apps' floating windows (chat heads, overlays) are hidden so nothing can cover it, and apps that read the screen through accessibility can't see the PIN or lock screen; real accessibility tools such as screen readers still work, and password managers can still fill the sign-in screen.
 
 ## Privacy
 

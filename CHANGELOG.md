@@ -4,6 +4,14 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.4.9 (2026-11-05)
+
+MemoCtrl now needs Android 15 or newer.
+
+### Changed
+
+- **Needs Android 15 or newer.** Android 13 no longer gets security updates and Android 14's end early 2027, so MemoCtrl now supports Android 15, 16 and 17 only. On older phones the version you have keeps working, but it won't get updates.
+
 ## v0.4.8 (2026-11-05)
 
 Password managers work on the sign-in screen again.
