@@ -4,6 +4,16 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## v0.4.11 (2026-11-13)
+
+### Security
+
+- **Saved logins are protected by the phone's secure chip where it has one.** On a fresh install (or after clearing MemoCtrl's data), the key that encrypts your access tokens is now created in the phone's StrongBox secure element when the phone has one, and in the normal Android Keystore otherwise. If you already use MemoCtrl nothing changes for you: your existing key keeps working and you stay signed in.
+
+### Project
+
+- The Gradle wrapper download is now checked against its published SHA-256 checksum before a build runs.
+
 ## v0.4.10 (2026-11-12)
 
 ### Changed

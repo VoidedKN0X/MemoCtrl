@@ -15,9 +15,21 @@ object KeystoreCrypto {
     private const val PROVIDER = "AndroidKeyStore"
     private const val TRANSFORM = "AES/GCM/NoPadding"
 
+    @Volatile private var cached: SecretKey? = null
+
+    @Synchronized
     private fun key(): SecretKey {
+        cached?.let { return it }
         val ks = KeyStore.getInstance(PROVIDER).apply { load(null) }
-        (ks.getEntry(ALIAS, null) as? KeyStore.SecretKeyEntry)?.let { return it.secretKey }
+        val key = (ks.getEntry(ALIAS, null) as? KeyStore.SecretKeyEntry)?.secretKey
+            // New keys go into the phone's secure element (StrongBox) when it has one, else the normal Keystore.
+            // An existing key keeps working as it is, so nobody has to sign in again.
+            ?: runCatching { generate(strongBox = true) }.getOrElse { generate(strongBox = false) }
+        cached = key
+        return key
+    }
+
+    private fun generate(strongBox: Boolean): SecretKey {
         val gen = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, PROVIDER)
         gen.init(
             KeyGenParameterSpec.Builder(ALIAS, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
@@ -25,6 +37,7 @@ object KeystoreCrypto {
                 .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
                 .setRandomizedEncryptionRequired(true)
                 .setKeySize(256)
+                .setIsStrongBoxBacked(strongBox)
                 .build()
         )
         return gen.generateKey()
