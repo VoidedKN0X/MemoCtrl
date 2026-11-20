@@ -8,11 +8,49 @@ import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.parser.MarkdownParser
+import java.util.Collections
 
 private val flavour = GFMFlavourDescriptor()
 
+/**
+ * Remembers what was worked out for the most recently used memo texts, so a memo that scrolls back into
+ * view (or is counted again after another memo changed) isn't parsed a second time. Bounded by the total
+ * length of the texts it keeps; safe to use from any thread. The same text always gives the same result.
+ */
+private class TextLru<V : Any>(private val maxCost: Int) {
+    private val map = LinkedHashMap<String, V>(64, 0.75f, true)
+    private var cost = 0
+
+    private fun costOf(key: String) = key.length + 32
+
+    fun get(key: String): V? = synchronized(map) { map[key] }
+
+    fun put(key: String, value: V) {
+        // One very long memo isn't worth pushing everything else out.
+        if (costOf(key) > maxCost / 4) return
+        synchronized(map) {
+            if (map.put(key, value) == null) cost += costOf(key)
+            val entries = map.entries.iterator()
+            while (cost > maxCost && entries.hasNext()) {
+                val eldest = entries.next()
+                cost -= costOf(eldest.key)
+                entries.remove()
+            }
+        }
+    }
+}
+
+// Parsed trees are much bigger than their text, so far fewer of them are kept than tag lists.
+private val treeCache = TextLru<ASTNode>(400_000)
+private val tagCache = TextLru<Set<String>>(2_000_000)
+
 /** Parses memo text as GitHub-flavoured Markdown, the way Memos itself reads it. */
-fun parseMarkdown(text: String): ASTNode = MarkdownParser(flavour).buildMarkdownTreeFromString(text)
+fun parseMarkdown(text: String): ASTNode {
+    treeCache.get(text)?.let { return it }
+    val tree = MarkdownParser(flavour).buildMarkdownTreeFromString(text)
+    treeCache.put(text, tree)
+    return tree
+}
 
 // ---------- Tags ----------
 
@@ -63,13 +101,16 @@ fun ASTNode.findNodeAt(position: Int): ASTNode? {
 /** The #tags in a memo, as Memos counts them: not inside code or links. */
 fun extractTags(text: String): Set<String> {
     if ('#' !in text) return emptySet()
+    tagCache.get(text)?.let { return it }
     val tree = parseMarkdown(text)
     val tags = LinkedHashSet<String>()
     findTagMatches(text).forEach { m ->
         val node = tree.findNodeAt(m.range.first)
         if (node != null && isTagAllowedAt(node)) tags += tagName(m)
     }
-    return tags
+    val result: Set<String> = Collections.unmodifiableSet(tags)
+    tagCache.put(text, result)
+    return result
 }
 
 /** Whether a memo has [tag] or one of its sub-tags ("work" matches "#work/meetings"). Case-sensitive. */

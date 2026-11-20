@@ -27,9 +27,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -75,7 +78,17 @@ private fun MemoTimeline(sync: ManualSync, filter: ((MemoEntity) -> Boolean)?, n
     val session by c.sessions.active.collectAsStateWithLifecycle()
     val repo = session?.repo ?: return
     val all by remember(repo) { repo.observeMemos() }.collectAsStateWithLifecycle(initialValue = null)
-    val memos = remember(all, filter) { all?.let { list -> if (filter == null) list else list.filter(filter) } }
+    // A tag's memos are picked out on a background thread: finding the tags reads every memo's text.
+    // The list that's showing stays up until the new one is ready.
+    val memos: List<MemoEntity>? = if (filter == null) {
+        all
+    } else {
+        val filtered by produceState<List<MemoEntity>?>(null, all, filter) {
+            val list = all
+            value = if (list == null) null else withContext(Dispatchers.Default) { list.filter(filter) }
+        }
+        filtered
+    }
     val listState = rememberLazyListState()
     var pulled by remember { mutableStateOf(false) }
     val expandedFab by remember { derivedStateOf { listState.firstVisibleItemIndex == 0 } }
@@ -112,7 +125,7 @@ private fun MemoTimeline(sync: ManualSync, filter: ((MemoEntity) -> Boolean)?, n
                         state = listState,
                         contentPadding = PaddingValues(top = 4.dp, bottom = 96.dp + LocalBottomClearance.current),
                     ) {
-                        items(memos, key = { it.identifier }) { memo ->
+                        items(memos, key = { it.identifier }, contentType = { "memo" }) { memo ->
                             MemoCard(memo, modifier = Modifier.animateItem(), onOpen = { nav.memo(memo.identifier) })
                         }
                     }

@@ -29,6 +29,12 @@ class MemoDatabase(context: Context) : SQLiteOpenHelper(context, "memoctrl.db", 
     /** Goes up after every write, so lists that show memos reload. */
     val changes: StateFlow<Long> = _changes.asStateFlow()
 
+    init {
+        // Write-ahead logging: saving a memo no longer makes the lists that are being read wait, and each
+        // save is cheaper. Same database file and tables; SQLite keeps its journal in a "-wal" file beside it.
+        setWriteAheadLoggingEnabled(true)
+    }
+
     override fun onConfigure(db: SQLiteDatabase) {
         db.setForeignKeyConstraintsEnabled(true)
     }
@@ -83,20 +89,38 @@ class MemoDatabase(context: Context) : SQLiteOpenHelper(context, "memoctrl.db", 
 
     // ---------- Memos ----------
 
-    private fun Cursor.toMemo(): MemoEntity = MemoEntity(
-        identifier = getString(getColumnIndexOrThrow("identifier")),
-        remoteId = getStringOrNull("remote_id"),
-        accountKey = getString(getColumnIndexOrThrow("account_key")),
-        content = getString(getColumnIndexOrThrow("content")),
-        date = Instant.ofEpochMilli(getLong(getColumnIndexOrThrow("date"))),
-        visibility = runCatching { MemoVisibility.valueOf(getString(getColumnIndexOrThrow("visibility"))) }.getOrDefault(MemoVisibility.PRIVATE),
-        pinned = getInt(getColumnIndexOrThrow("pinned")) != 0,
-        archived = getInt(getColumnIndexOrThrow("archived")) != 0,
-        needsSync = getInt(getColumnIndexOrThrow("needs_sync")) != 0,
-        isDeleted = getInt(getColumnIndexOrThrow("is_deleted")) != 0,
-        lastModified = Instant.ofEpochMilli(getLong(getColumnIndexOrThrow("last_modified"))),
-        lastSyncedAt = getLongOrNull("last_synced_at")?.let(Instant::ofEpochMilli),
-        location = getStringOrNull("location")?.let { runCatching { ApiJson.decodeFromString(MemoLocation.serializer(), it) }.getOrNull() },
+    /** Where each column of the memos table sits in a query's result, looked up once per query instead of per row. */
+    private class MemoColumns(c: Cursor) {
+        val identifier = c.getColumnIndexOrThrow("identifier")
+        val remoteId = c.getColumnIndexOrThrow("remote_id")
+        val accountKey = c.getColumnIndexOrThrow("account_key")
+        val content = c.getColumnIndexOrThrow("content")
+        val date = c.getColumnIndexOrThrow("date")
+        val visibility = c.getColumnIndexOrThrow("visibility")
+        val pinned = c.getColumnIndexOrThrow("pinned")
+        val archived = c.getColumnIndexOrThrow("archived")
+        val needsSync = c.getColumnIndexOrThrow("needs_sync")
+        val isDeleted = c.getColumnIndexOrThrow("is_deleted")
+        val lastModified = c.getColumnIndexOrThrow("last_modified")
+        val lastSyncedAt = c.getColumnIndexOrThrow("last_synced_at")
+        val location = c.getColumnIndexOrThrow("location")
+    }
+
+    private fun Cursor.toMemo(col: MemoColumns): MemoEntity = MemoEntity(
+        identifier = getString(col.identifier),
+        remoteId = if (isNull(col.remoteId)) null else getString(col.remoteId),
+        accountKey = getString(col.accountKey),
+        content = getString(col.content),
+        date = Instant.ofEpochMilli(getLong(col.date)),
+        visibility = runCatching { MemoVisibility.valueOf(getString(col.visibility)) }.getOrDefault(MemoVisibility.PRIVATE),
+        pinned = getInt(col.pinned) != 0,
+        archived = getInt(col.archived) != 0,
+        needsSync = getInt(col.needsSync) != 0,
+        isDeleted = getInt(col.isDeleted) != 0,
+        lastModified = Instant.ofEpochMilli(getLong(col.lastModified)),
+        lastSyncedAt = if (isNull(col.lastSyncedAt)) null else Instant.ofEpochMilli(getLong(col.lastSyncedAt)),
+        location = (if (isNull(col.location)) null else getString(col.location))
+            ?.let { runCatching { ApiJson.decodeFromString(MemoLocation.serializer(), it) }.getOrNull() },
     )
 
     private fun MemoEntity.values() = ContentValues().apply {
@@ -117,7 +141,8 @@ class MemoDatabase(context: Context) : SQLiteOpenHelper(context, "memoctrl.db", 
 
     private fun SQLiteDatabase.queryMemos(where: String, args: Array<String>, order: String? = null): List<MemoEntity> =
         query("memos", null, where, args, null, null, order).use { c ->
-            buildList { while (c.moveToNext()) add(c.toMemo()) }
+            val col = MemoColumns(c)
+            buildList { while (c.moveToNext()) add(c.toMemo(col)) }
         }
 
     /** The timeline: not archived, not deleted, pinned first, newest first. */
@@ -323,7 +348,3 @@ private fun Cursor.getStringOrNull(column: String): String? {
     return if (isNull(i)) null else getString(i)
 }
 
-private fun Cursor.getLongOrNull(column: String): Long? {
-    val i = getColumnIndexOrThrow(column)
-    return if (isNull(i)) null else getLong(i)
-}

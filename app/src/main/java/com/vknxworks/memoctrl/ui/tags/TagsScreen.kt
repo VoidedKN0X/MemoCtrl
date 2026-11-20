@@ -21,7 +21,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -86,10 +89,18 @@ fun TagsScreen() {
             LoadingView()
             return@Column
         }
-        val tagCounts = remember(list) {
-            val counts = HashMap<String, Int>()
-            list.forEach { m -> extractTags(m.content).forEach { counts[it] = (counts[it] ?: 0) + 1 } }
-            counts.entries.sortedBy { it.key.lowercase() }.map { it.key to it.value }
+        // Counted on a background thread: finding the tags reads every memo's text. The counts that are
+        // showing stay up until the new ones are ready.
+        val counted by produceState<List<Pair<String, Int>>?>(null, list) {
+            value = withContext(Dispatchers.Default) {
+                val counts = HashMap<String, Int>()
+                list.forEach { m -> extractTags(m.content).forEach { counts[it] = (counts[it] ?: 0) + 1 } }
+                counts.entries.sortedBy { it.key.lowercase() }.map { it.key to it.value }
+            }
+        }
+        val tagCounts = counted ?: run {
+            LoadingView()
+            return@Column
         }
         val start = session?.account?.toUser()?.startDate
         val days = remember(start) {

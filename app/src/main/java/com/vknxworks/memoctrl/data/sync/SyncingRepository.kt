@@ -26,6 +26,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -381,7 +383,12 @@ class SyncingRepository(
     private suspend fun syncInternal() {
         refreshCurrentUser()
 
-        val remoteMemos = remote.listMemos() + remote.listArchivedMemos()
+        // Both lists are asked for at the same time; the result is the same list in the same order.
+        val remoteMemos = coroutineScope {
+            val normal = async { remote.listMemos() }
+            val archived = async { remote.listArchivedMemos() }
+            normal.await() + archived.await()
+        }
         val remoteById = remoteMemos.associateBy { remoteMemoId(it) }
 
         var firstError: String? = null

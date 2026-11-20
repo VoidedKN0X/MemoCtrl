@@ -4,6 +4,29 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Not released yet: these changes are built but ship with the next version.
+
+### Removed
+
+- **The home screen widgets are gone.** The **Memos** widget (your latest memos, with its tag, pinned-only and count settings) and the **Memory** widget (a random memo) have been removed, together with the widget settings screen and the code that redrew them after every change and sync. If you had one on your home screen, Android removes it (or shows it as unavailable) after the update. The choices you made for each widget are deleted from the phone the next time MemoCtrl starts. The **New memo** shortcut (long-press the MemoCtrl icon) and **Share to MemoCtrl** are unchanged.
+
+### Changed
+
+- **The timeline scrolls more smoothly.** A memo's Markdown and its #tags are now worked out once and remembered, instead of twice every time the memo scrolls into view. Memos look exactly the same.
+- **Tag screens and the Tags tab no longer freeze with many memos.** Picking out a tag's memos and counting your tags now happens in the background; the first time you open them you may briefly see the loading indicator, and after a change the list that's showing stays up until the new one is ready.
+- **Saving and syncing memos is lighter on storage.** The memo database now uses SQLite's write-ahead log, so the lists that are being read don't wait for a memo that's being saved, and reading memos looks up the table's columns once per query instead of for every memo. Your memos and the database's tables are unchanged.
+- **Sync asks the server for your memos and your archived memos at the same time** instead of one after the other, so a sync finishes sooner. What gets synced is the same.
+
+### Fixed
+
+- **Ready for the Memos 26.10 pre-release's new addresses.** Memos 26.10-rc.1 moved its API from `/api/v1/...` to `/api/...` and answers "410 Gone" on the old addresses. MemoCtrl still talks to `/api/v1/...` first, so nothing changes for Memos 0.27 to 0.31. Only when a server answers 410 Gone, and its profile is really there on the new address, does MemoCtrl send the same request again on `/api/...` and keep using that for this server until the app is restarted. Memos 26.10 is still not an officially supported version: MemoCtrl keeps asking before you continue with it, and this hasn't been tried against a real 26.10 server.
+
+### Security
+
+- **Fewer ways in from other apps.** With the widgets gone, the two widget receivers and the widget settings screen that other apps could reach no longer exist, and neither do the "open this memo" and "edit this memo" requests only the widgets used.
+
 ## v0.4.11 (2026-11-13)
 
 ### Security
