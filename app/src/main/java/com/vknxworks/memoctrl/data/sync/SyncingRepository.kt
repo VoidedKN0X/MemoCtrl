@@ -398,42 +398,47 @@ class SyncingRepository(
 
         val localByRemoteId = db.getAllMemosForSync(accountKey).mapNotNull { m -> m.remoteId?.let { it to m } }.toMap()
 
-        for (remoteMemo in remoteMemos) {
-            val remoteId = remoteMemoId(remoteMemo)
-            // Read again: the snapshot can be seconds old, and autosave keeps writing during a sync.
-            val local = localByRemoteId[remoteId]?.let { db.getMemoById(it.identifier, accountKey) }
-
-            if (local == null) {
-                applyRemoteMemo(remoteMemo)
-                continue
-            }
-
-            if (local.isDeleted) {
-                if (!local.needsSync) {
-                    applyRemoteMemo(remoteMemo, local.identifier, expectedLastModified = local.lastModified)
-                    continue
+        // The server's memos are merged in groups: everything that only needs the phone's own database
+        // (new and changed memos from the server, memos that are already the same) is read and written
+        // for a whole group on one thread and committed together. Memos that need the server (a push, a
+        // delete there, a conflict) are done right after their group, one at a time as before.
+        try {
+            for (group in remoteMemos.chunked(SYNC_BATCH_SIZE)) {
+                val waiting = ArrayList<RemoteMemo>()
+                db.batch(announce = false) {
+                    for (remoteMemo in group) {
+                        if (mergeLocally(this, remoteMemo, localByRemoteId) != null) waiting += remoteMemo
+                    }
                 }
-                if (hasRemoteChanged(local, remoteMemo) || !memoEquivalent(local, remoteMemo)) {
-                    applyRemoteMemo(remoteMemo, local.identifier, expectedLastModified = local.lastModified)
-                } else {
-                    if (tryRemote { remote.deleteMemo(remoteId) }) permanentlyDeleteMemo(local.identifier) else recordFailure()
+                if (waiting.isEmpty()) continue
+                // Waiting for the server can take a while: let the lists show what's merged so far.
+                db.announceHeldBack()
+                for (remoteMemo in waiting) {
+                    // Read and decided again, right before the request: autosave keeps writing during a sync.
+                    val needed = db.batch { mergeLocally(this, remoteMemo, localByRemoteId) } ?: continue
+                    val local = needed.local
+                    when (needed.step) {
+                        ServerStep.DELETE_ON_SERVER ->
+                            if (tryRemote { remote.deleteMemo(remoteMemoId(remoteMemo)) }) permanentlyDeleteMemo(local.identifier) else recordFailure()
+                        ServerStep.PUSH -> if (!pushLocalMemo(local.identifier)) recordFailure()
+                        ServerStep.CONFLICT -> if (!duplicateConflict(local, remoteMemo)) recordFailure()
+                    }
                 }
-                continue
             }
-
-            if (memoEquivalent(local, remoteMemo)) {
-                markSynced(local, remoteMemo)
-                continue
-            }
-
-            when {
-                !local.needsSync -> applyRemoteMemo(remoteMemo, local.identifier, expectedLastModified = local.lastModified)
-                !hasRemoteChanged(local, remoteMemo) -> if (!pushLocalMemo(local.identifier)) recordFailure()
-                else -> if (!duplicateConflict(local, remoteMemo)) recordFailure()
-            }
+        } finally {
+            // One reload of the lists for everything the groups wrote, also when the sync stopped halfway.
+            db.announceHeldBack()
         }
 
         for (snapshot in db.getAllMemosForSync(accountKey)) {
+            // This list was read a moment ago. A memo that is on the server's list, got its server id
+            // after that list was fetched, or has nothing waiting needs nothing here (the same checks as
+            // below); only the others are read again, since a push in this loop can take seconds.
+            if (snapshot.remoteId != null) {
+                if (remoteById.containsKey(snapshot.remoteId) || !localByRemoteId.containsKey(snapshot.remoteId)) continue
+            } else if (!snapshot.isDeleted && !snapshot.needsSync) {
+                continue
+            }
             val local = db.getMemoById(snapshot.identifier, accountKey) ?: continue
             if (local.remoteId != null && remoteById.containsKey(local.remoteId)) continue
             // A conflict copy (or a push running alongside) can get a server id after the server list
@@ -457,6 +462,50 @@ class SyncingRepository(
         }
 
         firstError?.let { throw ApiException(it) }
+    }
+
+    private enum class ServerStep { DELETE_ON_SERVER, PUSH, CONFLICT }
+
+    /** What merging [local] with the server's version still needs from the server. */
+    private class NeedsServer(val local: MemoEntity, val step: ServerStep)
+
+    /**
+     * Merges one memo from the server's list with the phone's copy as far as that needs no request:
+     * takes over the server's version, or marks the memo as synced when both are the same. Returns null
+     * when that was all, or what has to be done with the server (nothing is written in that case).
+     */
+    private fun mergeLocally(batch: MemoDatabase.Batch, remoteMemo: RemoteMemo, localByRemoteId: Map<String, MemoEntity>): NeedsServer? {
+        val remoteId = remoteMemoId(remoteMemo)
+        // Read again: the snapshot can be seconds old, and autosave keeps writing during a sync.
+        val local = localByRemoteId[remoteId]?.let { batch.getMemoById(it.identifier, accountKey) }
+
+        if (local == null) {
+            applyRemoteMemoIn(batch, remoteMemo)
+            return null
+        }
+
+        if (local.isDeleted) {
+            if (!local.needsSync) {
+                applyRemoteMemoIn(batch, remoteMemo, local.identifier, expectedLastModified = local.lastModified)
+                return null
+            }
+            if (hasRemoteChanged(local, remoteMemo) || !memoEquivalent(batch, local, remoteMemo)) {
+                applyRemoteMemoIn(batch, remoteMemo, local.identifier, expectedLastModified = local.lastModified)
+                return null
+            }
+            return NeedsServer(local, ServerStep.DELETE_ON_SERVER)
+        }
+
+        if (memoEquivalent(batch, local, remoteMemo)) {
+            markSynced(batch, local, remoteMemo)
+            return null
+        }
+
+        if (!local.needsSync) {
+            applyRemoteMemoIn(batch, remoteMemo, local.identifier, expectedLastModified = local.lastModified)
+            return null
+        }
+        return NeedsServer(local, if (!hasRemoteChanged(local, remoteMemo)) ServerStep.PUSH else ServerStep.CONFLICT)
     }
 
     private suspend fun refreshCurrentUser() {
@@ -637,6 +686,15 @@ class SyncingRepository(
         preferredLocalIdentifier: String? = null,
         keepPendingResources: Boolean = false,
         expectedLastModified: Instant? = null,
+    ): Boolean = db.batch { applyRemoteMemoIn(this, remoteMemo, preferredLocalIdentifier, keepPendingResources, expectedLastModified) }
+
+    /** [applyRemoteMemo] inside a batch: the memo and its attachments are read and written in one go. */
+    private fun applyRemoteMemoIn(
+        db: MemoDatabase.Batch,
+        remoteMemo: RemoteMemo,
+        preferredLocalIdentifier: String? = null,
+        keepPendingResources: Boolean = false,
+        expectedLastModified: Instant? = null,
     ): Boolean {
         val remoteId = remoteMemoId(remoteMemo)
         val current = db.getMemoByRemoteId(remoteId, accountKey)
@@ -701,23 +759,32 @@ class SyncingRepository(
         return true
     }
 
-    private suspend fun markSynced(local: MemoEntity, remoteMemo: RemoteMemo) {
-        // Skipped if the row was edited after `local` was read: it keeps needsSync and gets pushed.
-        db.insertMemoIfUnchanged(
-            local.copy(
-                remoteId = remoteMemoId(remoteMemo),
-                date = remoteMemo.date,
-                needsSync = false,
-                isDeleted = false,
-                archived = remoteMemo.archived,
-                lastSyncedAt = remoteMemo.updatedAt ?: remoteMemo.date,
-                resources = emptyList(),
-            ),
-            local.lastModified,
+    private fun markSynced(db: MemoDatabase.Batch, local: MemoEntity, remoteMemo: RemoteMemo) {
+        val synced = local.copy(
+            remoteId = remoteMemoId(remoteMemo),
+            date = remoteMemo.date,
+            needsSync = false,
+            isDeleted = false,
+            archived = remoteMemo.archived,
+            lastSyncedAt = remoteMemo.updatedAt ?: remoteMemo.date,
+            resources = emptyList(),
         )
+        // Nothing to write when the row already says all of that (most memos, on most syncs). Times are
+        // stored in milliseconds, so that's how they're compared. `local` was read in this same batch.
+        if (synced.remoteId == local.remoteId &&
+            synced.date.toEpochMilli() == local.date.toEpochMilli() &&
+            !local.needsSync &&
+            !local.isDeleted &&
+            synced.archived == local.archived &&
+            synced.lastSyncedAt?.toEpochMilli() == local.lastSyncedAt?.toEpochMilli()
+        ) {
+            return
+        }
+        // Skipped if the row was edited after `local` was read: it keeps needsSync and gets pushed.
+        db.insertMemoIfUnchanged(synced, local.lastModified)
     }
 
-    private suspend fun memoEquivalent(local: MemoEntity, remote: RemoteMemo): Boolean {
+    private fun memoEquivalent(db: MemoDatabase.Batch, local: MemoEntity, remote: RemoteMemo): Boolean {
         if (this.remote.supportsLocation && local.location != remote.location) return false
         if (local.content != remote.content) return false
         if (local.pinned != remote.pinned) return false
@@ -830,6 +897,9 @@ class SyncingRepository(
 
     companion object {
         private const val MAX_RECONCILE_ATTEMPTS = 5
+
+        /** How many of the server's memos are merged per commit to storage. */
+        private const val SYNC_BATCH_SIZE = 50
     }
 }
 

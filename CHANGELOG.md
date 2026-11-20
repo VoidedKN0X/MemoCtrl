@@ -4,6 +4,17 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Not in a release yet. Built and checked by CI only: none of this had been run on a phone when it was written.
+
+### Changed
+
+- **A sync writes to the phone's storage in groups instead of once per memo.** Until now, every memo a sync took over from the server, and every memo it found unchanged, was its own commit to storage (one per memo, plus one per attachment). Now the server's memos are merged 50 at a time: for each group, everything that only needs the phone's own database is read and written on one background thread and committed together. Memos that need the server during a sync (one you changed that has to be uploaded, one you deleted that has to be deleted there, one changed on both sides) are handled right after their group, one at a time, exactly as before, and each is read again right before its request. The rules for what wins are unchanged: a memo you edited while the sync was running is still never overwritten (the same "only if nobody wrote this memo since I read it" check per memo), and a memo changed on both sides still keeps your version as a new memo. A memo's row and its attachments are now also saved together rather than one after the other. If a sync stops halfway, what it had already written is kept, as before.
+- **A memo that is already the same on the phone and on the server is no longer written again on every sync.** Each sync used to rewrite the row of every unchanged memo with the values it already had. Now nothing is written for such a memo, so a sync in which nothing changed no longer makes the timeline, the archive and the other lists reload.
+- **The lists reload once for a whole sync's worth of server changes, not again and again while it runs.** The timeline, the archive, Search and the tag screens used to be told about every single row a sync wrote and could reload the whole memo table several times during one sync. Now they are told once when the merge is done (and before the sync waits for the server for one of your own changes, so what's merged so far shows up then). Your own edits, new memos, deletes and attachments show up exactly as fast as before.
+- **The last step of a sync reads fewer memos again.** After merging the server's list, a sync checked every memo on the phone once more, one database read per memo. It now only reads again the memos that step can do something with (not on the server's list any more, deleted here, or still waiting to be uploaded); for all others the result was always "nothing to do".
+
 ## v0.5.1 (2026-11-20)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

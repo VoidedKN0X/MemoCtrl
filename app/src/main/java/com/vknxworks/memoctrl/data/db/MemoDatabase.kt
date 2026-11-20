@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The memos and attachments kept on the phone, for every signed-in account. Plain SQLite, so the app
@@ -86,6 +87,94 @@ class MemoDatabase(context: Context) : SQLiteOpenHelper(context, "memoctrl.db", 
     private fun changed() = _changes.update { it + 1 }
 
     private suspend fun <T> io(block: SQLiteDatabase.() -> T): T = withContext(Dispatchers.IO) { writableDatabase.block() }
+
+    // ---------- Several reads and writes in one go ----------
+
+    /** Set when a [batch] wrote something without telling the lists yet; [announceHeldBack] tells them. */
+    private val heldBack = AtomicBoolean(false)
+
+    /**
+     * The reads and writes a sync does for a group of memos, without a thread switch for each one. Only
+     * usable inside [batch]: everything runs on the one thread that holds the transaction (SQLite
+     * transactions belong to a thread), so nothing here suspends.
+     */
+    inner class Batch internal constructor(private val sql: SQLiteDatabase) {
+        internal var wrote = false
+
+        fun getMemoById(identifier: String, accountKey: String): MemoEntity? =
+            sql.queryMemos("identifier = ? AND account_key = ?", arrayOf(identifier, accountKey)).firstOrNull()
+
+        fun getMemoByRemoteId(remoteId: String, accountKey: String): MemoEntity? =
+            sql.queryMemos("remote_id = ? AND account_key = ?", arrayOf(remoteId, accountKey)).firstOrNull()
+
+        fun getMemoResources(memoId: String, accountKey: String): List<ResourceEntity> =
+            sql.queryResources("memo_id = ? AND account_key = ?", arrayOf(memoId, accountKey), "date ASC")
+
+        /** Same as [MemoDatabase.insertMemo]. */
+        fun insertMemo(memo: MemoEntity) {
+            sql.upsertMemo(memo)
+            wrote = true
+        }
+
+        /** Same as [MemoDatabase.insertMemoIfUnchanged]. */
+        fun insertMemoIfUnchanged(memo: MemoEntity, expectedLastModified: Instant): Boolean {
+            val written = sql.updateMemoIfUnchanged(memo, expectedLastModified)
+            if (written) wrote = true
+            return written
+        }
+
+        /** Same as [MemoDatabase.insertResource]. */
+        fun insertResource(resource: ResourceEntity) {
+            sql.upsertResource(resource)
+            wrote = true
+        }
+
+        /** Same as [MemoDatabase.deleteResource]. */
+        fun deleteResource(identifier: String) {
+            sql.delete("resources", "identifier = ?", arrayOf(identifier))
+            wrote = true
+        }
+    }
+
+    /**
+     * Runs [block] on one background thread inside one transaction, so a group of rows is committed to
+     * storage together instead of one commit per row. Whatever [block] wrote before it returned or threw
+     * is committed either way, exactly as when every write was its own commit; an error is passed on
+     * after that. Other writers (an edit being saved) wait until the block is done, so keep it short and
+     * never wait for the network in it.
+     *
+     * With [announce] false the lists that show memos aren't told yet; call [announceHeldBack] when the
+     * group of batches is done (also when it failed).
+     */
+    suspend fun <T> batch(announce: Boolean = true, block: Batch.() -> T): T {
+        var wrote = false
+        try {
+            return withContext(Dispatchers.IO) {
+                val sql = writableDatabase
+                val batch = Batch(sql)
+                sql.beginTransaction()
+                try {
+                    batch.block()
+                } finally {
+                    wrote = batch.wrote
+                    try {
+                        sql.setTransactionSuccessful()
+                    } finally {
+                        sql.endTransaction()
+                    }
+                }
+            }
+        } finally {
+            if (wrote) {
+                if (announce) changed() else heldBack.set(true)
+            }
+        }
+    }
+
+    /** Tells the lists about what batches with `announce = false` wrote. Does nothing when they wrote nothing. */
+    fun announceHeldBack() {
+        if (heldBack.getAndSet(false)) changed()
+    }
 
     // ---------- Memos ----------
 
@@ -189,17 +278,18 @@ class MemoDatabase(context: Context) : SQLiteOpenHelper(context, "memoctrl.db", 
      * row since the caller read it. Returns false (and writes nothing) otherwise or if the row is gone.
      */
     suspend fun insertMemoIfUnchanged(memo: MemoEntity, expectedLastModified: Instant): Boolean {
-        val written = io {
-            update(
-                "memos",
-                memo.values(),
-                "identifier = ? AND account_key = ? AND last_modified = ?",
-                arrayOf(memo.identifier, memo.accountKey, expectedLastModified.toEpochMilli().toString()),
-            ) > 0
-        }
+        val written = io { updateMemoIfUnchanged(memo, expectedLastModified) }
         if (written) changed()
         return written
     }
+
+    private fun SQLiteDatabase.updateMemoIfUnchanged(memo: MemoEntity, expectedLastModified: Instant): Boolean =
+        update(
+            "memos",
+            memo.values(),
+            "identifier = ? AND account_key = ? AND last_modified = ?",
+            arrayOf(memo.identifier, memo.accountKey, expectedLastModified.toEpochMilli().toString()),
+        ) > 0
 
     suspend fun deleteMemo(identifier: String) {
         io { delete("memos", "identifier = ?", arrayOf(identifier)) }
@@ -315,12 +405,14 @@ class MemoDatabase(context: Context) : SQLiteOpenHelper(context, "memoctrl.db", 
     }
 
     suspend fun insertResource(resource: ResourceEntity) {
-        io {
-            val v = resource.values()
-            val updated = update("resources", v, "identifier = ?", arrayOf(resource.identifier))
-            if (updated == 0) insertOrThrow("resources", null, v)
-        }
+        io { upsertResource(resource) }
         changed()
+    }
+
+    private fun SQLiteDatabase.upsertResource(resource: ResourceEntity) {
+        val v = resource.values()
+        val updated = update("resources", v, "identifier = ?", arrayOf(resource.identifier))
+        if (updated == 0) insertOrThrow("resources", null, v)
     }
 
     /** Links an attachment to a memo, keeping server details stored since the editor read it. */
