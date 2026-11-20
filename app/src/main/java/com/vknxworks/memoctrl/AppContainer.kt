@@ -46,7 +46,10 @@ class AppContainer(val context: Context) {
 
     private val connectionPool = ConnectionPool()
 
-    val http: OkHttpClient = run {
+    // Built the first time something talks to a server (signing in, opening the saved account, loading
+    // a picture), which is on a background thread, instead of on the main thread while the app starts:
+    // setting up TLS reads the phone's trusted certificates.
+    val http: OkHttpClient by lazy {
         val (ssl, trust) = ClientCertificate.sslContext(context, connectionPool)
         OkHttpClient.Builder()
             .connectionPool(connectionPool)
@@ -84,7 +87,7 @@ class AppContainer(val context: Context) {
 
     /** The app lock's PIN, fingerprint key and the key that encrypts server logins while locked. */
     val vault = LockVault(context, "memoctrl")
-    val sessions = SessionManager(context, http, db, files, settings, vault, appScope)
+    val sessions = SessionManager(context, { http }, db, files, settings, vault, appScope)
 
     /** Turns the app lock on: the PIN encrypts the server logins from now on. */
     // These run to the end even when the PIN screen that started them closes halfway (it does, as soon

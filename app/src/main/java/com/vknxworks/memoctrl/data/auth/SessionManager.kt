@@ -156,13 +156,16 @@ sealed interface SyncCheck {
 /** Saved Memos accounts and the active one. Tokens are stored encrypted and never leave the phone except to their server. */
 class SessionManager(
     private val context: Context,
-    private val http: OkHttpClient,
+    /** The app's HTTP client. Asked for only when a server is talked to, so it can be built late. */
+    private val httpClient: () -> OkHttpClient,
     private val db: MemoDatabase,
     private val files: FileStorage,
     private val settings: SettingsRepository,
     private val vault: LockVault,
     private val scope: CoroutineScope,
 ) {
+    private val http: OkHttpClient get() = httpClient()
+
     private val accountsKey = stringPreferencesKey("accounts")
     private val activeKey = stringPreferencesKey("active_account")
     private val mutex = Mutex()
