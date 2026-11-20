@@ -67,7 +67,7 @@ Settings, the archive, attachments, accounts and sign out are behind your profil
 ## Is it safe to install?
 
 - **Open source:** all of MemoCtrl's code is in this repo, under the GPL-3.0 licence.
-- **Built by GitHub, not on a personal computer:** every release on the [Releases page](https://github.com/VoidedKN0X/MemoCtrl/releases) is built by [the build workflow](.github/workflows/build.yml) from the code in this repo.
+- **Built by GitHub, not on a personal computer:** every release on the [Releases page](https://github.com/VoidedKN0X/MemoCtrl/releases) is built by [the build workflow](.github/workflows/build.yml) from the code in this repo. The signing key is kept away from the build: one job builds the APK without any secrets, and a separate job that runs no code from this repo signs it and checks the signature against the fingerprint below.
 - **Always signed with the same key:** Android refuses to install an update signed with a different key, so nobody else can replace MemoCtrl with their own version. The [CtrlF-Droid repo](https://voidedkn0x.github.io/CtrlF-Droid/) only accepts APKs signed with this key. The SHA-256 fingerprint of the signing certificate is:
 
   ```
