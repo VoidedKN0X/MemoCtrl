@@ -122,7 +122,7 @@ private fun MainScaffold() {
         }
     }
 
-    // Shares from other apps, launcher shortcuts and widget taps.
+    // Shares from other apps and launcher shortcuts.
     val pending by c.pendingAction.collectAsStateWithLifecycle()
     LaunchedEffect(pending, backStack != null) {
         val action = pending ?: return@LaunchedEffect
@@ -130,8 +130,6 @@ private fun MainScaffold() {
         when (action) {
             PendingAction.NewMemo -> navigator.navigateNow(EditorRoute())
             is PendingAction.Share -> navigator.navigateNow(EditorRoute(share = true))
-            is PendingAction.ViewMemo -> navigator.navigateNow(MemoRoute(action.identifier))
-            is PendingAction.EditMemo -> navigator.navigateNow(EditorRoute(action.identifier))
         }
         // A share is picked up by the editor itself; everything else is done.
         if (action !is PendingAction.Share) c.pendingAction.value = null

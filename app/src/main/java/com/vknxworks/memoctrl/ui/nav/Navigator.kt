@@ -19,7 +19,7 @@ class Navigator(val nav: NavHostController) {
         nav.navigate(route) { launchSingleTop = true }
     }
 
-    /** Opens a screen no matter what is animating: for things another app or a widget asked for. */
+    /** Opens a screen no matter what is animating: for things another app or a shortcut asked for. */
     fun navigateNow(route: Any) {
         nav.navigate(route) { launchSingleTop = true }
     }

@@ -15,7 +15,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Timeline** of your memos, pinned ones first, with pull to sync
 - **Works offline**: memos are kept on the phone and changes sync when your server can be reached, without losing anything when both sides changed
 - **Background sync** every 15 or 30 minutes, every hour or every 6 hours (or off), optionally only on Wi-Fi or while charging, plus a sync every time you open the app and an optional notice when a background sync fails
-- **Use without a server**: a local-only mode that keeps your memos, pictures and files only on the phone, with the editor, tags, heatmap, search, archive and widgets; move them to a server account whenever you add one
+- **Use without a server**: a local-only mode that keeps your memos, pictures and files only on the phone, with the editor, tags, heatmap, search and archive; move them to a server account whenever you add one
 - **Editor** with formatting, tasks, tags, pictures, the camera, file attachments, a location and who can see the memo
 - **Markdown** the way Memos shows it, with tappable tasks and #tags
 - **Drafts** for unposted memos, or **autosave** while you type
@@ -24,7 +24,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Explore** what others shared on your server
 - **Search** that works offline, optionally in your archive too
 - **Archive** and **attachments** pages, and a full-screen picture viewer
-- **Share to MemoCtrl** from any app, a **New memo** launcher shortcut, and **Memos** and **Memory** home screen widgets
+- **Share to MemoCtrl** from any app and a **New memo** launcher shortcut
 - **App lock** with its own PIN and optional fingerprint unlock; your server login stays encrypted while the app is locked (see [App lock](#app-lock))
 - **Hide in screenshots** and **Hide in recent apps**, two separate switches, on their own or with the app lock
 - **Client certificates** (mutual TLS) for servers behind a proxy that asks for one
@@ -116,7 +116,7 @@ Turn it on under your profile picture › **Settings > Privacy and security > Ap
 - **Lock again:** as soon as you leave the app (the default), after 1, 5 or 15 minutes or 1 hour away, or only when the app restarts. Taking a photo, picking pictures or files, sharing and opening an attachment don't count as leaving, unless you stay away for more than 5 minutes.
 - **Change app PIN** asks for your current PIN first, and turning the app lock off asks for the PIN too.
 - **Forgot your PIN?** It can't be recovered, because it encrypts your login. The lock screen offers to sign out of every account and delete what MemoCtrl keeps on the phone; everything on your Memos server stays.
-- **With the app lock on**, the recent-apps screen always shows a blank card, and the widgets show "MemoCtrl is locked" instead of your memos and don't sync, because your login stays encrypted.
+- **With the app lock on**, the recent-apps screen always shows a blank card, and background sync waits until you unlock, because your login stays encrypted.
 
 Two more switches in the same section work with or without the app lock, and are both off until you turn them on:
 

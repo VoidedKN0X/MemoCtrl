@@ -18,7 +18,7 @@ Only the latest release gets security fixes. Please update before reporting, and
 ## What counts
 
 - Your password, access token, memos or attachments leaking to anyone other than your own Memos server
-- Ways around the app lock, such as widgets, shortcuts or shares showing your memos while MemoCtrl is locked, or protected screens showing up in screenshots when they shouldn't
+- Ways around the app lock, such as shortcuts or shares showing your memos while MemoCtrl is locked, or protected screens showing up in screenshots when they shouldn't
 - Another app on the phone being able to make MemoCtrl do something you didn't ask for, such as attaching MemoCtrl's own files to a memo
 - A memo or a server answer making MemoCtrl open, show or save files on the phone that it shouldn't
 - Anything that lets someone run code or read files they shouldn't

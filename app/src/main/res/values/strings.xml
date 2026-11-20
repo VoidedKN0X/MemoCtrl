@@ -2,14 +2,7 @@
 <resources>
     <string name="app_name">MemoCtrl</string>
     <string name="new_memo">New memo</string>
-    <string name="refresh">Refresh</string>
     <string name="pinned">Pinned</string>
-
-    <string name="widget_memos_title">Memos</string>
-    <string name="widget_memos_description">Your latest memos, pinned ones first. Pick a tag to show only those.</string>
-    <string name="widget_memory_title">Memory</string>
-    <string name="widget_memory_description">A random memo from your timeline, different each time it refreshes.</string>
-    <string name="widget_empty">No memos yet</string>
 
     <string name="group_about">About</string>
     <string name="support_title">Support MemoCtrl</string>
@@ -112,7 +105,7 @@
     <string name="group_privacy">Privacy and security</string>
     <string name="privacy_footer">MemoCtrl has no analytics or tracking. It only talks to your own Memos server.</string>
     <string name="lock_app">App lock</string>
-    <string name="lock_app_subtitle">Ask for an app PIN (and optionally your fingerprint) when opening MemoCtrl. While locked, your server login stays encrypted with the PIN, and the recent-apps screen and widgets hide your memos.</string>
+    <string name="lock_app_subtitle">Ask for an app PIN (and optionally your fingerprint) when opening MemoCtrl. While locked, your server login stays encrypted with the PIN, and the recent-apps screen hides your memos.</string>
     <string name="lock_change_pin">Change app PIN</string>
     <string name="lock_change_pin_subtitle">At least %1$d digits, separate from your phone\'s PIN</string>
     <string name="lock_fingerprint">Unlock with fingerprint</string>
@@ -403,19 +396,6 @@ Your changes are kept on this phone and sync next time.</string>
     <string name="attachment_no_app">No app can open this file</string>
     <string name="attachment_get_failed">Couldn\'t get this file</string>
 
-    <!-- Widgets -->
-    <string name="widget_sign_in">Sign in to MemoCtrl to see your memos</string>
-    <string name="widget_locked">MemoCtrl is locked</string>
-    <string name="widget_config_title">Memos widget</string>
-    <string name="widget_config_tag">Tag</string>
-    <string name="widget_config_all">All memos</string>
-    <string name="widget_config_pinned">Pinned memos only</string>
-    <string name="widget_config_max">Show up to</string>
-    <string name="widget_config_add">Add widget</string>
-    <plurals name="widget_config_count">
-        <item quantity="one">%1$d memo</item>
-        <item quantity="other">%1$d memos</item>
-    </plurals>
     <string name="error_attachment_without_name">The server sent an attachment without a name, so MemoCtrl can\'t show it.</string>
     <!-- Renaming and deleting tags -->
     <string name="next">Next</string>

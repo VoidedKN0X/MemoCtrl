@@ -23,7 +23,6 @@ import com.vknxworks.memoctrl.container
 import com.vknxworks.memoctrl.data.auth.SyncCheck
 import com.vknxworks.memoctrl.data.settings.AppSettings
 import com.vknxworks.memoctrl.data.settings.SyncInterval
-import com.vknxworks.memoctrl.widget.Widgets
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
@@ -48,7 +47,6 @@ class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             if (c.sessions.checkSync(automatic = true) is SyncCheck.Allowed) {
                 session.repo.sync()
                 BackgroundSync.clearFailure(applicationContext)
-                Widgets.updateAll(applicationContext)
             }
         } catch (e: CancellationException) {
             throw e

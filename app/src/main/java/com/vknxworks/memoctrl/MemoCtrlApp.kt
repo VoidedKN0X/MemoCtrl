@@ -11,7 +11,7 @@ import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import com.vknxworks.memoctrl.ui.lock.AppLock
 import androidx.annotation.StringRes
 
-/** A string from strings.xml, for code outside Compose (errors, widgets, toasts). */
+/** A string from strings.xml, for code outside Compose (errors, toasts). */
 fun str(@StringRes id: Int, vararg args: Any): String = MemoCtrlApp.instance.getString(id, *args)
 
 class MemoCtrlApp : Application(), SingletonImageLoader.Factory {

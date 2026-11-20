@@ -28,7 +28,6 @@ import com.vknxworks.memoctrl.AppContainer
 import com.vknxworks.memoctrl.container
 import com.vknxworks.memoctrl.data.auth.SyncCheck
 import com.vknxworks.memoctrl.ui.components.friendlyMessage
-import com.vknxworks.memoctrl.widget.Widgets
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -59,7 +58,6 @@ class ManualSync(private val c: AppContainer, private val scope: CoroutineScope)
                     SyncCheck.Allowed -> {
                         session.repo.sync()
                         if (allowVersion != null) c.sessions.acceptVersion(allowVersion)
-                        Widgets.updateAll(c.context)
                     }
                     is SyncCheck.Blocked -> alert = SyncAlert.Blocked(check.message ?: c.context.getString(R.string.sync_unsupported))
                     is SyncCheck.NeedsConfirmation -> alert = SyncAlert.Confirm(check.version, check.message)

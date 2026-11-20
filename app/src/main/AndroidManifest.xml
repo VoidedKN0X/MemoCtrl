@@ -70,40 +70,6 @@
                 android:resource="@xml/shortcuts" />
         </activity>
 
-        <activity
-            android:name=".widget.WidgetConfigActivity"
-            android:exported="true"
-            android:excludeFromRecents="true"
-            android:theme="@style/Theme.MemoCtrl">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
-            </intent-filter>
-        </activity>
-
-        <receiver
-            android:name=".widget.MemosWidgetProvider"
-            android:exported="true"
-            android:label="@string/widget_memos_title">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_memos_info" />
-        </receiver>
-
-        <receiver
-            android:name=".widget.MemoryWidgetProvider"
-            android:exported="true"
-            android:label="@string/widget_memory_title">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-                android:name="android.appwidget.provider"
-                android:resource="@xml/widget_memory_info" />
-        </receiver>
-
         <!-- Hands photo and attachment files to the camera and to apps that open them, one file at a time. -->
         <provider
             android:name="androidx.core.content.FileProvider"

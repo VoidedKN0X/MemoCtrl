@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
         handleIntent(intent)
     }
 
-    /** Turns a share, shortcut or widget tap into something the main screen opens. */
+    /** Turns a share or shortcut into something the main screen opens. */
     private fun handleIntent(intent: Intent?) {
         intent ?: return
         // Another app can send anything: a broken extra must not crash MemoCtrl, it's just ignored.
@@ -70,8 +70,6 @@ class MainActivity : ComponentActivity() {
     private fun parseIntent(intent: Intent): PendingAction? =
         when (intent.action) {
             ACTION_NEW_MEMO -> PendingAction.NewMemo
-            ACTION_VIEW_MEMO -> intent.getStringExtra(EXTRA_MEMO_ID)?.let { PendingAction.ViewMemo(it) }
-            ACTION_EDIT_MEMO -> intent.getStringExtra(EXTRA_MEMO_ID)?.let { PendingAction.EditMemo(it) }
             Intent.ACTION_SEND -> {
                 val text = listOfNotNull(
                     intent.getStringExtra(Intent.EXTRA_SUBJECT)?.takeIf { it.isNotBlank() && intent.type == "text/plain" },
@@ -101,8 +99,5 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val ACTION_NEW_MEMO = "com.vknxworks.memoctrl.NEW_MEMO"
-        const val ACTION_VIEW_MEMO = "com.vknxworks.memoctrl.VIEW_MEMO"
-        const val ACTION_EDIT_MEMO = "com.vknxworks.memoctrl.EDIT_MEMO"
-        const val EXTRA_MEMO_ID = "memo_id"
     }
 }

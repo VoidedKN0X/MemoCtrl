@@ -15,7 +15,6 @@ import com.vknxworks.memoctrl.data.settings.SettingsRepository
 import com.vknxworks.memoctrl.data.sync.BackgroundSync
 import com.vknxworks.memoctrl.data.sync.SyncingRepository
 import com.vknxworks.memoctrl.ui.lock.AppLock
-import com.vknxworks.memoctrl.widget.Widgets
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -23,9 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,12 +32,10 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
-/** Something another app, a widget or a shortcut asked the app to open. */
+/** Something another app or a shortcut asked the app to open. */
 sealed interface PendingAction {
     data object NewMemo : PendingAction
     data class Share(val text: String, val images: List<Uri>) : PendingAction
-    data class ViewMemo(val identifier: String) : PendingAction
-    data class EditMemo(val identifier: String) : PendingAction
 }
 
 /** Manual dependency container; one per process. */
@@ -133,7 +128,7 @@ class AppContainer(val context: Context) {
     val repo: SyncingRepository
         get() = sessions.active.value?.repo ?: error("Not signed in")
 
-    /** Set by MainActivity for share sheets, shortcuts and widgets; the main screen consumes it. */
+    /** Set by MainActivity for share sheets and shortcuts; the main screen consumes it. */
     val pendingAction = MutableStateFlow<PendingAction?>(null)
 
     init {
@@ -147,17 +142,9 @@ class AppContainer(val context: Context) {
                 }
             }
         }
-        // Widgets show what's on the phone, so they follow every change.
-        appScope.launch {
-            db.changes.drop(1).debounce(1500).collect { Widgets.updateAll(context) }
-        }
-        // ... and hide memos when the app lock goes on, or change account.
-        appScope.launch {
-            settings.stored.map { it.appLock }.distinctUntilChanged().drop(1).collect { Widgets.updateAll(context) }
-        }
-        appScope.launch {
-            sessions.active.map { it?.account?.key }.distinctUntilChanged().drop(1).collect { Widgets.updateAll(context) }
-        }
+        // MemoCtrl no longer has home screen widgets: delete the choices (tag, pinned only, how many) an
+        // earlier version saved for them.
+        appScope.launch(Dispatchers.IO) { runCatching { context.deleteSharedPreferences("widgets") } }
         // Periodic background sync follows its settings (and is set up again at every start).
         appScope.launch {
             settings.stored
