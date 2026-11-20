@@ -26,6 +26,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -45,10 +46,18 @@ import com.vknxworks.memoctrl.ui.memos.MemoCard
 import com.vknxworks.memoctrl.ui.nav.LocalNavigator
 import com.vknxworks.memoctrl.ui.theme.Gutter
 import com.vknxworks.memoctrl.util.matchesSearch
+import com.vknxworks.memoctrl.data.model.MemoEntity
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.ui.res.stringResource
 import com.vknxworks.memoctrl.R
+
+/** What a search found, and the text it was a search for (empty: nothing searched). */
+private class SearchResults(val query: String, val memos: List<MemoEntity>, val archived: List<MemoEntity>)
+
+private val NothingSearched = SearchResults("", emptyList(), emptyList())
 
 /** The Search tab: finds memos on this phone by their text, so it works offline too. */
 @Composable
@@ -63,11 +72,27 @@ fun SearchScreen() {
     val archived by remember(repo) { repo.observeArchived() }.collectAsStateWithLifecycle(initialValue = emptyList())
     var query by rememberSaveable { mutableStateOf("") }
     val debounced by remember { snapshotFlow { query.trim() }.debounce(200).distinctUntilChanged() }.collectAsStateWithLifecycle(initialValue = "")
-    val results = remember(memos, debounced) { if (debounced.isEmpty()) emptyList() else memos.filter { matchesSearch(it.content, debounced) } }
-    val archivedResults = remember(archived, debounced, settings.searchIncludesArchived) {
-        if (debounced.isEmpty() || !settings.searchIncludesArchived) emptyList()
-        else archived.filter { matchesSearch(it.content, debounced) }
+    val includeArchived = settings.searchIncludesArchived
+    // Every memo's text is looked through: off the main thread, so typing stays smooth with many memos.
+    // Until the answer for the newest search is there, the previous one stays up.
+    val found by produceState(NothingSearched, memos, archived, debounced, includeArchived) {
+        val all = memos
+        val allArchived = archived
+        val text = debounced
+        value = if (text.isEmpty()) {
+            NothingSearched
+        } else {
+            withContext(Dispatchers.Default) {
+                SearchResults(
+                    query = text,
+                    memos = all.filter { matchesSearch(it.content, text) },
+                    archived = if (includeArchived) allArchived.filter { matchesSearch(it.content, text) } else emptyList(),
+                )
+            }
+        }
     }
+    val results = found.memos
+    val archivedResults = found.archived
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         TabTitle(stringResource(R.string.tab_search))
@@ -90,10 +115,12 @@ fun SearchScreen() {
                 stringResource(if (settings.searchIncludesArchived) R.string.search_archive_note else R.string.search_timeline_note),
                 modifier = Modifier.padding(bottom = LocalBottomClearance.current),
             )
+            // The first search after the box was empty is still being worked out: nothing to show yet.
+            found.query.isEmpty() -> Unit
             results.isEmpty() && archivedResults.isEmpty() -> MessageView(
                 Icons.Outlined.SearchOff,
                 stringResource(R.string.search_nothing),
-                stringResource(R.string.search_nothing_body, debounced),
+                stringResource(R.string.search_nothing_body, found.query),
                 modifier = Modifier.padding(bottom = LocalBottomClearance.current),
             )
             else -> LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 24.dp + LocalBottomClearance.current)) {
