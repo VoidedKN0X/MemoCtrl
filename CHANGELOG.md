@@ -4,6 +4,19 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+Not in a release yet: these changes are on `main` and were only built by CI. Nothing here has been run on a phone or against a Memos 26.10 or newer server.
+
+### Changed
+
+- **MemoCtrl now works out where a Memos server has its API, instead of waiting for "410 Gone".** Memos 26.10 moved its API from `/api/v1/...` to `/api/...`. Memos 26.10 and 26.11 still answer "410 Gone" on the old addresses, which is what MemoCtrl 0.5.0 relies on, but Memos has said that answer will go away, and after that the old addresses simply won't exist (404). MemoCtrl now decides per server, once each time the app starts:
+  - **By the Memos version it last saw on that server.** Older than 26.10 (Memos 0.27 to 0.31): `/api/v1/...`, exactly as before, with no extra requests. 26.10 or newer: `/api/...`, after one request without your access token has shown that the server's profile really is there.
+  - **By looking, when it has no version to go by** (signing in, for example): it asks for the server's profile on `/api/v1/...`, and if that answers 404 or 410, on `/api/...`, and uses the one that answers with a real profile. Signing in always looks afresh.
+  - **As a last resort, when a server changed after that** (you updated Memos while the app was open): a 410 on any request, or a 404 or 410 on the profile check that runs before every sync, makes MemoCtrl look for the profile on the other address and switch if it's there.
+
+  Your access token is never sent to the new `/api/...` addresses before a request without the token has shown that the server's profile is there; `/api/v1/...` stays the default, as it always was. On Memos 0.27 to 0.31 MemoCtrl sends exactly the same requests as before. The choice is kept in memory only; nothing new is saved on the phone. Memos 26.10 and newer are still not officially supported versions: MemoCtrl keeps asking before you continue with them, exactly as before.
+
 ## v0.5.0 (2026-11-20)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

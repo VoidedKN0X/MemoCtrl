@@ -282,9 +282,16 @@ class SessionManager(
         _ready.value = true
     }
 
-    private fun clientFor(api: ServerApi, host: String, token: String?, userName: String = ""): MemosRemote = when (api) {
+    private fun clientFor(
+        api: ServerApi,
+        host: String,
+        token: String?,
+        userName: String = "",
+        /** The Memos version the account last saw, so the client knows where that version has its API. */
+        version: String? = null,
+    ): MemosRemote = when (api) {
         ServerApi.V0 -> MemosV0(host, http, token)
-        ServerApi.V1 -> MemosV1(host, http, token, userName)
+        ServerApi.V1 -> MemosV1(host, http, token, userName, version)
         ServerApi.LOCAL -> LocalRemote()
     }
 
@@ -301,6 +308,8 @@ class SessionManager(
             ""
         }
         if (v0.isNotEmpty()) return ServerApi.V0 to v0
+        // Signing in looks up afresh where this server has its API ("api/v1/…" or "api/…").
+        MemosV1.forgetRoutes(host)
         val v1 = MemosV1(host, http, null).serverVersion()
         if (v1.isNotEmpty()) return ServerApi.V1 to v1
         throw ApiException(str(R.string.error_not_memos_server))
@@ -513,7 +522,7 @@ class SessionManager(
             val id = acc.tokenId ?: return@let
             val token = tokenOf(acc) ?: return@let
             kotlinx.coroutines.withTimeoutOrNull(5_000) {
-                runCatching { clientFor(acc.api, acc.host, token, acc.remoteIdentifier).revokeToken(id) }
+                runCatching { clientFor(acc.api, acc.host, token, acc.remoteIdentifier, acc.serverVersion).revokeToken(id) }
             }
         }
         val remaining = _accounts.value.filterNot { it.key == key }
@@ -597,7 +606,7 @@ class SessionManager(
         }
         // Reconnects always use the saved address and scheme; never switch an https account to http.
         if (!acc.isLocal) CleartextPolicy.allowServer(acc.host)
-        val remote = clientFor(acc.api, acc.host, token, acc.remoteIdentifier)
+        val remote = clientFor(acc.api, acc.host, token, acc.remoteIdentifier, acc.serverVersion)
         val repo = SyncingRepository(
             db = db,
             files = files,

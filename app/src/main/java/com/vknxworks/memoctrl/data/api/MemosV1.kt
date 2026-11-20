@@ -10,6 +10,8 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import okhttp3.HttpUrl
@@ -142,8 +144,13 @@ class MemosV1(
     private val accessToken: String?,
     /** "users/1"; empty while signing in, before the user is known. */
     private val userName: String = "",
+    /** The Memos version this account last saw on the server ("0.31.0", "26.10.0"), when there is one. */
+    versionHint: String? = null,
 ) : MemosRemote {
     private val base: HttpUrl = host.toHttpUrl()
+
+    /** What [versionHint] says about the API's root: true for "api/…", false for "api/v1/…", null for no idea. */
+    private val hintUnversioned: Boolean? = unversionedSince(versionHint)
 
     override val supportsLocation: Boolean get() = true
 
@@ -153,40 +160,111 @@ class MemosV1(
         header("Accept", "application/json")
     }
 
-    /** The API's root on this server: "api/v1", or "api" once the server has said it dropped the "v1" part. */
-    private fun apiRoot(): HttpUrl.Builder = base.path(if (host in unversionedHosts) "api" else "api/v1")
+    /**
+     * The API's root on this server: "api/v1" (Memos 0.27 to 0.31, and the default), or "api" once it is
+     * known that this server has the API there (Memos 26.10 and newer dropped the "v1" part).
+     */
+    private fun apiRoot(): HttpUrl.Builder = base.path(if (routes[host] == true) UNVERSIONED_ROOT else VERSIONED_ROOT)
 
     private fun api(path: String): HttpUrl.Builder = apiRoot().addPathSegments(path)
 
     /**
-     * Runs a request built with [api] / [apiRoot]. Every supported Memos version (0.27 to 0.31) answers on
-     * "api/v1/…", so that stays the default. The Memos 26.10 pre-release moved the same routes to "api/…"
-     * and answers 410 Gone on the old ones: when that happens, and the server's profile really is there on
-     * the new route, the same request is sent once more on the new route, and the choice is remembered for
-     * this server until the app is restarted. [call] builds its request anew each time it runs.
+     * Asks for the server's profile under [root] without any token. Only a profile that names a version
+     * counts; everything else is an [ApiException] (with the server's status when it answered with one).
      */
-    private suspend fun <T> routed(call: suspend () -> T): T {
-        val wasVersioned = host !in unversionedHosts
+    private suspend fun probeProfile(root: String): V1Profile {
+        val profile = http.fetchJson(
+            Request.Builder().url(base.path("$root/instance/profile").build())
+                .header(NO_SESSION_AUTH, "1")
+                .header("Accept", "application/json")
+                .build(),
+            V1Profile.serializer(),
+        )
+        if (profile.version.isBlank()) throw ApiException(str(R.string.error_not_memos))
+        return profile
+    }
+
+    /**
+     * Finds out, without any token, which of the two roots has this server's profile, and remembers it.
+     * The second root is only asked when the first one answered 404, 410 or something that isn't a Memos
+     * profile. Throws what the server answered when neither root has a profile, or when the first one
+     * failed in another way (the server is down, for example); nothing is remembered then.
+     */
+    private suspend fun determineRoutes(unversionedFirst: Boolean) {
+        val first = if (unversionedFirst) UNVERSIONED_ROOT else VERSIONED_ROOT
+        val second = if (unversionedFirst) VERSIONED_ROOT else UNVERSIONED_ROOT
+        try {
+            probeProfile(first)
+            routes[host] = unversionedFirst
+            return
+        } catch (e: ApiException) {
+            // Status 0 is an answer that wasn't a Memos profile.
+            if (e.status != 404 && e.status != 410 && e.status != 0) throw e
+        }
+        probeProfile(second)
+        routes[host] = !unversionedFirst
+    }
+
+    /**
+     * Makes sure it is known where this server's API is before a request goes out, in this order:
+     * 1. What was already found out for this server since the app started is used as it is.
+     * 2. Otherwise the Memos version the account last saw decides. Older than 26.10: "api/v1/…", as always,
+     *    with no extra request. 26.10 or newer: "api/…", but only after a request without the token has
+     *    shown that the profile really is there (once per app start), so the token never goes to a route
+     *    that hasn't been seen to exist.
+     * 3. With no version to go by, one request without the token looks for the profile on "api/v1/…" and,
+     *    if it isn't there, on "api/…". The profile request itself ([isProfile]) skips this: it is that
+     *    check already. If the check can't tell, "api/v1/…" is used as before and nothing is remembered.
+     */
+    private suspend fun ensureRoutes(isProfile: Boolean) {
+        if (routes.containsKey(host)) return
+        if (hintUnversioned == false) return
+        if (hintUnversioned == null && isProfile) return
+        routesMutex.withLock {
+            if (routes.containsKey(host)) return
+            if (hintUnversioned == true) {
+                determineRoutes(unversionedFirst = true)
+            } else {
+                try {
+                    determineRoutes(unversionedFirst = false)
+                } catch (e: ApiException) {
+                    // Can't tell: the request goes to "api/v1/…" like it always did and reports what's wrong.
+                }
+            }
+        }
+    }
+
+    /**
+     * Runs a request built with [api] / [apiRoot], after [ensureRoutes] has settled where the API is.
+     * Every supported Memos version (0.27 to 0.31) answers on "api/v1/…", so that stays the default. Memos
+     * 26.10 moved the same routes to "api/…" and answers 410 Gone on the old ones; a later Memos removes
+     * the old ones altogether (404). As a last resort for a server that changed after the choice was made:
+     * when a request on "api/v1/…" answers 410, or the profile request ([isProfile]) answers 404 or 410 on
+     * either root, and a request without the token finds the server's profile on the other root, the same
+     * request is sent once more there and the choice is remembered for this server until the app is
+     * restarted. A 404 on any other request is a memo or file that isn't there, and is left alone.
+     * [call] builds its request anew each time it runs.
+     */
+    private suspend fun <T> routed(isProfile: Boolean = false, call: suspend () -> T): T {
+        ensureRoutes(isProfile)
+        val wasUnversioned = routes[host] == true
         try {
             return call()
         } catch (e: ApiException) {
-            if (e.status != 410 || !wasVersioned) throw e
-            if (host !in unversionedHosts) {
+            val gone = e.status == 410 && !wasUnversioned
+            val profileMissing = isProfile && (e.status == 404 || e.status == 410)
+            if (!gone && !profileMissing) throw e
+            if ((routes[host] == true) == wasUnversioned) {
                 val confirmed = try {
-                    http.fetchJson(
-                        Request.Builder().url(base.path("api/instance/profile").build())
-                            .header(NO_SESSION_AUTH, "1")
-                            .header("Accept", "application/json")
-                            .build(),
-                        V1Profile.serializer(),
-                    ).version.isNotBlank()
+                    probeProfile(if (wasUnversioned) VERSIONED_ROOT else UNVERSIONED_ROOT)
+                    true
                 } catch (c: CancellationException) {
                     throw c
                 } catch (x: Exception) {
                     false
                 }
                 if (!confirmed) throw e
-                unversionedHosts.add(host)
+                routes[host] = !wasUnversioned
             }
         }
         return call()
@@ -227,8 +305,14 @@ class MemosV1(
         location = m.location,
     )
 
-    suspend fun profile(): V1Profile =
-        routed { http.fetchJson(request(api("instance/profile").build()).build(), V1Profile.serializer()) }
+    suspend fun profile(): V1Profile {
+        val profile = routed(isProfile = true) {
+            http.fetchJson(request(api("instance/profile").build()).build(), V1Profile.serializer())
+        }
+        // The root that answered with a real profile is the one to keep using for this server.
+        if (profile.version.isNotBlank()) routes.putIfAbsent(host, false)
+        return profile
+    }
 
     override suspend fun serverVersion(): String = profile().version.trim()
 
@@ -428,7 +512,33 @@ class MemosV1(
     companion object {
         private const val PAGE_SIZE = 200
 
-        /** Server addresses that answered 410 Gone on "api/v1/…" and have the API on "api/…" (this app run only). */
-        private val unversionedHosts: MutableSet<String> = ConcurrentHashMap.newKeySet<String>()
+        private const val VERSIONED_ROOT = "api/v1"
+        private const val UNVERSIONED_ROOT = "api"
+
+        /**
+         * Where each server's API was found since the app started: true for "api/…", false for "api/v1/…".
+         * A server that isn't in here hasn't been settled yet. Kept in memory only.
+         */
+        private val routes = ConcurrentHashMap<String, Boolean>()
+
+        /** One check for the API's root at a time, so requests that start together share its result. */
+        private val routesMutex = Mutex()
+
+        /** Forgets where [host]'s API was found, so it is looked up again (signing in to a server). */
+        fun forgetRoutes(host: String) {
+            routes.remove(host)
+        }
+
+        /**
+         * Whether a Memos [version] has the API on "api/…" (26.10 and newer, calendar versions like "26.10.0",
+         * "26.10-rc.1" or "26.11.3-dev.abc1234") instead of "api/v1/…" ("0.31.0" and older). Null when
+         * [version] isn't a version number.
+         */
+        fun unversionedSince(version: String?): Boolean? {
+            val parts = version?.trim()?.removePrefix("v")?.split('.', '-', '+') ?: return null
+            val major = parts.getOrNull(0)?.toIntOrNull() ?: return null
+            val minor = parts.getOrNull(1)?.toIntOrNull() ?: return null
+            return major > 26 || (major == 26 && minor >= 10)
+        }
     }
 }
