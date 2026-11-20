@@ -6,6 +6,7 @@ import com.vknxworks.memoctrl.data.model.MemoVisibility
 import com.vknxworks.memoctrl.data.model.RemoteMemo
 import com.vknxworks.memoctrl.data.model.RemoteResource
 import com.vknxworks.memoctrl.data.model.User
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -18,6 +19,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.InputStream
 import java.time.Instant
+import java.util.concurrent.ConcurrentHashMap
 import com.vknxworks.memoctrl.R
 import com.vknxworks.memoctrl.str
 
@@ -151,6 +153,45 @@ class MemosV1(
         header("Accept", "application/json")
     }
 
+    /** The API's root on this server: "api/v1", or "api" once the server has said it dropped the "v1" part. */
+    private fun apiRoot(): HttpUrl.Builder = base.path(if (host in unversionedHosts) "api" else "api/v1")
+
+    private fun api(path: String): HttpUrl.Builder = apiRoot().addPathSegments(path)
+
+    /**
+     * Runs a request built with [api] / [apiRoot]. Every supported Memos version (0.27 to 0.31) answers on
+     * "api/v1/…", so that stays the default. The Memos 26.10 pre-release moved the same routes to "api/…"
+     * and answers 410 Gone on the old ones: when that happens, and the server's profile really is there on
+     * the new route, the same request is sent once more on the new route, and the choice is remembered for
+     * this server until the app is restarted. [call] builds its request anew each time it runs.
+     */
+    private suspend fun <T> routed(call: suspend () -> T): T {
+        val wasVersioned = host !in unversionedHosts
+        try {
+            return call()
+        } catch (e: ApiException) {
+            if (e.status != 410 || !wasVersioned) throw e
+            if (host !in unversionedHosts) {
+                val confirmed = try {
+                    http.fetchJson(
+                        Request.Builder().url(base.path("api/instance/profile").build())
+                            .header(NO_SESSION_AUTH, "1")
+                            .header("Accept", "application/json")
+                            .build(),
+                        V1Profile.serializer(),
+                    ).version.isNotBlank()
+                } catch (c: CancellationException) {
+                    throw c
+                } catch (x: Exception) {
+                    false
+                }
+                if (!confirmed) throw e
+                unversionedHosts.add(host)
+            }
+        }
+        return call()
+    }
+
     /** "memos/abc" (or "memos/abc|…") to "abc". */
     private fun idOf(name: String) = name.substringBefore('|').substringAfterLast('/')
     private fun nameOf(identifier: String) = identifier.substringBefore('|')
@@ -187,21 +228,23 @@ class MemosV1(
     )
 
     suspend fun profile(): V1Profile =
-        http.fetchJson(request(base.path("api/v1/instance/profile").build()).build(), V1Profile.serializer())
+        routed { http.fetchJson(request(api("instance/profile").build()).build(), V1Profile.serializer()) }
 
     override suspend fun serverVersion(): String = profile().version.trim()
 
     suspend fun me(): V1User =
-        http.fetchJson(request(base.path("api/v1/auth/me").build()).build(), V1CurrentUser.serializer()).user
+        routed { http.fetchJson(request(api("auth/me").build()).build(), V1CurrentUser.serializer()) }.user
             ?: throw ApiException(str(R.string.error_not_signed_in), 401)
 
     override suspend fun currentUser(): User {
         val user = me()
         val visibility = runCatching {
-            http.fetchJson(
-                request(base.path("api/v1/users/${idOf(user.name)}/settings/GENERAL").build()).build(),
-                V1UserSetting.serializer(),
-            ).generalSetting?.memoVisibility
+            routed {
+                http.fetchJson(
+                    request(api("users/${idOf(user.name)}/settings/GENERAL").build()).build(),
+                    V1UserSetting.serializer(),
+                )
+            }.generalSetting?.memoVisibility
         }.getOrNull()
         return User(
             identifier = user.name,
@@ -212,14 +255,14 @@ class MemosV1(
         )
     }
 
-    private suspend fun page(pageSize: Int, pageToken: String?, state: V1State?, filter: String?): V1ListMemos {
-        val url = base.path("api/v1/memos").apply {
+    private suspend fun page(pageSize: Int, pageToken: String?, state: V1State?, filter: String?): V1ListMemos = routed {
+        val url = api("memos").apply {
             addQueryParameter("pageSize", pageSize.toString())
             if (!pageToken.isNullOrEmpty()) addQueryParameter("pageToken", pageToken)
             if (state != null) addQueryParameter("state", state.name)
             if (filter != null) addQueryParameter("filter", filter)
         }.build()
-        return http.fetchJson(request(url).build(), V1ListMemos.serializer())
+        http.fetchJson(request(url).build(), V1ListMemos.serializer())
     }
 
     private suspend fun listAll(state: V1State): List<RemoteMemo> {
@@ -243,7 +286,7 @@ class MemosV1(
             creators.map { creator ->
                 async {
                     runCatching {
-                        http.fetchJson(request(base.path("api/v1/users/${idOf(creator)}").build()).build(), V1User.serializer())
+                        routed { http.fetchJson(request(api("users/${idOf(creator)}").build()).build(), V1User.serializer()) }
                     }.getOrNull()
                 }
             }.awaitAll()
@@ -272,10 +315,8 @@ class MemosV1(
             createTime = createdAt,
             location = location,
         )
-        val req = request(base.path("api/v1/memos").build())
-            .post(jsonBody(ApiJson.encodeToString(V1CreateMemo.serializer(), body)))
-            .build()
-        return convert(http.fetchJson(req, V1Memo.serializer()))
+        val json = ApiJson.encodeToString(V1CreateMemo.serializer(), body)
+        return convert(routed { http.fetchJson(request(api("memos").build()).post(jsonBody(json)).build(), V1Memo.serializer()) })
     }
 
     override suspend fun updateMemo(
@@ -296,15 +337,19 @@ class MemosV1(
             attachments = resourceRemoteIds?.map { V1Attachment(name = nameOf(it)) },
             location = location?.value,
         )
-        val url = base.path("api/v1/memos").addPathSegment(idOf(remoteId))
-            .addQueryParameter("updateMask", body.updateMask(includeLocation = location != null))
-            .build()
-        val req = request(url).patch(jsonBody(ApiJson.encodeToString(V1UpdateMemo.serializer(), body))).build()
-        return convert(http.fetchJson(req, V1Memo.serializer()))
+        val json = ApiJson.encodeToString(V1UpdateMemo.serializer(), body)
+        return convert(
+            routed {
+                val url = api("memos").addPathSegment(idOf(remoteId))
+                    .addQueryParameter("updateMask", body.updateMask(includeLocation = location != null))
+                    .build()
+                http.fetchJson(request(url).patch(jsonBody(json)).build(), V1Memo.serializer())
+            },
+        )
     }
 
     override suspend fun deleteMemo(remoteId: String) {
-        http.fetchText(request(base.path("api/v1/memos").addPathSegment(idOf(remoteId)).build()).delete().build())
+        routed { http.fetchText(request(api("memos").addPathSegment(idOf(remoteId)).build()).delete().build()) }
     }
 
     override suspend fun createResource(
@@ -314,64 +359,76 @@ class MemosV1(
         openInputStream: () -> InputStream,
         memoRemoteId: String?,
     ): RemoteResource {
-        val body = StreamingBase64JsonRequestBody(
-            filename = filename,
-            type = type?.toString() ?: "application/octet-stream",
-            memo = memoRemoteId?.let(::nameOf),
-            rawLength = contentLength,
-            openInputStream = openInputStream,
+        return convert(
+            routed {
+                val body = StreamingBase64JsonRequestBody(
+                    filename = filename,
+                    type = type?.toString() ?: "application/octet-stream",
+                    memo = memoRemoteId?.let(::nameOf),
+                    rawLength = contentLength,
+                    openInputStream = openInputStream,
+                )
+                http.fetchJson(request(api("attachments").build()).post(body).build(), V1Attachment.serializer())
+            },
         )
-        val req = request(base.path("api/v1/attachments").build()).post(body).build()
-        return convert(http.fetchJson(req, V1Attachment.serializer()))
     }
 
     override suspend fun deleteResource(remoteId: String) {
-        http.fetchText(request(base.path("api/v1/attachments").addPathSegment(idOf(remoteId)).build()).delete().build())
+        routed { http.fetchText(request(api("attachments").addPathSegment(idOf(remoteId)).build()).delete().build()) }
     }
 
     override fun memoUrl(remoteId: String): String =
         base.newBuilder().addPathSegments(nameOf(remoteId)).build().toString()
 
     override suspend fun createTokenWithPassword(username: String, password: String, description: String): IssuedToken {
-        val signIn = http.fetchJson(
-            Request.Builder().url(base.path("api/v1/auth/signin").build()).header(NO_SESSION_AUTH, "1")
-                .header("Accept", "application/json")
-                .post(jsonBody(ApiJson.encodeToString(V1SignIn.serializer(), V1SignIn(V1PasswordCredentials(username, password)))))
-                .build(),
-            V1SignInResponse.serializer(),
-        )
+        val signIn = routed {
+            http.fetchJson(
+                Request.Builder().url(api("auth/signin").build()).header(NO_SESSION_AUTH, "1")
+                    .header("Accept", "application/json")
+                    .post(jsonBody(ApiJson.encodeToString(V1SignIn.serializer(), V1SignIn(V1PasswordCredentials(username, password)))))
+                    .build(),
+                V1SignInResponse.serializer(),
+            )
+        }
         val session = signIn.accessToken?.takeIf { it.isNotBlank() } ?: throw ApiException(str(R.string.error_no_signin))
         val user = signIn.user ?: throw ApiException(str(R.string.error_no_signin))
         try {
-            val created = http.fetchJson(
-                Request.Builder()
-                    .url(base.path("api/v1").addPathSegments(user.name).addPathSegment("personalAccessTokens").build())
-                    .header("Authorization", "Bearer $session")
-                    .header("Accept", "application/json")
-                    .post(jsonBody(ApiJson.encodeToString(V1CreateToken.serializer(), V1CreateToken(description))))
-                    .build(),
-                V1CreateTokenResponse.serializer(),
-            )
+            val created = routed {
+                http.fetchJson(
+                    Request.Builder()
+                        .url(apiRoot().addPathSegments(user.name).addPathSegment("personalAccessTokens").build())
+                        .header("Authorization", "Bearer $session")
+                        .header("Accept", "application/json")
+                        .post(jsonBody(ApiJson.encodeToString(V1CreateToken.serializer(), V1CreateToken(description))))
+                        .build(),
+                    V1CreateTokenResponse.serializer(),
+                )
+            }
             val token = created.token?.takeIf { it.isNotBlank() } ?: throw ApiException(str(R.string.error_no_token))
             return IssuedToken(token, created.personalAccessToken?.name)
         } finally {
             // The short sign-in session isn't needed anymore: the app uses its own token from now on.
             runCatching {
-                http.fetchText(
-                    Request.Builder().url(base.path("api/v1/auth/signout").build())
-                        .header("Authorization", "Bearer $session")
-                        .post(jsonBody("{}"))
-                        .build(),
-                )
+                routed {
+                    http.fetchText(
+                        Request.Builder().url(api("auth/signout").build())
+                            .header("Authorization", "Bearer $session")
+                            .post(jsonBody("{}"))
+                            .build(),
+                    )
+                }
             }
         }
     }
 
     override suspend fun revokeToken(tokenId: String) {
-        http.fetchText(request(base.path("api/v1").addPathSegments(tokenId).build()).delete().build())
+        routed { http.fetchText(request(apiRoot().addPathSegments(tokenId).build()).delete().build()) }
     }
 
     companion object {
         private const val PAGE_SIZE = 200
+
+        /** Server addresses that answered 410 Gone on "api/v1/…" and have the API on "api/…" (this app run only). */
+        private val unversionedHosts: MutableSet<String> = ConcurrentHashMap.newKeySet<String>()
     }
 }
