@@ -151,7 +151,10 @@
     <string name="archive_subtitle">Memo\'s die je hebt weggeborgen. Zet ze hier terug of verwijder ze</string>
     <string name="attachments_subtitle">Elke afbeelding en elk bestand in je memo\'s</string>
     <string name="group_server">Server</string>
-    <string name="default_visibility">Nieuwe memo\'s zijn standaard %1$s</string>
+    <string name="default_visibility_private">Nieuwe memo\'s zijn standaard privé</string>
+    <string name="default_visibility_protected">Nieuwe memo\'s zijn standaard zichtbaar voor aangemelde gebruikers</string>
+    <string name="default_visibility_public">Nieuwe memo\'s zijn standaard openbaar</string>
+    <string name="default_visibility_space">Nieuwe memo\'s zijn standaard zichtbaar voor leden van de space</string>
     <string name="memos_v0_api">Memos 0.21-API</string>
     <string name="sign_out_body">De memo\'s die voor dit account op deze telefoon staan, worden verwijderd. Ze blijven op je server staan.</string>
     <string name="visibility_private">Privé</string>

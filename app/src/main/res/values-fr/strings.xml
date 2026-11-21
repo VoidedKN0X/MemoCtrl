@@ -152,7 +152,10 @@
     <string name="archive_subtitle">Les mémos mis de côté. Restaurez-les ou supprimez-les ici</string>
     <string name="attachments_subtitle">Toutes les images et tous les fichiers de vos mémos</string>
     <string name="group_server">Serveur</string>
-    <string name="default_visibility">Les nouveaux mémos sont %1$s par défaut</string>
+    <string name="default_visibility_private">Les nouveaux mémos sont privés par défaut</string>
+    <string name="default_visibility_protected">Les nouveaux mémos sont visibles par les utilisateurs connectés par défaut</string>
+    <string name="default_visibility_public">Les nouveaux mémos sont publics par défaut</string>
+    <string name="default_visibility_space">Les nouveaux mémos sont visibles par les membres de l\'espace par défaut</string>
     <string name="memos_v0_api">API Memos 0.21</string>
     <plurals name="sign_out_unsynced">
         <item quantity="one">%1$d modification n\'est pas encore synchronisée et sera perdue. Les mémos sur votre serveur y restent.</item>

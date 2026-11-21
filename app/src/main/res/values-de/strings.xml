@@ -152,7 +152,10 @@
     <string name="archive_subtitle">Memos, die du weggelegt hast. Hier wiederherstellen oder löschen</string>
     <string name="attachments_subtitle">Alle Bilder und Dateien in deinen Memos</string>
     <string name="group_server">Server</string>
-    <string name="default_visibility">Neue Memos sind standardmäßig %1$s</string>
+    <string name="default_visibility_private">Neue Memos sind standardmäßig privat</string>
+    <string name="default_visibility_protected">Neue Memos sind standardmäßig für angemeldete Nutzer sichtbar</string>
+    <string name="default_visibility_public">Neue Memos sind standardmäßig öffentlich</string>
+    <string name="default_visibility_space">Neue Memos sind standardmäßig für Space-Mitglieder sichtbar</string>
     <string name="memos_v0_api">Memos 0.21 API</string>
     <plurals name="sign_out_unsynced">
         <item quantity="one">%1$d Änderung ist noch nicht synchronisiert und geht verloren. Memos auf deinem Server bleiben dort.</item>

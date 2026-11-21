@@ -167,7 +167,10 @@
     <string name="archive_subtitle">Memos you put away. Restore or delete them here</string>
     <string name="attachments_subtitle">Every picture and file in your memos</string>
     <string name="group_server">Server</string>
-    <string name="default_visibility">New memos are %1$s by default</string>
+    <string name="default_visibility_private">New memos are private by default</string>
+    <string name="default_visibility_protected">New memos are visible to signed-in users by default</string>
+    <string name="default_visibility_public">New memos are public by default</string>
+    <string name="default_visibility_space">New memos are visible to space members by default</string>
     <string name="memos_v0_api">Memos 0.21 API</string>
     <plurals name="sign_out_unsynced">
         <item quantity="one">%1$d change hasn\'t synced yet and will be lost. Memos on your server stay there.</item>
@@ -297,9 +300,7 @@
     <string name="sync_newer_title">Newer Memos version</string>
     <string name="sync_anyway">Sync anyway</string>
     <string name="sync_failed_title">Sync didn\'t finish</string>
-    <string name="sync_failed_body">%1$s
-
-Your changes are kept on this phone and sync next time.</string>
+    <string name="sync_failed_body">%1$s\n\nYour changes are kept on this phone and sync next time.</string>
     <string name="sync_failed_now">Last sync failed. Sync now</string>
     <string name="sync_now">Sync now</string>
     <plurals name="sync_pending_now">

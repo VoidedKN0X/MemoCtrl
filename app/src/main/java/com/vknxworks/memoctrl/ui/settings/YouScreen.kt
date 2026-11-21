@@ -60,7 +60,7 @@ import com.vknxworks.memoctrl.ui.components.GroupRow
 import com.vknxworks.memoctrl.ui.components.LocalBottomClearance
 import com.vknxworks.memoctrl.ui.components.ScreenTopBar
 import com.vknxworks.memoctrl.ui.memos.SyncButton
-import com.vknxworks.memoctrl.ui.memos.label
+import com.vknxworks.memoctrl.data.model.MemoVisibility
 import com.vknxworks.memoctrl.ui.memos.rememberManualSync
 import com.vknxworks.memoctrl.ui.nav.AccountsRoute
 import com.vknxworks.memoctrl.ui.nav.ArchivedRoute
@@ -159,7 +159,14 @@ fun YouScreen() {
                     acc.host,
                     listOfNotNull(
                         if (acc.isEncrypted) null else stringResource(R.string.not_encrypted),
-                        stringResource(R.string.default_visibility, acc.defaultVisibility.label.lowercase()),
+                        stringResource(
+                            when (acc.defaultVisibility) {
+                                MemoVisibility.PRIVATE -> R.string.default_visibility_private
+                                MemoVisibility.PROTECTED -> R.string.default_visibility_protected
+                                MemoVisibility.PUBLIC -> R.string.default_visibility_public
+                                MemoVisibility.SPACE -> R.string.default_visibility_space
+                            },
+                        ),
                         if (acc.api == ServerApi.V0) stringResource(R.string.memos_v0_api) else null,
                     ).joinToString("  ·  "),
                     icon = Icons.Outlined.Dns,

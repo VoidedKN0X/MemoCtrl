@@ -4,6 +4,13 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+### Fixed
+
+- **Default visibility under your server in Settings now reads properly in every language.** It took the visibility's name and lowercased it into a sentence, giving "New memos are signed-in users by default" in English and broken wording such as "Neue Memos sind standardmäßig angemeldete nutzer" in German. Each visibility now has its own full sentence in English, Dutch, French and German ("New memos are visible to signed-in users by default", "Neue Memos sind standardmäßig für angemeldete Nutzer sichtbar").
+- **English: the "sync failed" message lost its blank line.** The explanation under a failed sync's error was written with real line breaks in the text file, which Android turns into a single space, so the error and "Your changes are kept on this phone…" ran together on one line. It now has the blank line between them, as Dutch, French and German already had.
+
 ## v0.8.0 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.
