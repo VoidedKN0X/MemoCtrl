@@ -39,7 +39,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Client certificates** (mutual TLS) for servers behind a proxy that asks for one
 - **Sign in with your password** (MemoCtrl makes its own access token and never keeps the password) or an access token
 - **Several servers and accounts**
-- **English and Dutch**, following your phone's language
+- **English, Dutch, French and German**, following your phone's language
 
 ## Requirements
 
