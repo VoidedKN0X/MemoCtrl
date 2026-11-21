@@ -175,7 +175,7 @@
     <string name="share">Delen</string>
     <string name="copy_text">Tekst kopiëren</string>
     <string name="share_link">Link delen</string>
-    <string name="archive">Archief</string>
+    <string name="archive">Archiveren</string>
     <string name="memo">Memo</string>
     <string name="signin_local_network_denied">MemoCtrl heeft toegang tot apparaten op je netwerk nodig om een server thuis te bereiken. Sta dat toe in de instellingen van de app en probeer opnieuw.</string>
     <string name="signin_http_title">Een onversleutelde verbinding gebruiken?</string>
@@ -201,7 +201,7 @@
     <string name="signin_show_token">Token tonen</string>
     <string name="signin_token_note">Voor accounts die met SSO aanmelden, of als je het token liever zelf maakt: Memos &gt; Settings &gt; My account &gt; Access tokens. Kies er een dat nooit vervalt.</string>
     <string name="signin_account_name">Accountnaam (optioneel)</string>
-    <string name="signin_account_name_hint">Start</string>
+    <string name="signin_account_name_hint">Thuis</string>
     <string name="signin_certificate_using">\"%1$s\" wordt gebruikt</string>
     <string name="signin_certificate_hint">Alleen als de proxy van je server erom vraagt</string>
     <string name="signin_button">Aanmelden</string>
@@ -220,7 +220,7 @@
     <string name="format_quote">Citaat</string>
     <string name="format_bullets">Lijst met opsommingstekens</string>
     <string name="format_numbers">Genummerde lijst</string>
-    <string name="editor_tag">Taggen</string>
+    <string name="editor_tag">Tag</string>
     <string name="editor_new_tag">Nieuwe tag</string>
     <string name="editor_task">Taak</string>
     <string name="editor_add_pictures">Afbeeldingen toevoegen</string>
