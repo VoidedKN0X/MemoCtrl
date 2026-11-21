@@ -54,7 +54,7 @@
     <string name="places_show_map_title">Load the map from OpenStreetMap?</string>
     <string name="places_show_map_body">The map pictures come from openstreetmap.org, not from your Memos server. That website then sees which areas you look at, which is roughly where your memos were written. Your memos themselves are never sent. You can turn this off again with the map button.</string>
     <string name="places_hint">Tap a dot to see its memo. Drag to move, pinch to zoom.</string>
-    <string name="places_hint_no_map">Tap a dot to see its memo. The dots are in the right places, but the map itself isn't loaded: tap the map button at the top to show it.</string>
+    <string name="places_hint_no_map">Tap a dot to see its memo. The dots are in the right places, but the map itself isn\'t loaded: tap the map button at the top to show it.</string>
     <string name="places_open_dot">Show this memo</string>
 
     <!-- Saved views -->
@@ -68,11 +68,11 @@
     <string name="view_untitled">Untitled view</string>
     <string name="view_name">Name</string>
     <string name="view_filter">Filter</string>
-    <string name="view_filter_help">Written in Memos' filter language. Your server checks it when you save. Tap a piece to add it:</string>
-    <string name="view_delete_title">Delete "%1$s"?</string>
+    <string name="view_filter_help">Written in Memos\' filter language. Your server checks it when you save. Tap a piece to add it:</string>
+    <string name="view_delete_title">Delete \"%1$s\"?</string>
     <string name="view_delete_body">The view is removed from your server. Your memos stay.</string>
     <string name="view_no_memos">No memos match</string>
-    <string name="view_no_memos_body">None of your memos match this view's filter.</string>
+    <string name="view_no_memos_body">None of your memos match this view\'s filter.</string>
 
     <!-- Voice memos -->
     <string name="editor_voice">Record a voice memo</string>
@@ -83,15 +83,15 @@
     <string name="voice_attach">Stop and attach</string>
     <string name="voice_discard">Discard</string>
     <string name="voice_denied_title">No microphone access</string>
-    <string name="voice_denied_body">MemoCtrl needs the microphone to record a voice memo. Allow it in Android's settings for MemoCtrl and try again.</string>
-    <string name="voice_failed_title">Couldn't record</string>
-    <string name="voice_failed_body">The microphone couldn't be started. Another app may be using it.</string>
+    <string name="voice_denied_body">MemoCtrl needs the microphone to record a voice memo. Allow it in Android\'s settings for MemoCtrl and try again.</string>
+    <string name="voice_failed_title">Couldn\'t record</string>
+    <string name="voice_failed_body">The microphone couldn\'t be started. Another app may be using it.</string>
     <string name="audio_play">Play</string>
     <string name="audio_stop">Stop</string>
 
     <!-- Memos to and from a ZIP file -->
     <string name="group_memo_files">Memos as a file</string>
-    <string name="memo_files_footer">The ZIP file uses Memos' own export format, so the Memos website (0.31 and newer) can import it too. It isn't encrypted: anyone who has the file can read your memos.</string>
+    <string name="memo_files_footer">The ZIP file uses Memos\' own export format, so the Memos website (0.31 and newer) can import it too. It isn\'t encrypted: anyone who has the file can read your memos.</string>
     <string name="zip_export">Export memos to a ZIP file</string>
     <string name="zip_export_subtitle">Every memo of this account with its attachments, also archived ones</string>
     <string name="zip_import">Import memos from a ZIP file</string>
@@ -101,16 +101,16 @@
     <string name="zip_reading">Reading the file…</string>
     <string name="zip_progress">%1$d of %2$d</string>
     <string name="zip_not_valid">There are no memos in that file. Pick a Memos export, or a ZIP file with Markdown or text files in it.</string>
-    <string name="zip_export_failed">The export didn't finish: %1$s</string>
-    <string name="zip_import_failed">The import didn't finish: %1$s</string>
-    <string name="error_write_file">Couldn't write the file</string>
+    <string name="zip_export_failed">The export didn\'t finish: %1$s</string>
+    <string name="zip_import_failed">The import didn\'t finish: %1$s</string>
+    <string name="error_write_file">Couldn\'t write the file</string>
     <plurals name="zip_exported">
         <item quantity="one">Exported %1$d memo and %2$d attached files.</item>
         <item quantity="other">Exported %1$d memos and %2$d attached files.</item>
     </plurals>
     <plurals name="zip_export_missing">
-        <item quantity="one">%1$d attached file couldn't be fetched from your server and isn't in the file.</item>
-        <item quantity="other">%1$d attached files couldn't be fetched from your server and aren't in the file.</item>
+        <item quantity="one">%1$d attached file couldn\'t be fetched from your server and isn\'t in the file.</item>
+        <item quantity="other">%1$d attached files couldn\'t be fetched from your server and aren\'t in the file.</item>
     </plurals>
     <string name="zip_import_title">Import memos?</string>
     <string name="zip_import_nothing">There is nothing new to import from this file.</string>
@@ -126,7 +126,7 @@
         <item quantity="one">%1$d comment is skipped: comments can only be imported by the Memos website.</item>
         <item quantity="other">%1$d comments are skipped: comments can only be imported by the Memos website.</item>
     </plurals>
-    <string name="zip_import_plain">This isn't a Memos export, so every Markdown or text file becomes one private memo.</string>
+    <string name="zip_import_plain">This isn\'t a Memos export, so every Markdown or text file becomes one private memo.</string>
     <string name="zip_import_confirm">Import</string>
     <plurals name="zip_imported">
         <item quantity="one">Imported %1$d memo.</item>
@@ -135,14 +135,14 @@
 
     <!-- Settings to and from a file -->
     <string name="group_settings_file">Settings as a file</string>
-    <string name="settings_file_footer">Only MemoCtrl's settings. No account, server address, access token, PIN, certificate or memo is in the file, and importing one never turns the app lock, Hide in screenshots or Hide in recent apps off.</string>
+    <string name="settings_file_footer">Only MemoCtrl\'s settings. No account, server address, access token, PIN, certificate or memo is in the file, and importing one never turns the app lock, Hide in screenshots or Hide in recent apps off.</string>
     <string name="settings_file_export">Export settings</string>
-    <string name="settings_file_export_subtitle">Save MemoCtrl's settings to a file</string>
+    <string name="settings_file_export_subtitle">Save MemoCtrl\'s settings to a file</string>
     <string name="settings_file_import">Import settings</string>
     <string name="settings_file_import_subtitle">Read settings from a file; you see what changes first</string>
     <string name="settings_file_saved">Settings saved</string>
-    <string name="settings_file_save_failed">Couldn't save the settings file</string>
-    <string name="settings_file_not_valid">That isn't a MemoCtrl settings file</string>
+    <string name="settings_file_save_failed">Couldn\'t save the settings file</string>
+    <string name="settings_file_not_valid">That isn\'t a MemoCtrl settings file</string>
     <string name="settings_file_too_new">That file was made by a newer MemoCtrl. Update the app first</string>
     <string name="settings_file_import_title">Import settings?</string>
     <string name="settings_file_from">Settings file from %1$s.</string>
@@ -152,7 +152,7 @@
     <string name="settings_file_untouched">The app lock, your accounts and your memos are not touched.</string>
     <string name="settings_file_import_confirm">Import</string>
     <string name="settings_file_imported">Settings imported</string>
-    <string name="settings_file_import_failed">Couldn't import the settings</string>
+    <string name="settings_file_import_failed">Couldn\'t import the settings</string>
     <string name="setting_on">On</string>
     <string name="setting_off">Off</string>
     <string name="map_tiles">Show the map in Places</string>
