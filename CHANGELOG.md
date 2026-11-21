@@ -8,6 +8,10 @@ To publish a new version: bump `versionCode` and `versionName` in `app/build.gra
 
 Not in a release yet. Built and checked by CI only: none of this had been run on a phone when it was written.
 
+### Fixed
+
+- **Fixed before release: the app would have crashed at start with the new build tools.** MemoCtrl uses WorkManager for its background work, and WorkManager stores its jobs in a small Room database that is created by name when the app starts. The shrinker (R8) in Android Gradle Plugin 9 is stricter than the old one and removed the constructor that needs, which makes the app stop right at launch (a known problem with Room 2.6.1 under Android Gradle Plugin 9). A keep rule for that constructor, the same one newer Room versions ship themselves, is now in `app/proguard-rules.pro`. No released version was affected: the new build tools have not been in any release. Built by CI only; not yet run on a phone.
+
 ### Changed
 
 - **A sync writes to the phone's storage in groups instead of once per memo.** Until now, every memo a sync took over from the server, and every memo it found unchanged, was its own commit to storage (one per memo, plus one per attachment). Now the server's memos are merged 50 at a time: for each group, everything that only needs the phone's own database is read and written on one background thread and committed together. Memos that need the server during a sync (one you changed that has to be uploaded, one you deleted that has to be deleted there, one changed on both sides) are handled right after their group, one at a time, exactly as before, and each is read again right before its request. The rules for what wins are unchanged: a memo you edited while the sync was running is still never overwritten (the same "only if nobody wrote this memo since I read it" check per memo), and a memo changed on both sides still keeps your version as a new memo. A memo's row and its attachments are now also saved together rather than one after the other. If a sync stops halfway, what it had already written is kept, as before.
