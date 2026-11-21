@@ -28,9 +28,11 @@ class MemoCtrlApp : Application(), SingletonImageLoader.Factory {
                 val s = container.settings.settings.value
                 AppLock.onForeground(s.appLock || container.vault.enabled, s.lockTimeout.millis)
                 container.syncInBackground()
+                container.live.onForeground()
             }
 
             override fun onStop(owner: LifecycleOwner) {
+                container.live.onBackground()
                 val s = container.settings.settings.value
                 AppLock.onBackground(s.appLock || container.vault.enabled, s.lockTimeout.millis)
             }

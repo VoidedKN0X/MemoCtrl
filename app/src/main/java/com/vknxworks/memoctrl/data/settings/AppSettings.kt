@@ -76,6 +76,12 @@ data class AppSettings(
     val syncCharging: Boolean = false,
     /** A notification when a background sync fails. */
     val syncFailureNotice: Boolean = false,
+    /** Stay connected to the server while the app is open, and sync as soon as something changes there. */
+    val liveUpdates: Boolean = true,
+    /** Ask the server for the title and description of links in a memo you open. */
+    val linkPreviews: Boolean = true,
+    /** Draw the map of memos with a location on OpenStreetMap's map pictures (loaded from openstreetmap.org). */
+    val mapTiles: Boolean = false,
 )
 
 /** An unsent new memo, kept per account until it's posted or thrown away. */
@@ -97,6 +103,9 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         val syncWifiOnly = booleanPreferencesKey("sync_wifi_only")
         val syncCharging = booleanPreferencesKey("sync_charging")
         val syncFailureNotice = booleanPreferencesKey("sync_failure_notice")
+        val liveUpdates = booleanPreferencesKey("live_updates")
+        val linkPreviews = booleanPreferencesKey("link_previews")
+        val mapTiles = booleanPreferencesKey("map_tiles")
         /** 0.1.6's single "Hide in screenshots and recent apps": turned on, it turns both switches on. */
         val legacyHideContent = booleanPreferencesKey("hide_content")
     }
@@ -123,6 +132,9 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
         syncWifiOnly = this[K.syncWifiOnly] ?: false,
         syncCharging = this[K.syncCharging] ?: false,
         syncFailureNotice = this[K.syncFailureNotice] ?: false,
+        liveUpdates = this[K.liveUpdates] ?: true,
+        linkPreviews = this[K.linkPreviews] ?: true,
+        mapTiles = this[K.mapTiles] ?: false,
     )
 
     suspend fun update(transform: (AppSettings) -> AppSettings) {
@@ -142,6 +154,9 @@ class SettingsRepository(private val context: Context, scope: CoroutineScope) {
             p[K.syncWifiOnly] = s.syncWifiOnly
             p[K.syncCharging] = s.syncCharging
             p[K.syncFailureNotice] = s.syncFailureNotice
+            p[K.liveUpdates] = s.liveUpdates
+            p[K.linkPreviews] = s.linkPreviews
+            p[K.mapTiles] = s.mapTiles
             p.remove(K.legacyHideContent)
         }
     }

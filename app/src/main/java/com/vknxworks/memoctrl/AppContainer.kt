@@ -89,6 +89,14 @@ class AppContainer(val context: Context) {
     val vault = LockVault(context, "memoctrl")
     val sessions = SessionManager(context, { http }, db, files, settings, vault, appScope)
 
+    /** The server's event stream while the app is open, so changes made elsewhere show up right away. */
+    val live = com.vknxworks.memoctrl.data.sync.LiveUpdates(
+        scope = appScope,
+        session = sessions.active,
+        enabled = settings.stored.map { it.liveUpdates },
+        sync = { syncInBackground() },
+    )
+
     /** Turns the app lock on: the PIN encrypts the server logins from now on. */
     // These run to the end even when the PIN screen that started them closes halfway (it does, as soon
     // as the lock state changes), so the logins are never left half sealed or the lock half removed.

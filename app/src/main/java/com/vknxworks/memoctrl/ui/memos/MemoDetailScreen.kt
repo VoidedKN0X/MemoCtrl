@@ -91,6 +91,8 @@ fun MemoDetailScreen(id: String) {
                     )
                     MemoBody(m, preview = false, selectable = true)
                     TagChips(m.content)
+                    val remote = session?.remote
+                    if (remote != null) LinkPreviews(m.content, remote)
                     Text(
                         listOfNotNull(
                             DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.SHORT).format(Date(m.date.toEpochMilli())),
@@ -102,6 +104,9 @@ fun MemoDetailScreen(id: String) {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                     )
+                    // Reactions, linked memos and comments live on the server only (Memos 0.27 and newer).
+                    val remoteId = m.remoteId
+                    if (remoteId != null) MemoSocial(memoRemoteId = remoteId, visibility = m.visibility, archived = m.archived, mayLink = true)
                 }
                 if (menu) MemoActionsSheet(m, onDismiss = { menu = false })
             }

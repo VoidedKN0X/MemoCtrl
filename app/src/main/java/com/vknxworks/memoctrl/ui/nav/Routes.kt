@@ -9,6 +9,8 @@ import kotlinx.serialization.Serializable
 @Serializable data object SearchRoute
 
 @Serializable data class MemoRoute(val id: String)
+/** A memo read straight from the server by its server id: someone else's, or one that isn't on the phone. */
+@Serializable data class SharedMemoRoute(val remoteId: String)
 @Serializable data class TagRoute(val tag: String)
 /**
  * The editor: a new memo when [id] is null. [share] picks up text and pictures shared from another

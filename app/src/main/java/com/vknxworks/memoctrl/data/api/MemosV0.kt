@@ -168,6 +168,7 @@ class MemosV0(
         archived = m.rowStatus == V0RowStatus.ARCHIVED,
         updatedAt = Instant.ofEpochSecond(m.updatedTs),
         creator = m.creatorName?.let { User(m.creatorId.toString(), it) },
+        creatorId = m.creatorId.takeIf { it > 0 }?.toString(),
     )
 
     override suspend fun serverVersion(): String = version().trim()

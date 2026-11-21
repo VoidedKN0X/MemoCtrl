@@ -59,7 +59,34 @@ data class RemoteMemo(
     val updatedAt: Instant? = null,
     val location: MemoLocation? = null,
     val creator: User? = null,
+    /** Who wrote it, the way the server names users ("users/1", or "1" on Memos 0.21). */
+    val creatorId: String? = null,
+    /** The memo this one is a comment on, when it is one. */
+    val parent: String? = null,
+    val reactions: List<RemoteReaction> = emptyList(),
+    val relations: List<RemoteRelation> = emptyList(),
 )
+
+/** One reaction on a memo: who reacted ([creator], "users/1") with which emoji. [name] deletes it. */
+data class RemoteReaction(val name: String, val creator: String, val type: String)
+
+/**
+ * A link between two memos. [comment] links are made by the server when someone comments; the others
+ * are references the author added. [memo] points at [related]; both are server names ("memos/abc").
+ */
+data class RemoteRelation(
+    val memo: String,
+    val memoSnippet: String,
+    val related: String,
+    val relatedSnippet: String,
+    val comment: Boolean,
+)
+
+/** A saved view on the server: a name for a filter (a "shortcut" on Memos 0.27 to 0.30). */
+data class SavedView(val name: String, val title: String, val filter: String)
+
+/** What the server found out about a link: its title, description and picture. */
+data class LinkPreview(val url: String, val title: String, val description: String, val image: String)
 
 /** An attachment as the server returned it. */
 data class RemoteResource(

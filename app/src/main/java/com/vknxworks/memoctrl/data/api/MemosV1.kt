@@ -3,7 +3,12 @@ package com.vknxworks.memoctrl.data.api
 import com.vknxworks.memoctrl.data.model.MemoLocation
 import com.vknxworks.memoctrl.data.model.MemoLocationChange
 import com.vknxworks.memoctrl.data.model.MemoVisibility
+import com.vknxworks.memoctrl.data.model.LinkPreview
 import com.vknxworks.memoctrl.data.model.RemoteMemo
+import com.vknxworks.memoctrl.data.model.RemoteReaction
+import com.vknxworks.memoctrl.data.model.RemoteRelation
+import com.vknxworks.memoctrl.data.model.SavedView
+import kotlinx.coroutines.Dispatchers
 import com.vknxworks.memoctrl.data.model.RemoteResource
 import com.vknxworks.memoctrl.data.model.User
 import kotlinx.coroutines.CancellationException
@@ -42,6 +47,8 @@ data class V1User(
     val avatarUrl: String? = null,
     @Serializable(with = Rfc3339InstantSerializer::class)
     val createTime: Instant? = null,
+    /** "ADMIN" (or "HOST" on older servers) for administrators. */
+    val role: String? = null,
 )
 
 @Serializable
@@ -79,7 +86,53 @@ data class V1Memo(
     val pinned: Boolean? = null,
     val attachments: List<V1Attachment>? = null,
     val location: MemoLocation? = null,
+    val parent: String? = null,
+    val reactions: List<V1Reaction>? = null,
+    val relations: List<V1Relation>? = null,
 )
+
+@Serializable
+data class V1Reaction(
+    val name: String? = null,
+    val creator: String? = null,
+    /** Memos 0.27 to 0.30 want the memo's name here; 0.31 dropped the field and ignores it. */
+    val contentId: String? = null,
+    val reactionType: String? = null,
+)
+
+@Serializable
+data class V1RelationMemo(val name: String? = null, val snippet: String? = null)
+
+@Serializable
+data class V1Relation(val memo: V1RelationMemo? = null, val relatedMemo: V1RelationMemo? = null, val type: String? = null)
+
+@Serializable
+private data class V1ListReactions(val reactions: List<V1Reaction> = emptyList(), val nextPageToken: String? = null)
+
+@Serializable
+private data class V1UpsertReaction(val reaction: V1Reaction)
+
+@Serializable
+private data class V1ListRelations(val relations: List<V1Relation> = emptyList(), val nextPageToken: String? = null)
+
+@Serializable
+private data class V1SetRelations(val relations: List<V1Relation>)
+
+@Serializable
+private data class V1View(val name: String? = null, val title: String? = null, val filter: String? = null)
+
+/** Memos 0.31 calls them "memoViews", 0.27 to 0.30 "shortcuts". */
+@Serializable
+private data class V1ListViews(val memoViews: List<V1View>? = null, val shortcuts: List<V1View>? = null)
+
+@Serializable
+private data class V1MemoRelatedSetting(val reactions: List<String>? = null)
+
+@Serializable
+private data class V1InstanceSetting(val memoRelatedSetting: V1MemoRelatedSetting? = null)
+
+@Serializable
+private data class V1LinkMetadata(val url: String? = null, val title: String? = null, val description: String? = null, val image: String? = null)
 
 @Serializable
 private data class V1ListMemos(val memos: List<V1Memo> = emptyList(), val nextPageToken: String? = null)
@@ -145,7 +198,7 @@ class MemosV1(
     /** "users/1"; empty while signing in, before the user is known. */
     private val userName: String = "",
     /** The Memos version this account last saw on the server ("0.31.0", "26.10.0"), when there is one. */
-    versionHint: String? = null,
+    private val versionHint: String? = null,
 ) : MemosRemote {
     private val base: HttpUrl = host.toHttpUrl()
 
@@ -303,7 +356,22 @@ class MemosV1(
         archived = m.state == V1State.ARCHIVED,
         updatedAt = m.updateTime,
         location = m.location,
+        creatorId = m.creator,
+        parent = m.parent?.takeIf { it.isNotBlank() },
+        reactions = m.reactions.orEmpty().mapNotNull(::convert),
+        relations = m.relations.orEmpty().mapNotNull(::convert),
     )
+
+    private fun convert(r: V1Reaction): RemoteReaction? {
+        val type = r.reactionType?.takeIf { it.isNotBlank() } ?: return null
+        return RemoteReaction(name = r.name.orEmpty(), creator = r.creator.orEmpty(), type = type)
+    }
+
+    private fun convert(r: V1Relation): RemoteRelation? {
+        val memo = r.memo?.name?.takeIf { it.isNotBlank() } ?: return null
+        val related = r.relatedMemo?.name?.takeIf { it.isNotBlank() } ?: return null
+        return RemoteRelation(memo, r.memo?.snippet.orEmpty(), related, r.relatedMemo?.snippet.orEmpty(), comment = r.type == "COMMENT")
+    }
 
     suspend fun profile(): V1Profile {
         val profile = routed(isProfile = true) {
@@ -509,8 +577,284 @@ class MemosV1(
         routed { http.fetchText(request(apiRoot().addPathSegments(tokenId).build()).delete().build()) }
     }
 
+    // ---------- Comments, reactions, links between memos, saved views, link previews, live updates ----------
+
+    override val supportsSocial: Boolean get() = true
+
+    @Volatile private var admin: Boolean? = null
+    private val adminMutex = Mutex()
+
+    override suspend fun isAdmin(): Boolean {
+        admin?.let { return it }
+        return adminMutex.withLock {
+            admin ?: run {
+                val role = me().role.orEmpty()
+                (role == "ADMIN" || role == "HOST").also { admin = it }
+            }
+        }
+    }
+
+    @Volatile private var reactionList: List<String>? = null
+
+    override suspend fun reactionChoices(): List<String> {
+        reactionList?.let { return it }
+        val fromServer = runCatching {
+            routed { http.fetchJson(request(api("instance/settings/MEMO_RELATED").build()).build(), V1InstanceSetting.serializer()) }
+                .memoRelatedSetting?.reactions.orEmpty().filter { it.isNotBlank() }
+        }.getOrNull()
+        if (fromServer.isNullOrEmpty()) return DEFAULT_REACTIONS
+        return fromServer.also { reactionList = it }
+    }
+
+    /** Names of the people who wrote [memos], looked up once each. Someone who can't be looked up stays without a name. */
+    private suspend fun withCreators(memos: List<V1Memo>): List<RemoteMemo> {
+        val creators = memos.mapNotNull { it.creator }.toSet()
+        val users = coroutineScope {
+            creators.map { creator ->
+                async {
+                    runCatching {
+                        routed { http.fetchJson(request(api("users/${idOf(creator)}").build()).build(), V1User.serializer()) }
+                    }.getOrNull()
+                }
+            }.awaitAll()
+        }.filterNotNull().associateBy { it.name }
+        return memos.map { m ->
+            convert(m).copy(
+                creator = m.creator?.let { c ->
+                    users[c]?.let { u -> User(u.name, u.displayName?.takeIf { it.isNotBlank() } ?: u.username, u.createTime ?: Instant.now()) }
+                },
+            )
+        }
+    }
+
+    override suspend fun getMemo(remoteId: String): RemoteMemo {
+        val memo = routed { http.fetchJson(request(api("memos").addPathSegment(idOf(remoteId)).build()).build(), V1Memo.serializer()) }
+        return withCreators(listOf(memo)).first()
+    }
+
+    override suspend fun listComments(memoRemoteId: String): List<RemoteMemo> {
+        val out = ArrayList<V1Memo>()
+        var token: String? = null
+        do {
+            val p = routed {
+                val url = api("memos").addPathSegment(idOf(memoRemoteId)).addPathSegment("comments").apply {
+                    addQueryParameter("pageSize", "100")
+                    if (!token.isNullOrEmpty()) addQueryParameter("pageToken", token)
+                }.build()
+                http.fetchJson(request(url).build(), V1ListMemos.serializer())
+            }
+            out += p.memos
+            token = p.nextPageToken?.takeIf { it.isNotEmpty() }
+        } while (token != null && out.size < MAX_LISTED)
+        return withCreators(out).sortedBy { it.date }
+    }
+
+    override suspend fun createComment(memoRemoteId: String, content: String, visibility: MemoVisibility): RemoteMemo {
+        val json = ApiJson.encodeToString(V1CreateMemo.serializer(), V1CreateMemo(content = content, visibility = visibility.toApi()))
+        val memo = routed {
+            val url = api("memos").addPathSegment(idOf(memoRemoteId)).addPathSegment("comments").build()
+            http.fetchJson(request(url).post(jsonBody(json)).build(), V1Memo.serializer())
+        }
+        return withCreators(listOf(memo)).first()
+    }
+
+    override suspend fun listReactions(memoRemoteId: String): List<RemoteReaction> {
+        val out = ArrayList<RemoteReaction>()
+        var token: String? = null
+        do {
+            val p = routed {
+                val url = api("memos").addPathSegment(idOf(memoRemoteId)).addPathSegment("reactions").apply {
+                    addQueryParameter("pageSize", "200")
+                    if (!token.isNullOrEmpty()) addQueryParameter("pageToken", token)
+                }.build()
+                http.fetchJson(request(url).build(), V1ListReactions.serializer())
+            }
+            out += p.reactions.mapNotNull(::convert)
+            token = p.nextPageToken?.takeIf { it.isNotEmpty() }
+        } while (token != null && out.size < MAX_LISTED)
+        return out
+    }
+
+    override suspend fun addReaction(memoRemoteId: String, type: String): RemoteReaction {
+        val body = V1UpsertReaction(V1Reaction(contentId = "memos/${idOf(memoRemoteId)}", reactionType = type))
+        val json = ApiJson.encodeToString(V1UpsertReaction.serializer(), body)
+        val made = routed {
+            val url = api("memos").addPathSegment(idOf(memoRemoteId)).addPathSegment("reactions").build()
+            http.fetchJson(request(url).post(jsonBody(json)).build(), V1Reaction.serializer())
+        }
+        return convert(made) ?: RemoteReaction(made.name.orEmpty(), userName, type)
+    }
+
+    override suspend fun deleteReaction(reactionName: String) {
+        // "memos/abc/reactions/12": only a name of that shape is ever put in the address.
+        val parts = reactionName.split('/')
+        if (parts.size != 4 || parts[0] != "memos" || parts[2] != "reactions" || parts.any { it.isBlank() }) {
+            throw ApiException(str(R.string.error_not_memos))
+        }
+        routed {
+            val url = api("memos").addPathSegment(parts[1]).addPathSegment("reactions").addPathSegment(parts[3]).build()
+            http.fetchText(request(url).delete().build())
+        }
+    }
+
+    override suspend fun listRelations(memoRemoteId: String): List<RemoteRelation> {
+        val out = ArrayList<RemoteRelation>()
+        var token: String? = null
+        do {
+            val p = routed {
+                val url = api("memos").addPathSegment(idOf(memoRemoteId)).addPathSegment("relations").apply {
+                    addQueryParameter("pageSize", "200")
+                    if (!token.isNullOrEmpty()) addQueryParameter("pageToken", token)
+                }.build()
+                http.fetchJson(request(url).build(), V1ListRelations.serializer())
+            }
+            out += p.relations.mapNotNull(::convert)
+            token = p.nextPageToken?.takeIf { it.isNotEmpty() }
+        } while (token != null && out.size < MAX_LISTED)
+        return out
+    }
+
+    override suspend fun setReferences(memoRemoteId: String, relatedRemoteIds: List<String>) {
+        val self = V1RelationMemo(name = "memos/${idOf(memoRemoteId)}")
+        val body = V1SetRelations(
+            relatedRemoteIds.map { V1Relation(memo = self, relatedMemo = V1RelationMemo(name = "memos/${idOf(it)}"), type = "REFERENCE") },
+        )
+        val json = ApiJson.encodeToString(V1SetRelations.serializer(), body)
+        routed {
+            val url = api("memos").addPathSegment(idOf(memoRemoteId)).addPathSegment("relations").build()
+            http.fetchText(request(url).patch(jsonBody(json)).build())
+        }
+    }
+
+    /**
+     * Where this server keeps saved views: "views" on Memos 0.31 and newer, "shortcuts" on 0.27 to 0.30.
+     * Decided by the version the account last saw; without one, by which of the two answers.
+     */
+    private var viewsSegment: String? = when {
+        versionHint == null -> null
+        unversionedSince(versionHint) == true -> "views"
+        else -> versionHint.trim().removePrefix("v").split('.', '-', '+').let { p ->
+            val major = p.getOrNull(0)?.toIntOrNull()
+            val minor = p.getOrNull(1)?.toIntOrNull()
+            if (major == null || minor == null) null else if (major > 0 || minor >= 31) "views" else "shortcuts"
+        }
+    }
+
+    private fun userPath(): String = "users/${idOf(userName)}"
+
+    private suspend fun <T> withViews(call: suspend (segment: String) -> T): T {
+        viewsSegment?.let { return call(it) }
+        return try {
+            call("views").also { viewsSegment = "views" }
+        } catch (e: ApiException) {
+            // 404, 405 and 501 are "no such route": this server still calls them shortcuts.
+            if (e.status != 404 && e.status != 405 && e.status != 501) throw e
+            call("shortcuts").also { viewsSegment = "shortcuts" }
+        }
+    }
+
+    private fun convert(v: V1View): SavedView? {
+        val name = v.name?.takeIf { it.isNotBlank() } ?: return null
+        return SavedView(name, v.title.orEmpty(), v.filter.orEmpty())
+    }
+
+    /** "users/1/views/abc" or "users/steven/shortcuts/abc": the two parts that go in the address. */
+    private fun viewAddress(name: String): Pair<String, String> {
+        val parts = name.split('/')
+        if (parts.size != 4 || parts[0] != "users" || (parts[2] != "views" && parts[2] != "shortcuts") || parts.any { it.isBlank() }) {
+            throw ApiException(str(R.string.error_not_memos))
+        }
+        return "users/${parts[1]}/${parts[2]}" to parts[3]
+    }
+
+    override suspend fun listViews(): List<SavedView> = withViews { segment ->
+        val list = routed { http.fetchJson(request(api("${userPath()}/$segment").build()).build(), V1ListViews.serializer()) }
+        (list.memoViews ?: list.shortcuts).orEmpty().mapNotNull(::convert)
+    }
+
+    override suspend fun createView(title: String, filter: String): SavedView = withViews { segment ->
+        val json = ApiJson.encodeToString(V1View.serializer(), V1View(title = title, filter = filter))
+        val made = routed { http.fetchJson(request(api("${userPath()}/$segment").build()).post(jsonBody(json)).build(), V1View.serializer()) }
+        convert(made) ?: throw ApiException(str(R.string.error_not_memos))
+    }
+
+    override suspend fun updateView(name: String, title: String, filter: String): SavedView {
+        val (path, id) = viewAddress(name)
+        val json = ApiJson.encodeToString(V1View.serializer(), V1View(name = name, title = title, filter = filter))
+        val made = routed {
+            val url = api(path).addPathSegment(id).addQueryParameter("updateMask", "title,filter").build()
+            http.fetchJson(request(url).patch(jsonBody(json)).build(), V1View.serializer())
+        }
+        return convert(made) ?: SavedView(name, title, filter)
+    }
+
+    override suspend fun deleteView(name: String) {
+        val (path, id) = viewAddress(name)
+        routed { http.fetchText(request(api(path).addPathSegment(id).build()).delete().build()) }
+    }
+
+    override suspend fun listMemosByFilter(filter: String, pageSize: Int, pageToken: String?): Pair<List<RemoteMemo>, String?> {
+        val own = "creator == \"$userName\""
+        val p = page(pageSize, pageToken, V1State.NORMAL, if (filter.isBlank()) own else "$own && ($filter)")
+        return p.memos.map(::convert) to p.nextPageToken?.takeIf { it.isNotEmpty() }
+    }
+
+    /** False once this server said it has no link previews (Memos 0.27 and 0.28), so it isn't asked again. */
+    private var hasLinkPreviews = true
+
+    override suspend fun linkPreview(url: String): LinkPreview? {
+        if (!hasLinkPreviews) return null
+        val meta = try {
+            routed {
+                val address = api("memos/-/linkMetadata").addQueryParameter("url", url).build()
+                http.fetchJson(request(address).build(), V1LinkMetadata.serializer())
+            }
+        } catch (e: ApiException) {
+            if (e.status == 404 || e.status == 405 || e.status == 501) hasLinkPreviews = false
+            return null
+        }
+        val title = meta.title.orEmpty().trim()
+        val description = meta.description.orEmpty().trim()
+        if (title.isEmpty() && description.isEmpty()) return null
+        return LinkPreview(url, title, description, meta.image.orEmpty().trim())
+    }
+
+    override suspend fun watchChanges(onConnected: () -> Unit, onChange: () -> Unit) {
+        ensureRoutes(isProfile = false)
+        // The connection stays open and silent between events (the server pings every 30 seconds).
+        val client = http.newBuilder().readTimeout(90, java.util.concurrent.TimeUnit.SECONDS).build()
+        val call = client.newCall(request(api("sse").build()).header("Accept", "text/event-stream").build())
+        val response = call.await()
+        coroutineScope {
+            val reader = async(Dispatchers.IO) {
+                response.use { r ->
+                    if (!r.isSuccessful) throw ApiException(str(R.string.error_server_answered, r.code, ""), r.code, generic = true)
+                    if (r.header("Content-Type")?.startsWith("text/event-stream") != true) throw ApiException(str(R.string.error_server_too_old))
+                    val source = r.body?.source() ?: return@use
+                    onConnected()
+                    while (true) {
+                        val line = source.readUtf8Line() ?: break
+                        if (line.startsWith("data:")) onChange()
+                    }
+                }
+            }
+            try {
+                reader.await()
+            } finally {
+                // Reading blocks; cancelling the call is what ends it when the app stops listening.
+                call.cancel()
+            }
+        }
+    }
+
     companion object {
         private const val PAGE_SIZE = 200
+
+        /** Comments, reactions and relations of one memo are read up to this many. */
+        private const val MAX_LISTED = 1000
+
+        /** The reactions Memos offers when the server's own list can't be read. */
+        val DEFAULT_REACTIONS = listOf("👍", "👎", "❤️", "🎉", "😄", "😕", "😢", "😡")
 
         private const val VERSIONED_ROOT = "api/v1"
         private const val UNVERSIONED_ROOT = "api"

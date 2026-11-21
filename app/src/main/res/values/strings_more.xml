@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Server features that need Memos 0.27 or newer -->
+    <string name="error_server_too_old">This needs Memos 0.27 or newer on your server.</string>
+
+    <!-- Reactions, linked memos, comments -->
+    <string name="social_loading">Loading reactions and comments…</string>
+    <string name="social_offline">Reactions, linked memos and comments are on your server. They show when it can be reached.</string>
+    <string name="reactions">Reactions</string>
+    <string name="reaction_pick">Add a reaction</string>
+    <string name="reaction_add">React with %1$s</string>
+    <string name="reaction_remove">Take back your %1$s</string>
+    <string name="linked_memos">Linked memos</string>
+    <string name="link_add">Link a memo</string>
+    <string name="link_remove">Remove link</string>
+    <string name="link_to">Links to</string>
+    <string name="link_from">Linked from</string>
+    <string name="link_search_hint">Search your memos</string>
+    <string name="link_none">No memos to link. Only memos that are on your server can be linked.</string>
+    <plurals name="comments_count">
+        <item quantity="one">%1$d comment</item>
+        <item quantity="other">%1$d comments</item>
+    </plurals>
+    <string name="comment_hint">Write a comment</string>
+    <string name="comment_send">Send comment</string>
+    <string name="comment_archived">Archived memos can\'t be commented on.</string>
+    <string name="tasks_read_only">Only the author of this memo or an administrator can tick its tasks.</string>
+
+    <!-- Settings: live updates, link previews -->
+    <string name="live_updates">Live updates</string>
+    <string name="live_updates_subtitle">While MemoCtrl is open, stay connected to your server and sync the moment something changes there</string>
+    <string name="link_previews">Link previews</string>
+    <string name="link_previews_subtitle">Your server looks up the title and description of links in a memo you open. Your phone never contacts those websites</string>
+</resources>

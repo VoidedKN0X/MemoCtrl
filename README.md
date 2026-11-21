@@ -21,7 +21,11 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Drafts** for unposted memos, or **autosave** while you type
 - **Pin, edit, share, copy, archive and delete** memos
 - **Tags** with a heatmap of the days you wrote and stats; long-press a tag to **rename** or **delete** it in every memo (also offline)
-- **Explore** what others shared on your server
+- **Explore** what others shared on your server; open a shared memo to read it in full, and tick its tasks when it's yours or you're an administrator (otherwise the boxes show as read-only)
+- **Comments and reactions** under every memo that is on your server, your own and shared ones (Memos 0.27 or newer)
+- **Linked memos**: link a memo to your other memos, and see which memos link back to it (Memos 0.27 or newer)
+- **Link previews**: the title and description of links in a memo, looked up by your server so your phone never contacts those websites (Memos 0.29 or newer)
+- **Live updates**: while the app is open, changes made elsewhere show up right away (Memos 0.27 or newer)
 - **Search** that works offline, optionally in your archive too
 - **Archive** and **attachments** pages, and a full-screen picture viewer
 - **Share to MemoCtrl** from any app and a **New memo** launcher shortcut

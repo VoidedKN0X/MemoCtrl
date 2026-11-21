@@ -63,6 +63,7 @@ import com.vknxworks.memoctrl.ui.editor.EditorScreen
 import com.vknxworks.memoctrl.ui.explore.ExploreScreen
 import com.vknxworks.memoctrl.ui.memos.MemoDetailScreen
 import com.vknxworks.memoctrl.ui.memos.MemosScreen
+import com.vknxworks.memoctrl.ui.memos.SharedMemoScreen
 import com.vknxworks.memoctrl.ui.memos.TagMemosScreen
 import com.vknxworks.memoctrl.ui.search.SearchScreen
 import com.vknxworks.memoctrl.ui.settings.AccountsScreen
@@ -226,6 +227,7 @@ private fun AppNavHost(navController: NavHostController) {
         composable<SearchRoute> { SearchScreen() }
 
         composable<MemoRoute> { MemoDetailScreen(it.toRoute<MemoRoute>().id) }
+        composable<SharedMemoRoute> { SharedMemoScreen(it.toRoute<SharedMemoRoute>().remoteId) }
         composable<TagRoute> { TagMemosScreen(it.toRoute<TagRoute>().tag) }
         composable<EditorRoute> {
             val r = it.toRoute<EditorRoute>()

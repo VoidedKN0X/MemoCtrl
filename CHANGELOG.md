@@ -4,6 +4,17 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+### New
+
+- **Comments and reactions.** Open a memo that is on your server and scroll past its text: you see who reacted with what, can add or take back your own reaction (the emoji your server offers), read the comments and write one. This works for your own memos and for memos others shared. It needs Memos 0.27 or newer and a connection, because comments and reactions are only kept on the server; offline you get a short note and a Retry button instead. Archived memos can't be commented on (the server refuses that). Built by CI only; not yet run on a phone.
+- **Linked memos and backlinks.** The same place shows which memos this memo links to (arrow pointing right) and which memos link to it (arrow pointing left). Tap one to open it. On your own memos, **Link a memo** lets you search your memos and add a link, and the × next to a link removes it. Memos 0.27 or newer.
+- **Shared memos open in full.** Tapping a memo in Explore opens it on its own screen with its pictures, files, comments and reactions, and buttons to copy its text or share its link (Memos 0.27 or newer).
+- **Ticking tasks in a shared memo.** Memos only lets the author of a memo and administrators change it. So in Explore and on a shared memo's screen the task boxes can be ticked when the memo is yours or you are an administrator of the server, and the change is saved to the server. For everyone else the boxes now show greyed out as read-only, with a line that says why, instead of looking like boxes that do nothing when tapped.
+- **Link previews through the server.** When you open a memo, the first three web links in it get a small card with the page's title and description. Your Memos server looks the pages up (Memos 0.29 or newer); your phone never contacts those websites. The page's picture is only shown when **Load pictures from other websites** is on, because that picture does come from the other website. Turn previews off under **Settings > Sync > Link previews**.
+- **Live updates.** While MemoCtrl is open and unlocked it stays connected to your server's event stream (Memos 0.27 or newer) and syncs the moment a memo, comment or reaction changes somewhere else. Nothing extra runs in the background: the connection closes when you leave the app. Turn it off under **Settings > Sync > Live updates**. If your reverse proxy doesn't pass the event stream through, MemoCtrl simply keeps syncing the way it did.
+
 ## v0.6.0 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published. It is the first release built with the new build tools (Android Gradle Plugin 9, stricter code shrinking), so update over your installed version and check that your data and settings are still there.

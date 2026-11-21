@@ -240,11 +240,17 @@ fun MemoBody(memo: MemoEntity, preview: Boolean, onShowMore: (() -> Unit)? = nul
 
 /** Ticks or unticks a "- [ ]" task: only the box itself changes in the memo's text. */
 private fun toggleTask(c: com.vknxworks.memoctrl.AppContainer, memo: MemoEntity, checked: Boolean, start: Int, end: Int) {
-    if (start < 0 || end > memo.content.length || start >= end) return
-    val box = memo.content.substring(start, end)
-    val replaced = if (checked) box.replace("[ ]", "[x]") else box.replace("[x]", "[ ]").replace("[X]", "[ ]")
-    val content = memo.content.replaceRange(start, end, replaced)
+    val content = toggledTaskText(memo.content, checked, start, end) ?: return
     c.runTask { c.repo.updateMemo(memo.identifier, content = content) }
+}
+
+/** [content] with the task box at [start] until [end] ticked or unticked, or null when that isn't a box. */
+fun toggledTaskText(content: String, checked: Boolean, start: Int, end: Int): String? {
+    if (start < 0 || end > content.length || start >= end) return null
+    val box = content.substring(start, end)
+    val replaced = if (checked) box.replace("[ ]", "[x]") else box.replace("[x]", "[ ]").replace("[X]", "[ ]")
+    if (replaced == box) return null
+    return content.replaceRange(start, end, replaced)
 }
 
 /** The ⋮ menu of a memo. */
@@ -307,17 +313,23 @@ fun copyText(context: Context, text: String) {
     copySensitive(context, context.getString(R.string.memo), text)
 }
 
-/** A memo someone shared on the server, in Explore. Read-only. */
+/**
+ * A memo someone shared on the server, in Explore. Tapping it opens it with its comments and reactions.
+ * Its task boxes can be ticked when the server lets you change the memo (it's yours, or you're an
+ * administrator); otherwise they show as read-only.
+ */
 @Composable
-fun ExploreCard(memo: RemoteMemo, serverUrl: String?) {
-    val nav = LocalNavigator.current
+fun ExploreCard(memo: RemoteMemo, serverUrl: String?, onChanged: (RemoteMemo) -> Unit = {}, onOpen: (() -> Unit)? = null) {
     Surface(
         shape = CtrlShapes.Card,
         color = CtrlColors.Surface,
         border = BorderStroke(1.dp, CtrlColors.Outline),
         modifier = Modifier.fillMaxWidth().padding(horizontal = Gutter, vertical = 5.dp),
     ) {
-        Column(Modifier.padding(start = 18.dp, end = 18.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Column(
+            Modifier.then(if (onOpen != null) Modifier.clickable(onClick = onOpen) else Modifier).padding(start = 18.dp, end = 18.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
             MemoHeader(
                 time = relativeTime(memo.date.toEpochMilli()),
                 pinned = false,
@@ -325,27 +337,68 @@ fun ExploreCard(memo: RemoteMemo, serverUrl: String?) {
                 visibility = memo.visibility,
                 author = memo.creator?.name?.takeIf { it.isNotBlank() },
             )
-            val actions = remember { MarkdownActions(onTag = { nav.tag(it) }) }
-            if (memo.content.isNotBlank()) Markdown(memo.content, serverUrl = serverUrl, actions = actions)
-            TagChips(memo.content)
-            val asEntities = remember(memo) {
-                memo.resources.map { r ->
-                    com.vknxworks.memoctrl.data.model.ResourceEntity(
-                        identifier = r.remoteId,
-                        remoteId = r.remoteId,
-                        accountKey = "",
-                        date = r.date,
-                        filename = r.filename,
-                        uri = r.uri,
-                        mimeType = r.mimeType,
-                    )
-                }
-            }
-            ImageGrid(asEntities.filter { it.isImage }, serverUrl = serverUrl)
-            AttachmentChips(asEntities.filterNot { it.isImage })
-            memo.location?.let { LocationRow(it) }
+            RemoteMemoBody(memo, serverUrl, onChanged)
         }
     }
+}
+
+/** The text, tags, pictures, files and location of a memo that comes straight from the server. */
+@Composable
+fun RemoteMemoBody(memo: RemoteMemo, serverUrl: String?, onChanged: (RemoteMemo) -> Unit, selectable: Boolean = false) {
+    val nav = LocalNavigator.current
+    val c = LocalContext.current.container
+    val canTick = rememberCanChange(memo)
+    val actions = remember(memo.remoteId, memo.content, canTick) {
+        MarkdownActions(
+            onCheckbox = if (!canTick) null else { checked, start, end ->
+                val content = toggledTaskText(memo.content, checked, start, end)
+                if (content != null) c.runTask {
+                    val repo = c.repo
+                    val local = c.db.getMemoByRemoteId(memo.remoteId, repo.accountKey)
+                    // Your own memo that is also on the phone: changed there first and synced, like in your timeline.
+                    if (local != null && !local.isDeleted) repo.updateMemo(local.identifier, content = content)
+                    else repo.remote.updateMemo(memo.remoteId, content = content)
+                    onChanged(memo.copy(content = content))
+                }
+            },
+            onTag = { nav.tag(it) },
+        )
+    }
+    if (memo.content.isNotBlank()) Markdown(memo.content, serverUrl = serverUrl, actions = actions, selectable = selectable)
+    TagChips(memo.content)
+    val asEntities = remember(memo.resources) {
+        memo.resources.map { r ->
+            com.vknxworks.memoctrl.data.model.ResourceEntity(
+                identifier = r.remoteId,
+                remoteId = r.remoteId,
+                accountKey = "",
+                date = r.date,
+                filename = r.filename,
+                uri = r.uri,
+                mimeType = r.mimeType,
+            )
+        }
+    }
+    ImageGrid(asEntities.filter { it.isImage }, serverUrl = serverUrl)
+    AttachmentChips(asEntities.filterNot { it.isImage })
+    memo.location?.let { LocationRow(it) }
+}
+
+/**
+ * Whether the server lets the signed-in user change [memo]: Memos allows that for the memo's author and
+ * for administrators only. Until that is known (one request, once per account) the answer is no.
+ */
+@Composable
+fun rememberCanChange(memo: RemoteMemo): Boolean {
+    val c = LocalContext.current.container
+    val session by c.sessions.active.collectAsStateWithLifecycle()
+    val s = session ?: return false
+    val mine = memo.creatorId != null && memo.creatorId == s.account.remoteIdentifier
+    if (mine) return true
+    val admin by androidx.compose.runtime.produceState(false, s.remote) {
+        value = runCatching { s.remote.isAdmin() }.getOrDefault(false)
+    }
+    return admin
 }
 
 /** A memo's #tags as small chips (9dp corners, mono); tapping one opens that tag. */

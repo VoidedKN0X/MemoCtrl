@@ -17,6 +17,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.Archive
+import androidx.compose.material.icons.outlined.Bolt
+import androidx.compose.material.icons.outlined.Link
 import androidx.compose.material.icons.outlined.Attachment
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Image
@@ -202,7 +204,21 @@ fun SettingsScreen() {
             }
 
             if (!local) {
-                Group(stringResource(R.string.group_background_sync), footer = stringResource(R.string.background_sync_footer)) {
+                Group(stringResource(R.string.group_sync), footer = stringResource(R.string.background_sync_footer)) {
+                    if (session?.remote?.supportsSocial == true) {
+                        GroupSwitch(
+                            stringResource(R.string.live_updates),
+                            stringResource(R.string.live_updates_subtitle),
+                            s.liveUpdates,
+                            icon = Icons.Outlined.Bolt,
+                        ) { v -> update { it.copy(liveUpdates = v) } }
+                        GroupSwitch(
+                            stringResource(R.string.link_previews),
+                            stringResource(R.string.link_previews_subtitle),
+                            s.linkPreviews,
+                            icon = Icons.Outlined.Link,
+                        ) { v -> update { it.copy(linkPreviews = v) } }
+                    }
                     GroupChoice(
                         stringResource(R.string.background_sync),
                         SyncInterval.entries.map { it to stringResource(it.label) },

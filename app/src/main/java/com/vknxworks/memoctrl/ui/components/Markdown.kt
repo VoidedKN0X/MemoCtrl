@@ -231,6 +231,8 @@ private fun ListItem(item: ASTNode, src: String, serverUrl: String?, actions: Ma
                 Checkbox(
                     checked = checked,
                     onCheckedChange = actions.onCheckbox?.let { cb -> { _: Boolean -> cb(!checked, checkbox.startOffset, checkbox.endOffset) } },
+                    // Without something to do on a tap, the box shows as read-only instead of as a control that does nothing.
+                    enabled = actions.onCheckbox != null,
                     modifier = Modifier.padding(end = 8.dp, top = 2.dp).size(20.dp),
                 )
             }

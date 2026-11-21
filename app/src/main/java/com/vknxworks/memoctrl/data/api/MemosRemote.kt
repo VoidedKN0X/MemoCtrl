@@ -5,7 +5,11 @@ import android.util.Base64OutputStream
 import com.vknxworks.memoctrl.data.model.MemoLocation
 import com.vknxworks.memoctrl.data.model.MemoLocationChange
 import com.vknxworks.memoctrl.data.model.MemoVisibility
+import com.vknxworks.memoctrl.data.model.LinkPreview
 import com.vknxworks.memoctrl.data.model.RemoteMemo
+import com.vknxworks.memoctrl.data.model.RemoteReaction
+import com.vknxworks.memoctrl.data.model.RemoteRelation
+import com.vknxworks.memoctrl.data.model.SavedView
 import com.vknxworks.memoctrl.data.model.RemoteResource
 import com.vknxworks.memoctrl.data.model.User
 import kotlinx.serialization.builtins.serializer
@@ -86,7 +90,56 @@ interface MemosRemote {
 
     /** Removes a tag from the server's own list of tags, where it keeps one (Memos 0.21). Memos aren't changed. */
     suspend fun deleteTag(tag: String) = Unit
+
+    // ---------- Only on Memos 0.27 and newer. Everything below says "not on this server" elsewhere. ----------
+
+    /** Comments, reactions, links between memos, saved views and live updates exist on this server. */
+    val supportsSocial: Boolean get() = false
+
+    /** One memo by its server id, with its reactions and relations. Also memos of other people you may read. */
+    suspend fun getMemo(remoteId: String): RemoteMemo = unsupported()
+
+    /** Whether the signed-in user is an administrator, who may change other people's memos. */
+    suspend fun isAdmin(): Boolean = false
+
+    suspend fun listComments(memoRemoteId: String): List<RemoteMemo> = unsupported()
+    suspend fun createComment(memoRemoteId: String, content: String, visibility: MemoVisibility): RemoteMemo = unsupported()
+    suspend fun listReactions(memoRemoteId: String): List<RemoteReaction> = unsupported()
+    suspend fun addReaction(memoRemoteId: String, type: String): RemoteReaction = unsupported()
+    suspend fun deleteReaction(reactionName: String): Unit = unsupported()
+
+    /** The emoji this server offers as reactions. */
+    suspend fun reactionChoices(): List<String> = emptyList()
+
+    /** Links from and to a memo: references in both directions, and comments. */
+    suspend fun listRelations(memoRemoteId: String): List<RemoteRelation> = unsupported()
+
+    /** Replaces the memos this memo refers to. Only the author of the memo (or an administrator) may. */
+    suspend fun setReferences(memoRemoteId: String, relatedRemoteIds: List<String>): Unit = unsupported()
+
+    suspend fun listViews(): List<SavedView> = unsupported()
+    suspend fun createView(title: String, filter: String): SavedView = unsupported()
+    suspend fun updateView(name: String, title: String, filter: String): SavedView = unsupported()
+    suspend fun deleteView(name: String): Unit = unsupported()
+
+    /** Your own memos that match a saved view's [filter], which the server works out, a page at a time. */
+    suspend fun listMemosByFilter(filter: String, pageSize: Int, pageToken: String?): Pair<List<RemoteMemo>, String?> = unsupported()
+
+    /**
+     * Asks the server to look up a link's title, description and picture (Memos 0.29 and newer). The
+     * phone never contacts the link itself. Null when this server can't.
+     */
+    suspend fun linkPreview(url: String): LinkPreview? = null
+
+    /**
+     * Stays connected to the server and calls [onChange] every time it says a memo, comment or reaction
+     * changed. Returns when the server closes the connection; throws when it can't connect.
+     */
+    suspend fun watchChanges(onConnected: () -> Unit, onChange: () -> Unit): Unit = unsupported()
 }
+
+private fun unsupported(): Nothing =
+    throw ApiException(com.vknxworks.memoctrl.str(com.vknxworks.memoctrl.R.string.error_server_too_old))
 
 /**
  * The "server" of a local-only account: there is none. Memos only live in the phone's database, the

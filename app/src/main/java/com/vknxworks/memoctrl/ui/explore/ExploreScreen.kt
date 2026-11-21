@@ -41,6 +41,8 @@ import com.vknxworks.memoctrl.ui.components.MessageView
 import com.vknxworks.memoctrl.ui.components.TabTitle
 import com.vknxworks.memoctrl.ui.components.friendlyMessage
 import com.vknxworks.memoctrl.ui.memos.ExploreCard
+import com.vknxworks.memoctrl.ui.nav.LocalNavigator
+import com.vknxworks.memoctrl.ui.nav.SharedMemoRoute
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -68,6 +70,12 @@ class ExploreModel : ViewModel() {
         if (remote === r) return
         remote = r
         refresh(initial = true)
+    }
+
+    /** A memo changed from this screen (a task ticked): show it without loading the list again. */
+    fun replace(memo: RemoteMemo) {
+        val i = memos.indexOfFirst { it.remoteId == memo.remoteId }
+        if (i >= 0) memos[i] = memo
     }
 
     fun refresh(initial: Boolean = false) {
@@ -111,6 +119,7 @@ fun ExploreScreen(model: ExploreModel = viewModel()) {
     val c = LocalContext.current.container
     val session by c.sessions.active.collectAsStateWithLifecycle()
     val remote = session?.remote ?: return
+    val nav = LocalNavigator.current
     LaunchedEffect(remote) { model.bind(remote) }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
@@ -131,7 +140,13 @@ fun ExploreScreen(model: ExploreModel = viewModel()) {
                 LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 4.dp, bottom = 24.dp + LocalBottomClearance.current)) {
                     itemsIndexed(model.memos, key = { _, m -> m.remoteId }) { i, memo ->
                         if (i >= model.memos.size - 5) LaunchedEffect(model.memos.size) { model.loadMore() }
-                        ExploreCard(memo, serverUrl = remote.host)
+                        ExploreCard(
+                            memo,
+                            serverUrl = remote.host,
+                            onChanged = model::replace,
+                            // Comments and reactions need Memos 0.27 or newer; on 0.21 a card is all there is.
+                            onOpen = if (remote.supportsSocial) ({ nav.navigate(SharedMemoRoute(memo.remoteId)) }) else null,
+                        )
                     }
                     item(key = "footer") {
                         Box(Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
