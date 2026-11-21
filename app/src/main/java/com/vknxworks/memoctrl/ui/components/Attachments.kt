@@ -11,6 +11,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.clickable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.material.icons.outlined.Stop
+import androidx.compose.material.icons.outlined.PlayArrow
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -155,7 +159,45 @@ fun ImageGrid(images: List<ResourceEntity>, serverUrl: String? = null, onRemove:
     if (viewing >= 0 && viewable.isNotEmpty()) ImageViewer(viewable, viewing, onDismiss = { viewing = -1 })
 }
 
-/** Files that aren't pictures: a chip each, tapping opens the file in another app. */
+/** A sound file: a voice memo or any other audio attachment. */
+val ResourceEntity.isAudio: Boolean
+    get() = mimeType?.startsWith("audio/") == true ||
+        filename.substringAfterLast('.', "").lowercase() in setOf("m4a", "mp3", "ogg", "oga", "opus", "wav", "aac", "flac", "amr", "3gp")
+
+/** Plays one sound file at a time with the phone's own player. [playing] is the attachment that is sounding. */
+class AudioPlayer {
+    var playing by mutableStateOf<String?>(null)
+        private set
+    private var player: android.media.MediaPlayer? = null
+
+    fun play(id: String, file: File): Boolean {
+        stop()
+        val p = android.media.MediaPlayer()
+        return try {
+            p.setDataSource(file.absolutePath)
+            p.setOnCompletionListener { if (player === p) stop() }
+            p.setOnErrorListener { _, _, _ -> if (player === p) stop(); true }
+            p.prepare()
+            p.start()
+            player = p
+            playing = id
+            true
+        } catch (e: Exception) {
+            runCatching { p.release() }
+            false
+        }
+    }
+
+    fun stop() {
+        val p = player ?: return
+        player = null
+        playing = null
+        runCatching { p.stop() }
+        runCatching { p.release() }
+    }
+}
+
+/** Files that aren't pictures: a chip each. Tapping plays a sound file, and opens any other file in another app. */
 @Composable
 fun AttachmentChips(files: List<ResourceEntity>, onRemove: ((ResourceEntity) -> Unit)? = null) {
     if (files.isEmpty()) return
@@ -163,6 +205,8 @@ fun AttachmentChips(files: List<ResourceEntity>, onRemove: ((ResourceEntity) -> 
     val c = context.container
     val scope = rememberCoroutineScope()
     var opening by remember { mutableStateOf<String?>(null) }
+    val player = remember { AudioPlayer() }
+    DisposableEffect(Unit) { onDispose { player.stop() } }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         files.forEach { f ->
             Row(
@@ -171,17 +215,50 @@ fun AttachmentChips(files: List<ResourceEntity>, onRemove: ((ResourceEntity) -> 
                     .clip(RoundedCornerShape(10.dp))
                     .background(MaterialTheme.colorScheme.surfaceContainerHighest)
                     .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(10.dp))
-                    .clickable(enabled = opening == null) {
-                        opening = f.identifier
-                        scope.launch {
-                            openAttachment(context, c, f)
-                            opening = null
+                    .combinedClickable(
+                        enabled = opening == null,
+                        // Sound plays right here; a long press opens it in another app like any other file.
+                        onLongClick = if (!f.isAudio) null else {
+                            {
+                                player.stop()
+                                opening = f.identifier
+                                scope.launch {
+                                    openAttachment(context, c, f)
+                                    opening = null
+                                }
+                            }
+                        },
+                    ) {
+                        if (f.isAudio) {
+                            if (player.playing == f.identifier) player.stop()
+                            else {
+                                opening = f.identifier
+                                scope.launch {
+                                    val file = runCatching { ensureLocalFile(context, c, f) }.getOrNull()
+                                    opening = null
+                                    if (file == null || !player.play(f.identifier, file)) {
+                                        Toast.makeText(context, context.getString(R.string.attachment_open_failed), Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        } else {
+                            opening = f.identifier
+                            scope.launch {
+                                openAttachment(context, c, f)
+                                opening = null
+                            }
                         }
                     }
                     .padding(start = 12.dp, end = if (onRemove != null) 4.dp else 14.dp, top = 6.dp, bottom = 6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (opening == f.identifier) CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                else if (f.isAudio) Icon(
+                    if (player.playing == f.identifier) Icons.Outlined.Stop else Icons.Outlined.PlayArrow,
+                    stringResource(if (player.playing == f.identifier) R.string.audio_stop else R.string.audio_play),
+                    Modifier.size(18.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
                 else Icon(Icons.Outlined.Attachment, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.size(8.dp))
                 Text(f.filename.ifBlank { stringResource(R.string.attachment) }, style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))

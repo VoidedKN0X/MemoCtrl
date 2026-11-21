@@ -65,6 +65,12 @@ import com.vknxworks.memoctrl.ui.memos.rememberManualSync
 import com.vknxworks.memoctrl.ui.nav.AccountsRoute
 import com.vknxworks.memoctrl.ui.nav.ArchivedRoute
 import com.vknxworks.memoctrl.ui.nav.AttachmentsRoute
+import com.vknxworks.memoctrl.ui.nav.CalendarRoute
+import com.vknxworks.memoctrl.ui.nav.PlacesRoute
+import com.vknxworks.memoctrl.ui.nav.ViewsRoute
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.FilterList
+import androidx.compose.material.icons.outlined.Place
 import com.vknxworks.memoctrl.ui.nav.LocalNavigator
 import com.vknxworks.memoctrl.ui.nav.SettingsRoute
 import com.vknxworks.memoctrl.ui.theme.Gutter
@@ -141,6 +147,11 @@ fun YouScreen() {
             Group {
                 GroupRow(stringResource(R.string.archive_title), stringResource(R.string.archive_subtitle), icon = Icons.Outlined.Archive, showChevron = true, onClick = { nav.navigate(ArchivedRoute) })
                 GroupRow(stringResource(R.string.attachments_title), stringResource(R.string.attachments_subtitle), icon = Icons.Outlined.Attachment, showChevron = true, onClick = { nav.navigate(AttachmentsRoute) })
+                GroupRow(stringResource(R.string.calendar_title), stringResource(R.string.calendar_subtitle), icon = Icons.Outlined.CalendarMonth, showChevron = true, onClick = { nav.navigate(CalendarRoute) })
+                GroupRow(stringResource(R.string.places_title), stringResource(R.string.places_subtitle), icon = Icons.Outlined.Place, showChevron = true, onClick = { nav.navigate(PlacesRoute) })
+                if (s.remote.supportsSocial) {
+                    GroupRow(stringResource(R.string.views_title), stringResource(R.string.views_subtitle), icon = Icons.Outlined.FilterList, showChevron = true, onClick = { nav.navigate(ViewsRoute) })
+                }
             }
 
             if (!acc.isLocal) Group(stringResource(R.string.group_server)) {

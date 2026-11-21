@@ -278,6 +278,8 @@ fun SettingsScreen() {
                     icon = Icons.Outlined.Archive,
                 ) { v -> update { it.copy(searchIncludesArchived = v) } }
             }
+
+            DataGroups()
         }
     }
 

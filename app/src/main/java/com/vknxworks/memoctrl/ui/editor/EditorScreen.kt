@@ -47,6 +47,7 @@ import androidx.compose.material.icons.outlined.FormatQuote
 import androidx.compose.material.icons.outlined.FormatStrikethrough
 import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Mic
 import androidx.compose.material.icons.outlined.PhotoCamera
 import androidx.compose.material.icons.outlined.Tag
 import androidx.compose.material3.Button
@@ -216,6 +217,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
     var showExitDialog by remember { mutableStateOf(false) }
     var showLocation by remember { mutableStateOf(false) }
     var showVisibility by remember { mutableStateOf(false) }
+    var showVoice by remember { mutableStateOf(false) }
     var showTags by remember { mutableStateOf(false) }
     var tags by remember { mutableStateOf<List<String>>(emptyList()) }
     val isEdit = memoId != null
@@ -587,6 +589,7 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
                     AppLock.expectReturn()
                     pickFile.launch(arrayOf("*/*"))
                 }
+                ToolButton(Icons.Outlined.Mic, stringResource(R.string.editor_voice)) { showVoice = true }
                 if (s.remote.supportsLocation) ToolButton(Icons.Outlined.LocationOn, stringResource(R.string.editor_location)) { showLocation = true }
             }
             // Who can see a memo only means something on a server.
@@ -596,6 +599,8 @@ fun EditorScreen(memoId: String?, fromShare: Boolean, initialText: String?, mode
             }
         }
     }
+
+    if (showVoice) VoiceRecorderDialog(onDismiss = { showVoice = false }) { uri -> uploadAll(listOf(uri)) }
 
     if (showVisibility) {
         val options = buildList {

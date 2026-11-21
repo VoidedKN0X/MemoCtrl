@@ -15,11 +15,14 @@
     <!-- Only asked when you tap "Use current location" on a memo. Satellite (GPS) fixes only. -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <!-- Only asked when you tap the microphone in the editor to record a voice memo. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Added by WorkManager for work that runs as a foreground service. Background sync never does. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
     <uses-feature android:name="android.hardware.location" android:required="false" />
     <uses-feature android:name="android.hardware.location.gps" android:required="false" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
     <application
         android:name=".MemoCtrlApp"

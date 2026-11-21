@@ -65,6 +65,10 @@ import com.vknxworks.memoctrl.ui.memos.MemoDetailScreen
 import com.vknxworks.memoctrl.ui.memos.MemosScreen
 import com.vknxworks.memoctrl.ui.memos.SharedMemoScreen
 import com.vknxworks.memoctrl.ui.memos.TagMemosScreen
+import com.vknxworks.memoctrl.ui.more.CalendarScreen
+import com.vknxworks.memoctrl.ui.more.PlacesScreen
+import com.vknxworks.memoctrl.ui.more.ViewMemosScreen
+import com.vknxworks.memoctrl.ui.more.ViewsScreen
 import com.vknxworks.memoctrl.ui.search.SearchScreen
 import com.vknxworks.memoctrl.ui.settings.AccountsScreen
 import com.vknxworks.memoctrl.ui.settings.ArchivedScreen
@@ -234,6 +238,13 @@ private fun AppNavHost(navController: NavHostController) {
             EditorScreen(memoId = r.id, fromShare = r.share, initialText = r.text)
         }
 
+        composable<CalendarRoute> { CalendarScreen() }
+        composable<PlacesRoute> { PlacesScreen() }
+        composable<ViewsRoute> { ViewsScreen() }
+        composable<ViewMemosRoute> {
+            val r = it.toRoute<ViewMemosRoute>()
+            ViewMemosScreen(r.title, r.filter)
+        }
         composable<YouRoute> { YouScreen() }
         composable<ArchivedRoute> { ArchivedScreen() }
         composable<AttachmentsRoute> { AttachmentsScreen() }

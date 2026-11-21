@@ -24,3 +24,9 @@ import kotlinx.serialization.Serializable
 @Serializable data object SettingsRoute
 @Serializable data object AccountsRoute
 @Serializable data object AddAccountRoute
+
+@Serializable data object CalendarRoute
+@Serializable data object PlacesRoute
+@Serializable data object ViewsRoute
+/** Your memos that match a saved view's [filter]. */
+@Serializable data class ViewMemosRoute(val title: String, val filter: String)

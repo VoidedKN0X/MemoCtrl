@@ -205,6 +205,10 @@ class SyncingRepository(
         resources: List<ResourceEntity>,
         deferPush: Boolean = false,
         location: MemoLocation? = null,
+        /** When the memo was written, for memos brought in from a file. Now when left out. */
+        date: Instant? = null,
+        pinned: Boolean = false,
+        archived: Boolean = false,
     ): MemoEntity {
         val now = Instant.now()
         val memo = MemoEntity(
@@ -213,10 +217,10 @@ class SyncingRepository(
             accountKey = accountKey,
             content = content,
             location = location,
-            date = now,
+            date = date ?: now,
             visibility = visibility,
-            pinned = false,
-            archived = false,
+            pinned = pinned,
+            archived = archived,
             needsSync = pending,
             isDeleted = false,
             lastModified = now,

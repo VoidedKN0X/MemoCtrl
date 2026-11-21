@@ -27,6 +27,11 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Link previews**: the title and description of links in a memo, looked up by your server so your phone never contacts those websites (Memos 0.29 or newer)
 - **Live updates**: while the app is open, changes made elsewhere show up right away (Memos 0.27 or newer)
 - **Search** that works offline, optionally in your archive too
+- **Calendar**: a month at a time with the number of memos per day; tap a day to read them
+- **Places**: memos that have a location as dots on a map; the map pictures from OpenStreetMap are only loaded after you turn that on
+- **Saved views**: your Memos shortcuts (named filters kept on the server), to open, add, change and delete (Memos 0.27 or newer)
+- **Voice memos**: record with the microphone in the editor; the recording is attached as a sound file and plays right in the memo
+- **Export and import memos as a ZIP file** in Memos' own export format, and **export and import the app's settings** to a file (never a login, token or PIN)
 - **Archive** and **attachments** pages, and a full-screen picture viewer
 - **Share to MemoCtrl** from any app and a **New memo** launcher shortcut
 - **App lock** with its own PIN and optional fingerprint unlock; your server login stays encrypted while the app is locked (see [App lock](#app-lock))
@@ -90,12 +95,13 @@ Settings, the archive, attachments, accounts and sign out are behind your profil
 | Biometrics | Unlocking the app lock with your fingerprint, if you turn that on |
 | Hide other apps' floating windows | Hiding other apps' floating windows (chat heads, overlays) over the PIN screen, sign-in and "can't be undone" confirmations, so nothing can cover them. No prompt, and nothing changes on other screens |
 | Notifications | The optional "Background sync failed" notice, only asked when you turn it on |
+| Microphone | Recording a voice memo, only asked when you tap the microphone in the editor, and only used while the "Recording" dialog is open |
 | Approximate and precise location | Adding your location to a memo, only asked when you tap **Use current location** (GPS only) |
 | Network state | Background sync's "only on Wi-Fi" option, and waiting for a connection before a sync |
 | Prevent phone from sleeping | Keeping the phone awake for the few seconds a background sync runs |
 | Run at startup | Setting background sync up again after the phone restarts (nothing runs if sync is off) |
 
-The last three come with Android's background-work library, which runs background sync. Android also lists a permission named after MemoCtrl itself (`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`): it only lets MemoCtrl's own parts talk to each other, and no other app can hold it. MemoCtrl has no permission for your contacts, microphone, phone calls or files; it can't install apps or run in the foreground.
+The last three come with Android's background-work library, which runs background sync. Android also lists a permission named after MemoCtrl itself (`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`): it only lets MemoCtrl's own parts talk to each other, and no other app can hold it. MemoCtrl has no permission for your contacts, phone calls or files; it can't install apps or run in the foreground.
 
 See [Privacy](#privacy) for what MemoCtrl sends and where.
 
@@ -133,11 +139,13 @@ While the lock, PIN or sign-in screen or a "can't be undone" confirmation is sho
 
 ## Privacy
 
-**Telemetry-free.** MemoCtrl has no analytics, crash reporting, usage stats or tracking of any kind, and no update check. It only talks to your own Memos server. Your password is never stored; the app's access token is stored encrypted on the phone and is only sent to that server, never to another server a redirect points at.
+**Telemetry-free.** MemoCtrl has no analytics, crash reporting, usage stats or tracking of any kind, and no update check. It only talks to your own Memos server (and, only if you turn the map in Places on, to openstreetmap.org for map pictures). Your password is never stored; the app's access token is stored encrypted on the phone and is only sent to that server, never to another server a redirect points at.
 
 **Google-free.** No Google Play services, Firebase or other Google libraries, and nothing ever goes to Google. Every build checks its dependencies for them, and release builds write nothing about you to the phone's log.
 
-- **Servers:** only the Memos servers you sign in to. Pictures that memos link or attach from other websites are only loaded after you turn on **Load pictures from other websites** (your profile picture › **Settings > Privacy and security**); until then they show as a link.
+- **Servers:** only the Memos servers you sign in to, plus openstreetmap.org for the Places map if you turn that on. Pictures that memos link or attach from other websites are only loaded after you turn on **Load pictures from other websites** (your profile picture › **Settings > Privacy and security**); until then they show as a link.
+- **Map pictures:** the **Places** map is drawn from openstreetmap.org's map pictures, but only after you turn that on in Places (off by default, and you're told first). That website then sees which areas you look at; your memos are never sent to it. With it off, nothing is loaded and the dots are drawn on an empty background.
+- **Link previews** are looked up by your own Memos server, not by your phone. A preview's picture comes from the other website and only shows when **Load pictures from other websites** is on.
 - **Links:** links in memos, a memo's location (OpenStreetMap) and the Support, Report a bug, Source code and Licence rows in About open in your browser only when you tap them; the app itself doesn't contact those sites.
 - **Location** comes from the phone's GPS only, and only when you tap **Use current location** on a memo.
 - **No backups:** Android doesn't back up MemoCtrl's data or move it to a new phone. Your memos live on your own server; memos of **Use without a server** only live on the phone, so move them to a server to keep them safe.
