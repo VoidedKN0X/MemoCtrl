@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.Unarchive
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,11 +37,8 @@ import com.vknxworks.memoctrl.data.settings.SyncInterval
 import com.vknxworks.memoctrl.ui.components.CtrlAlertDialog
 import com.vknxworks.memoctrl.ui.components.Group
 import com.vknxworks.memoctrl.ui.components.GroupRow
-import com.vknxworks.memoctrl.ui.components.friendlyMessage
 import com.vknxworks.memoctrl.ui.lock.AppLock
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
@@ -62,80 +60,29 @@ fun DataGroups() {
 private fun MemoZipGroup() {
     val context = LocalContext.current
     val c = context.container
-    val scope = rememberCoroutineScope()
     val session by c.sessions.active.collectAsStateWithLifecycle()
     val s = session ?: return
-    var job by remember { mutableStateOf<Job?>(null) }
-    var progress by remember { mutableStateOf<Pair<Int, Int>?>(null) }
-    var exporting by remember { mutableStateOf(false) }
-    var plan by remember { mutableStateOf<MemoZip.Plan?>(null) }
-    var message by remember { mutableStateOf<String?>(null) }
-
-    fun run(export: Boolean, block: suspend () -> String) {
-        if (job != null) return
-        exporting = export
-        progress = 0 to 0
-        job = scope.launch {
-            try {
-                message = block()
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: MemoZip.NotAMemoZip) {
-                message = context.getString(R.string.zip_not_valid)
-            } catch (e: Throwable) {
-                message = context.getString(if (export) R.string.zip_export_failed else R.string.zip_import_failed, e.friendlyMessage())
-            } finally {
-                job = null
-                progress = null
-            }
-        }
-    }
+    // The jobs live in the app's scope (see MemoZipTasks): leaving Settings or the app lock doesn't stop them.
+    val tasks = c.zipTasks
+    val progress by tasks.progress.collectAsStateWithLifecycle()
+    val pending by tasks.plan.collectAsStateWithLifecycle()
+    val message by tasks.message.collectAsStateWithLifecycle()
 
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri: Uri? ->
         if (uri == null) return@rememberLauncherForActivityResult
-        run(export = true) {
-            val result = withContext(Dispatchers.IO) {
-                val out = context.contentResolver.openOutputStream(uri, "wt") ?: throw java.io.IOException(context.getString(R.string.error_write_file))
-                out.use {
-                    MemoZip.export(
-                        context = context,
-                        repo = s.repo,
-                        http = if (s.account.isLocal) null else c.http,
-                        username = s.account.username,
-                        displayName = s.account.displayName,
-                        out = it,
-                    ) { done, total -> progress = done to total }
-                }
-            }
-            buildString {
-                append(context.resources.getQuantityString(R.plurals.zip_exported, result.memos, result.memos, result.attachments))
-                if (result.missingAttachments > 0) {
-                    append("\n\n")
-                    append(context.resources.getQuantityString(R.plurals.zip_export_missing, result.missingAttachments, result.missingAttachments))
-                }
-            }
-        }
+        tasks.export(
+            uri = uri,
+            repo = s.repo,
+            http = if (s.account.isLocal) null else c.http,
+            server = if (s.account.isLocal) null else s.account.host,
+            username = s.account.username,
+            displayName = s.account.displayName,
+        )
     }
 
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
         if (uri == null) return@rememberLauncherForActivityResult
-        if (job != null) return@rememberLauncherForActivityResult
-        exporting = false
-        progress = 0 to 0
-        job = scope.launch {
-            try {
-                plan = MemoZip.read(context, uri, s.repo)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: MemoZip.NotAMemoZip) {
-                message = context.getString(R.string.zip_not_valid)
-            } catch (e: Throwable) {
-                message = context.getString(R.string.zip_import_failed, e.friendlyMessage())
-            } finally {
-                job = null
-                progress = null
-            }
-        }
+        tasks.read(uri, s.repo)
     }
 
     Group(stringResource(R.string.group_memo_files), footer = stringResource(R.string.memo_files_footer)) {
@@ -153,17 +100,22 @@ private fun MemoZipGroup() {
         )
     }
 
-    progress?.let { (done, total) ->
+    progress?.let { pr ->
         CtrlAlertDialog(
             onDismissRequest = {},
-            title = { Text(stringResource(if (exporting) R.string.zip_exporting else R.string.zip_importing)) },
-            text = { Text(if (total > 0) stringResource(R.string.zip_progress, done, total) else stringResource(R.string.zip_reading)) },
-            confirmButton = { TextButton(onClick = { job?.cancel() }) { Text(stringResource(R.string.cancel)) } },
+            title = { Text(stringResource(if (pr.export) R.string.zip_exporting else R.string.zip_importing)) },
+            text = { Text(if (pr.total > 0) stringResource(R.string.zip_progress, pr.done, pr.total) else stringResource(R.string.zip_reading)) },
+            confirmButton = { TextButton(onClick = { tasks.cancel() }) { Text(stringResource(R.string.cancel)) } },
         )
     }
 
-    plan?.let { p ->
-        val discard = { p.discard(); plan = null }
+    // A ZIP read for another account (you switched accounts since) is not offered for this one.
+    LaunchedEffect(pending, s.repo.accountKey) {
+        if (pending != null && pending?.accountKey != s.repo.accountKey) tasks.discardPlan()
+    }
+
+    pending?.takeIf { it.accountKey == s.repo.accountKey && progress == null }?.plan?.let { p ->
+        val discard = { tasks.discardPlan() }
         CtrlAlertDialog(
             onDismissRequest = discard,
             title = { Text(stringResource(R.string.zip_import_title)) },
@@ -179,13 +131,7 @@ private fun MemoZipGroup() {
                 }
             },
             confirmButton = {
-                if (p.memos.isNotEmpty()) TextButton(onClick = {
-                    plan = null
-                    run(export = false) {
-                        val made = MemoZip.importPlan(p, s.repo) { done, total -> progress = done to total }
-                        context.resources.getQuantityString(R.plurals.zip_imported, made, made)
-                    }
-                }) { Text(stringResource(R.string.zip_import_confirm)) }
+                if (p.memos.isNotEmpty()) TextButton(onClick = { tasks.import(s.repo) }) { Text(stringResource(R.string.zip_import_confirm)) }
                 else TextButton(onClick = discard) { Text(stringResource(R.string.close)) }
             },
             dismissButton = if (p.memos.isNotEmpty()) { { TextButton(onClick = discard) { Text(stringResource(R.string.cancel)) } } } else null,
@@ -194,10 +140,10 @@ private fun MemoZipGroup() {
 
     message?.let { text ->
         CtrlAlertDialog(
-            onDismissRequest = { message = null },
+            onDismissRequest = { tasks.dismissMessage() },
             title = { Text(stringResource(R.string.group_memo_files)) },
             text = { Text(text) },
-            confirmButton = { TextButton(onClick = { message = null }) { Text(stringResource(R.string.close)) } },
+            confirmButton = { TextButton(onClick = { tasks.dismissMessage() }) { Text(stringResource(R.string.close)) } },
         )
     }
 }
@@ -211,14 +157,18 @@ private fun SettingsFileGroup() {
 
     val save = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri: Uri? ->
         if (uri == null) return@rememberLauncherForActivityResult
-        scope.launch {
+        val app = context.applicationContext
+        // In the app's scope: leaving Settings right after picking the file doesn't cut it short.
+        c.appScope.launch {
             val ok = runCatching {
                 val text = SettingsBackups.export(c.settings.settings.value, BuildConfig.VERSION_NAME, OffsetDateTime.now().toString())
                 withContext(Dispatchers.IO) {
-                    context.contentResolver.openOutputStream(uri, "wt")?.use { it.write(text.toByteArray()) } ?: throw java.io.IOException()
+                    app.contentResolver.openOutputStream(uri, "wt")?.use { it.write(text.toByteArray()) } ?: throw java.io.IOException()
                 }
             }.isSuccess
-            Toast.makeText(context, if (ok) R.string.settings_file_saved else R.string.settings_file_save_failed, Toast.LENGTH_LONG).show()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(app, if (ok) R.string.settings_file_saved else R.string.settings_file_save_failed, Toast.LENGTH_LONG).show()
+            }
         }
     }
 
@@ -289,9 +239,13 @@ private fun SettingsFileGroup() {
                 if (changes.isEmpty()) TextButton(onClick = { pending = null }) { Text(stringResource(R.string.close)) }
                 else TextButton(onClick = {
                     pending = null
-                    scope.launch {
+                    val app = context.applicationContext
+                    // In the app's scope, so leaving Settings straight away doesn't stop it halfway.
+                    c.appScope.launch {
                         val ok = runCatching { c.settings.update { SettingsBackups.apply(it, b.settings) } }.isSuccess
-                        Toast.makeText(context, if (ok) R.string.settings_file_imported else R.string.settings_file_import_failed, Toast.LENGTH_LONG).show()
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(app, if (ok) R.string.settings_file_imported else R.string.settings_file_import_failed, Toast.LENGTH_LONG).show()
+                        }
                     }
                 }) { Text(stringResource(R.string.settings_file_import_confirm)) }
             },

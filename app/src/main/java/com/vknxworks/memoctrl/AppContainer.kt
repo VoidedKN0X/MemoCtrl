@@ -117,6 +117,9 @@ class AppContainer(val context: Context) {
 
     /** "Forgot PIN?": the logins can't be decrypted any more, so sign out everywhere and start over. */
     suspend fun forgetEverything(): Unit = withContext(NonCancellable) {
+        // A ZIP export or import of an account that is about to be signed out stops here.
+        zipTasks.cancel()
+        zipTasks.discardPlan()
         sessions.forgetAllAccounts()
         settings.clearAllDrafts()
         AppLock.markUnlocked()
@@ -139,6 +142,9 @@ class AppContainer(val context: Context) {
     val repo: SyncingRepository
         get() = sessions.active.value?.repo ?: error("Not signed in")
 
+    /** The memo ZIP export and import, which keep running when Settings closes or the app locks. */
+    val zipTasks by lazy { com.vknxworks.memoctrl.ui.settings.MemoZipTasks(context, appScope) }
+
     /** Set by MainActivity for share sheets and shortcuts; the main screen consumes it. */
     val pendingAction = MutableStateFlow<PendingAction?>(null)
 
@@ -151,6 +157,11 @@ class AppContainer(val context: Context) {
                 java.io.File(context.cacheDir, name).listFiles()?.forEach { f ->
                     if (f.lastModified() < cutoff) runCatching { f.delete() }
                 }
+            }
+            // Unpacked ZIP imports and export downloads only live as long as the process that made them; a
+            // question left open or a process that died halfway left them behind (up to a few GB).
+            context.cacheDir.listFiles()?.forEach { f ->
+                if (f.isDirectory && (f.name.startsWith("import-") || f.name.startsWith("export-"))) runCatching { f.deleteRecursively() }
             }
         }
         // MemoCtrl no longer has home screen widgets: delete the choices (tag, pinned only, how many) an

@@ -12,15 +12,14 @@
     <uses-permission android:name="android.permission.HIDE_OVERLAY_WINDOWS" />
     <!-- Only asked when you turn on "Tell me when background sync fails". -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <!-- Only asked when you tap "Use current location" on a memo. Satellite (GPS) fixes only. -->
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!-- Only asked when you tap the microphone in the editor to record a voice memo. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Added by WorkManager for work that runs as a foreground service. Background sync never does. -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove" />
-    <uses-feature android:name="android.hardware.location" android:required="false" />
-    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <!-- MemoCtrl never reads the phone's position (a memo's location is typed in); no library may add it either. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" tools:node="remove" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
 

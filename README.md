@@ -31,7 +31,7 @@ Part of the [Ctrl series](#the-ctrl-series) by VKNXWorks.
 - **Places**: memos that have a location as dots on a map; the map pictures from OpenStreetMap are only loaded after you turn that on
 - **Saved views**: your Memos shortcuts (named filters kept on the server), to open, add, change and delete (Memos 0.27 or newer)
 - **Voice memos**: record with the microphone in the editor; the recording is attached as a sound file and plays right in the memo
-- **Export and import memos as a ZIP file** in Memos' own export format, and **export and import the app's settings** to a file (never a login, token or PIN)
+- **Export and import memos as a ZIP file** in Memos' own export format (it keeps running if you leave Settings; attachments that are only links to other websites are saved as links, never downloaded), and **export and import the app's settings** to a file (never a login, token or PIN)
 - **Archive** and **attachments** pages, and a full-screen picture viewer
 - **Share to MemoCtrl** from any app and a **New memo** launcher shortcut
 - **App lock** with its own PIN and optional fingerprint unlock; your server login stays encrypted while the app is locked (see [App lock](#app-lock))
@@ -97,12 +97,11 @@ Settings, the archive, attachments, accounts and sign out are behind your profil
 | Hide other apps' floating windows | Hiding other apps' floating windows (chat heads, overlays) over the PIN screen, sign-in and "can't be undone" confirmations, so nothing can cover them. No prompt, and nothing changes on other screens |
 | Notifications | The optional "Background sync failed" notice, only asked when you turn it on |
 | Microphone | Recording a voice memo, only asked when you tap the microphone in the editor, and only used while the "Recording" dialog is open |
-| Approximate and precise location | Adding your location to a memo, only asked when you tap **Use current location** (GPS only) |
 | Network state | Background sync's "only on Wi-Fi" option, and waiting for a connection before a sync |
 | Prevent phone from sleeping | Keeping the phone awake for the few seconds a background sync runs |
 | Run at startup | Setting background sync up again after the phone restarts (nothing runs if sync is off) |
 
-The last three come with Android's background-work library, which runs background sync. Android also lists a permission named after MemoCtrl itself (`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`): it only lets MemoCtrl's own parts talk to each other, and no other app can hold it. MemoCtrl has no permission for your contacts, phone calls or files; it can't install apps or run in the foreground.
+The last three come with Android's background-work library, which runs background sync. Android also lists a permission named after MemoCtrl itself (`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`): it only lets MemoCtrl's own parts talk to each other, and no other app can hold it. MemoCtrl has no permission for your location, contacts, phone calls or files; it can't install apps or run in the foreground.
 
 See [Privacy](#privacy) for what MemoCtrl sends and where.
 
@@ -111,7 +110,7 @@ See [Privacy](#privacy) for what MemoCtrl sends and where.
 - **Plain HTTP** works, but the app warns you first because your token would be sent unencrypted.
 - **"Your access token no longer works"**: the token expired or was deleted in Memos. Sign out and sign in again.
 - **Changes waiting to sync** keep a cloud icon on the memo; tap the sync button at the top to try again.
-- **Location** needs Memos 0.27 or newer, and uses the phone's GPS only.
+- **Location** needs Memos 0.27 or newer. You type the place name and coordinates yourself; MemoCtrl has no location permission and never reads where your phone is. Locations memos already have are kept and still show on the Places map.
 - **Background sync** is under your profile picture › **Settings > Background sync**. Android decides the exact moment it runs to save battery, and it waits while MemoCtrl is locked with the app lock.
 - **Renaming a tag** also renames its sub-tags (`#work/meetings` becomes `#job/meetings`). Memos has no tag list of its own on 0.27 and newer, so MemoCtrl changes the text of every memo with the tag and syncs them like any edit. On Memos 0.21 it uses the server's own rename when you're online.
 - **Pictures from other websites** in memos (in the text or attached as a link) show as a link until you turn on **Load pictures from other websites** (your profile picture › **Settings > Privacy and security**).
@@ -126,7 +125,7 @@ Turn it on under your profile picture › **Settings > Privacy and security > Ap
 - **Wrong PINs:** after 5 tries you wait 30 seconds, doubling up to 15 minutes. Restarting the app or the phone, or changing the clock, doesn't skip the wait.
 - **Lock again:** as soon as you leave the app (the default), after 1, 5 or 15 minutes or 1 hour away, or only when the app restarts. Taking a photo, picking pictures or files, sharing and opening an attachment don't count as leaving, unless you stay away for more than 5 minutes.
 - **Change app PIN** asks for your current PIN first, and turning the app lock off asks for the PIN too.
-- **Forgot your PIN?** It can't be recovered, because it encrypts your login. The lock screen offers to sign out of every account and delete what MemoCtrl keeps on the phone; everything on your Memos server stays.
+- **Forgot your PIN?** It can't be recovered, because it encrypts your login. The lock screen offers to sign out of every account and delete what MemoCtrl keeps on the phone; everything on your Memos server stays. If your phone has a screen lock (PIN, pattern or password), it asks for that first, so someone who picks up your unlocked phone can't reset MemoCtrl's lock.
 - **With the app lock on**, the recent-apps screen always shows a blank card, and background sync waits until you unlock, because your login stays encrypted.
 
 Two more switches in the same section work with or without the app lock, and are both off until you turn them on:
@@ -148,7 +147,7 @@ While the lock, PIN or sign-in screen or a "can't be undone" confirmation is sho
 - **Map pictures:** the **Places** map is drawn from openstreetmap.org's map pictures, but only after you turn that on in Places (off by default, and you're told first). That website then sees which areas you look at; your memos are never sent to it. With it off, nothing is loaded and the dots are drawn on an empty background.
 - **Link previews** are looked up by your own Memos server, not by your phone. A preview's picture comes from the other website and only shows when **Load pictures from other websites** is on.
 - **Links:** links in memos, a memo's location (OpenStreetMap) and the Support, Report a bug, Source code and Licence rows in About open in your browser only when you tap them; the app itself doesn't contact those sites.
-- **Location** comes from the phone's GPS only, and only when you tap **Use current location** on a memo.
+- **Location:** MemoCtrl can't see where your phone is (it has no location permission). A memo's location is only what you type in, or what it already had from the server.
 - **No backups:** Android doesn't back up MemoCtrl's data or move it to a new phone. Your memos live on your own server; memos of **Use without a server** only live on the phone, so move them to a server to keep them safe.
 - **Notifications:** only the optional "Background sync failed" notice, which never shows memo text, and only after you allow notifications.
 

@@ -51,6 +51,10 @@
     <string name="lock_forgot">Pincode vergeten?</string>
     <string name="lock_forgot_title">Je pincode vergeten?</string>
     <string name="lock_forgot_body">De pincode kan niet worden hersteld, omdat ze je serverlogin versleutelt. MemoCtrl meldt zich af bij elk account en verwijdert de memo\'s, afbeeldingen en concepten die op deze telefoon staan. Alles op je Memos-server blijft. Wijzigingen die nog niet gesynchroniseerd zijn, gaan verloren.</string>
+    <string name="lock_forgot_screen_lock">Eerst vraagt je telefoon zijn schermvergrendeling, zodat alleen jij dit kunt resetten.</string>
+    <string name="lock_reset_prompt_title">App-vergrendeling van MemoCtrl resetten</string>
+    <string name="lock_reset_prompt_subtitle">Bevestig met de schermvergrendeling van je telefoon dat jij het bent</string>
+    <string name="lock_reset_prompt_failed">De schermvergrendeling kon niet getoond worden</string>
     <string name="lock_forgot_body_local">Memo\'s die alleen op deze telefoon staan (\"Op deze telefoon\") worden ook definitief verwijderd, omdat ze op geen enkele server staan.</string>
     <string name="lock_forgot_confirm">Afmelden en resetten</string>
     <string name="lock_choose_title">Kies een pincode voor de app</string>
@@ -243,13 +247,7 @@
     <string name="visibility_protected_short">iedereen die op je server is aangemeld</string>
     <string name="visibility_public_short">iedereen met de link</string>
     <string name="visibility_space_short">leden van je space</string>
-    <string name="location_gps_off">Zet locatie (gps) aan in de instellingen van je telefoon, of typ de coördinaten.</string>
-    <string name="location_no_fix">Er kon geen gps-positie worden bepaald. Ga naar buiten of bij een raam staan, of typ de coördinaten.</string>
-    <string name="location_denied">Toegang tot je locatie is geweigerd. Je kunt de coördinaten nog altijd typen.</string>
     <string name="location_title">Locatie</string>
-    <string name="location_finding">Je positie wordt gezocht…</string>
-    <string name="location_use_current">Huidige locatie gebruiken</string>
-    <string name="location_settings">Locatie-instellingen</string>
     <string name="location_place">Naam van de plaats</string>
     <string name="location_latitude">Breedtegraad</string>
     <string name="location_latitude_range">−90 tot 90</string>
@@ -510,6 +508,9 @@
     <string name="zip_progress">%1$d van %2$d</string>
     <string name="zip_not_valid">Er zitten geen memo\'s in dat bestand. Kies een Memos-export, of een zipbestand met Markdown- of tekstbestanden.</string>
     <string name="zip_export_failed">De export is niet afgerond: %1$s</string>
+    <string name="zip_export_cancelled">De export is gestopt. Het onafgewerkte ZIP-bestand is verwijderd.</string>
+    <string name="zip_export_partial_left">Het ZIP-bestand dat geschreven werd, is onvolledig en kon niet verwijderd worden. Verwijder het zelf; het is geen bruikbare export.</string>
+    <string name="zip_import_cancelled">De import is gestopt na %1$d van %2$d memo\'s. De memo\'s die al geïmporteerd zijn, blijven.</string>
     <string name="zip_import_failed">De import is niet afgerond: %1$s</string>
     <string name="error_write_file">Het bestand kon niet geschreven worden</string>
     <string name="zip_import_title">Memo\'s importeren?</string>

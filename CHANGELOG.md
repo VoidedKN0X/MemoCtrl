@@ -4,6 +4,27 @@ What changed in each MemoCtrl release. Every release on the [Releases page](http
 
 To publish a new version: bump `versionCode` and `versionName` in `app/build.gradle.kts`, add a section here, and push to `main`. Pushes without a version bump only build; they don't make a release.
 
+## Unreleased
+
+### Fixed
+
+- **Exporting or importing memos as a ZIP file no longer stops halfway when you leave Settings or the app locks.** Before, pressing back, or the app lock covering the screen, cancelled the job: an export left a cut-off .zip file where you saved it without any message, and an import stopped after some memos with no summary. Now both keep going in the background until they're done, and the result ("Exported … memos", "Imported … memos", or what went wrong) is waiting in **Settings > Memos as a file** when you come back. If you tap **Cancel** during an export, or it fails, the unfinished ZIP file is deleted (if that isn't possible, you're told the file is incomplete). Cancelling an import says how many memos were already added; those stay. The question "Import these memos?" also stays until you answer it, and is dropped if you switched to another account in the meantime. The settings file (**Settings > Settings as a file**) is saved and applied in the background the same way.
+- **The Places map can be moved and zoomed again after rotating the phone.** After rotating, unfolding, or a sync or live update that added or removed a memo with a location, dragging and pinching the map did nothing any more (tapping dots still worked). It now keeps responding.
+- **Leftover files from a ZIP import are cleaned up.** When the import question was left open, or the app was closed during reading or importing, the unpacked files (up to a few GB) stayed in MemoCtrl's cache until Android cleared it. They are now deleted every time the app starts.
+- **Importing a ZIP of plain text files is much faster with many memos.** Checking whether a memo is already there no longer compares every file with every memo one by one.
+
+### Changed
+
+- **Exported ZIP files keep links to other websites as links.** An attachment that is only a link to another website (not a file on your Memos server) used to be downloaded from that website during the export, which contacted it without asking, even with **Load pictures from other websites** off. The export now writes such an attachment as its link (`externalLink`, as the Memos export format allows) instead of a file, and only downloads files from your own server. Importing such a ZIP in MemoCtrl skips these link-only attachments, as before.
+
+### Removed
+
+- **"Use current location" and the location permission.** The location dialog in the editor no longer has the **Use current location** button, and MemoCtrl no longer asks for, or has, the location permission (precise or approximate); it can't see where your phone is. You can still type a place name and coordinates for a memo, and locations memos already have are kept, synced and still shown on the **Places** map.
+
+### Security
+
+- **"Forgot PIN?" now asks for your phone's own screen lock first.** Before, anyone holding your unlocked phone could tap "Forgot PIN?" on MemoCtrl's lock screen and reset it. Now, if your phone has a screen lock (PIN, pattern, password, or a strong fingerprint), MemoCtrl asks for it before it signs out of anything or deletes anything; cancelling leaves everything as it was. The dialog says so. If your phone has no screen lock, it works as before (you only confirm the dialog). It also stops a ZIP export or import that is still running.
+
 ## v0.8.1 (2026-11-21)
 
 Built and checked by CI only: nothing in this release had been run on a phone when it was published.

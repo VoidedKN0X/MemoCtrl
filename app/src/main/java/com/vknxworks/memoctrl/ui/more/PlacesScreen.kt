@@ -173,7 +173,9 @@ private fun MemoMap(memos: List<MemoEntity>, selectedId: String?, tiles: Boolean
         val top = cy * world - h / 2
 
         Box(
-            Modifier.fillMaxSize().pointerInput(Unit) {
+            // Keyed on [start]: after a rotation or a change in located memos, cx/cy/zoom above are new states,
+            // and the gesture handler must write to those, not to the first ones (the map stopped moving).
+            Modifier.fillMaxSize().pointerInput(start) {
                 detectTransformGestures { centroid, pan, gestureZoom, _ ->
                     val before = tilePx * 2.0.pow(zoom)
                     val newZoom = (zoom + log2(gestureZoom.toDouble())).coerceIn(MIN_ZOOM, MAX_ZOOM)

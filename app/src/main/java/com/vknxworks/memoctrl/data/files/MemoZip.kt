@@ -16,6 +16,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -141,13 +142,43 @@ object MemoZip {
         return digest.digest().joinToString("") { "%02x".format(it) }
     }
 
-    /** The attachment's file on the phone: the kept copy, or a download into [scratch]. Null when neither works. */
-    private suspend fun fileOf(resource: ResourceEntity, http: OkHttpClient?, scratch: File): File? {
+    /**
+     * [url] is on the account's own server [server] (same scheme, host and port), so downloading it doesn't
+     * contact any other website. False for an account without a server or an address that isn't a web address.
+     */
+    internal fun sameOrigin(url: String, server: String?): Boolean {
+        val u = url.toHttpUrlOrNull() ?: return false
+        val base = server?.toHttpUrlOrNull() ?: return false
+        return u.scheme == base.scheme && u.host.equals(base.host, ignoreCase = true) && u.port == base.port
+    }
+
+    /** The kept copy of the attachment on the phone, if there is one. */
+    private fun localFileOf(resource: ResourceEntity): File? {
         for (uri in listOf(resource.localUri, resource.uri)) {
             val u = uri?.let(Uri::parse) ?: continue
             if (u.scheme == "file") u.path?.let(::File)?.takeIf { it.isFile }?.let { return it }
         }
-        if (http == null || !(resource.uri.startsWith("https://") || resource.uri.startsWith("http://"))) return null
+        return null
+    }
+
+    /**
+     * An attachment that is only a link to another website (not a file on the phone or on the account's own
+     * server [server]). Exporting never downloads it: that would contact the other website without asking.
+     */
+    private fun externalLinkOf(resource: ResourceEntity, server: String?): String? {
+        if (localFileOf(resource) != null) return null
+        val uri = resource.uri
+        if (!(uri.startsWith("https://", ignoreCase = true) || uri.startsWith("http://", ignoreCase = true))) return null
+        return uri.takeIf { !sameOrigin(it, server) }
+    }
+
+    /**
+     * The attachment's file on the phone: the kept copy, or a download from the account's own server [server]
+     * into [scratch]. Null when neither works.
+     */
+    private suspend fun fileOf(resource: ResourceEntity, http: OkHttpClient?, server: String?, scratch: File): File? {
+        localFileOf(resource)?.let { return it }
+        if (http == null || !sameOrigin(resource.uri, server)) return null
         return runCatching {
             val target = File(scratch, resource.identifier.filter { it.isLetterOrDigit() }.take(40) + ".bin")
             http.newCall(Request.Builder().url(resource.uri).build()).await().use { response ->
@@ -161,13 +192,16 @@ object MemoZip {
 
     /**
      * Writes every memo of [repo]'s account (also archived ones) to [out]. Attachments that are only on
-     * the server are downloaded for it with [http] (null for an account without a server); one that
-     * can't be fetched is left out of the file and counted in [ExportResult.missingAttachments].
+     * the account's server [server] are downloaded for it with [http] (both null for an account without a
+     * server); one that can't be fetched is left out of the file and counted in
+     * [ExportResult.missingAttachments]. An attachment that is only a link to another website is written as
+     * that link (`externalLink`, no file), as the Memos export format allows, and never downloaded.
      */
     suspend fun export(
         context: Context,
         repo: SyncingRepository,
         http: OkHttpClient?,
+        server: String?,
         username: String,
         displayName: String,
         out: OutputStream,
@@ -204,7 +238,12 @@ object MemoZip {
                     for (r in memo.resources) {
                         val fileUid = uidOf(r.remoteId, r.identifier, fileUids)
                         val type = r.mimeType?.takeIf { it.isNotBlank() } ?: "application/octet-stream"
-                        val file = fileOf(r, http, scratch)
+                        val link = externalLinkOf(r, server)
+                        if (link != null) {
+                            records += AttachmentRecord(fileUid, r.filename.ifBlank { "file" }, type, 0, null, null, link, stamp(r.date))
+                            continue
+                        }
+                        val file = fileOf(r, http, server, scratch)
                         if (file == null) {
                             missing++
                             continue
@@ -358,6 +397,8 @@ object MemoZip {
             val mine = (repo.listMemos() + repo.listArchivedMemos())
             val haveUids = mine.mapNotNullTo(HashSet()) { it.remoteId?.substringBefore('|')?.substringAfterLast('/') }
             val haveTexts = mine.mapTo(HashSet()) { it.content.trim() to it.date.epochSecond }
+            // Built once: looking each file up in this set instead of trimming every memo for every file.
+            val haveContents = mine.mapTo(HashSet()) { it.content.trim() }
             val m = manifest
             val memosFormat = m != null && (m.format == FORMAT || m.format == LEGACY_FORMAT) && m.formatVersion.substringBefore('.') == "1"
             val out = ArrayList<ImportMemo>()
@@ -392,7 +433,7 @@ object MemoZip {
                     if (content.isEmpty()) continue
                     val date = time.takeIf { it > 0 }?.let(Instant::ofEpochMilli)
                     if (date != null && (content to date.epochSecond) in haveTexts) { existing++; continue }
-                    if (mine.any { it.content.trim() == content }) { existing++; continue }
+                    if (content in haveContents) { existing++; continue }
                     out += ImportMemo(null, content, date, MemoVisibility.PRIVATE, pinned = false, archived = false, location = null, files = emptyList())
                 }
             }

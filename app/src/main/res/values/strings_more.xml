@@ -102,6 +102,9 @@
     <string name="zip_progress">%1$d of %2$d</string>
     <string name="zip_not_valid">There are no memos in that file. Pick a Memos export, or a ZIP file with Markdown or text files in it.</string>
     <string name="zip_export_failed">The export didn\'t finish: %1$s</string>
+    <string name="zip_export_cancelled">The export was stopped. The unfinished ZIP file was deleted.</string>
+    <string name="zip_export_partial_left">The ZIP file it was writing is incomplete and couldn\'t be deleted. Delete it yourself; it\'s not a usable export.</string>
+    <string name="zip_import_cancelled">The import was stopped after %1$d of %2$d memos. The memos already imported stay.</string>
     <string name="zip_import_failed">The import didn\'t finish: %1$s</string>
     <string name="error_write_file">Couldn\'t write the file</string>
     <plurals name="zip_exported">

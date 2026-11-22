@@ -51,6 +51,10 @@
     <string name="lock_forgot">Code PIN oublié ?</string>
     <string name="lock_forgot_title">Code PIN oublié ?</string>
     <string name="lock_forgot_body">Le code PIN ne peut pas être récupéré, car il chiffre votre connexion au serveur. MemoCtrl se déconnectera de tous les comptes et supprimera les mémos, images et brouillons gardés sur ce téléphone. Tout ce qui est sur votre serveur Memos reste. Les modifications pas encore synchronisées sont perdues.</string>
+    <string name="lock_forgot_screen_lock">Le verrouillage d\'écran de votre téléphone vous sera d\'abord demandé, pour que vous seul puissiez le réinitialiser.</string>
+    <string name="lock_reset_prompt_title">Réinitialiser le verrouillage de MemoCtrl</string>
+    <string name="lock_reset_prompt_subtitle">Utilisez le verrouillage d\'écran de votre téléphone pour confirmer votre identité</string>
+    <string name="lock_reset_prompt_failed">Impossible d\'afficher le verrouillage d\'écran</string>
     <string name="lock_forgot_body_local">Les mémos gardés uniquement sur ce téléphone (« Sur ce téléphone ») sont aussi supprimés définitivement, car ils ne sont sur aucun serveur.</string>
     <string name="lock_forgot_confirm">Se déconnecter et réinitialiser</string>
     <string name="lock_choose_title">Choisir un code PIN d\'appli</string>
@@ -257,13 +261,7 @@
     <string name="visibility_protected_short">toute personne connectée à votre serveur</string>
     <string name="visibility_public_short">toute personne ayant le lien</string>
     <string name="visibility_space_short">les membres de votre espace</string>
-    <string name="location_gps_off">Activez la localisation (GPS) dans les paramètres du téléphone, ou saisissez les coordonnées.</string>
-    <string name="location_no_fix">Impossible d\'obtenir une position GPS. Sortez ou approchez-vous d\'une fenêtre, ou saisissez les coordonnées.</string>
-    <string name="location_denied">L\'accès à la position a été refusé. Vous pouvez toujours saisir les coordonnées.</string>
     <string name="location_title">Lieu</string>
-    <string name="location_finding">Recherche de votre position…</string>
-    <string name="location_use_current">Utiliser la position actuelle</string>
-    <string name="location_settings">Paramètres de localisation</string>
     <string name="location_place">Nom du lieu</string>
     <string name="location_latitude">Latitude</string>
     <string name="location_latitude_range">−90 à 90</string>
@@ -527,6 +525,9 @@
     <string name="zip_progress">%1$d sur %2$d</string>
     <string name="zip_not_valid">Ce fichier ne contient aucun mémo. Choisissez un export Memos, ou un fichier ZIP contenant des fichiers Markdown ou texte.</string>
     <string name="zip_export_failed">L\'export n\'a pas abouti : %1$s</string>
+    <string name="zip_export_cancelled">L\'exportation a été arrêtée. Le fichier ZIP inachevé a été supprimé.</string>
+    <string name="zip_export_partial_left">Le fichier ZIP en cours d\'écriture est incomplet et n\'a pas pu être supprimé. Supprimez-le vous-même ; ce n\'est pas une exportation utilisable.</string>
+    <string name="zip_import_cancelled">L\'importation a été arrêtée après %1$d mémos sur %2$d. Les mémos déjà importés sont conservés.</string>
     <string name="zip_import_failed">L\'import n\'a pas abouti : %1$s</string>
     <string name="error_write_file">Impossible d\'écrire le fichier</string>
     <plurals name="zip_exported">

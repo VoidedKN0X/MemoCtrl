@@ -51,6 +51,10 @@
     <string name="lock_forgot">PIN vergessen?</string>
     <string name="lock_forgot_title">PIN vergessen?</string>
     <string name="lock_forgot_body">Die PIN lässt sich nicht wiederherstellen, weil sie deine Server-Anmeldung verschlüsselt. MemoCtrl meldet sich von allen Konten ab und löscht die Memos, Bilder und Entwürfe auf diesem Telefon. Alles auf deinem Memos-Server bleibt erhalten. Noch nicht synchronisierte Änderungen gehen verloren.</string>
+    <string name="lock_forgot_screen_lock">Zuerst wird die Displaysperre deines Smartphones abgefragt, damit nur du zurücksetzen kannst.</string>
+    <string name="lock_reset_prompt_title">App-Sperre von MemoCtrl zurücksetzen</string>
+    <string name="lock_reset_prompt_subtitle">Bestätige mit der Displaysperre deines Smartphones, dass du es bist</string>
+    <string name="lock_reset_prompt_failed">Displaysperre konnte nicht angezeigt werden</string>
     <string name="lock_forgot_body_local">Memos, die nur auf diesem Telefon liegen („Auf diesem Telefon“), werden ebenfalls endgültig gelöscht, da sie auf keinem Server sind.</string>
     <string name="lock_forgot_confirm">Abmelden und zurücksetzen</string>
     <string name="lock_choose_title">App-PIN festlegen</string>
@@ -257,13 +261,7 @@
     <string name="visibility_protected_short">alle, die auf deinem Server angemeldet sind</string>
     <string name="visibility_public_short">alle mit dem Link</string>
     <string name="visibility_space_short">Mitglieder deines Space</string>
-    <string name="location_gps_off">Schalte den Standort (GPS) in den Einstellungen deines Telefons ein oder gib die Koordinaten ein.</string>
-    <string name="location_no_fix">Keine GPS-Position gefunden. Geh nach draußen oder an ein Fenster, oder gib die Koordinaten ein.</string>
-    <string name="location_denied">Standortzugriff wurde verweigert. Du kannst die Koordinaten trotzdem eingeben.</string>
     <string name="location_title">Ort</string>
-    <string name="location_finding">Standort wird ermittelt…</string>
-    <string name="location_use_current">Aktuellen Standort verwenden</string>
-    <string name="location_settings">Standorteinstellungen</string>
     <string name="location_place">Ortsname</string>
     <string name="location_latitude">Breitengrad</string>
     <string name="location_latitude_range">−90 bis 90</string>
@@ -527,6 +525,9 @@
     <string name="zip_progress">%1$d von %2$d</string>
     <string name="zip_not_valid">Diese Datei enthält keine Memos. Wähle einen Memos-Export oder eine ZIP-Datei mit Markdown- oder Textdateien.</string>
     <string name="zip_export_failed">Der Export wurde nicht abgeschlossen: %1$s</string>
+    <string name="zip_export_cancelled">Der Export wurde gestoppt. Die unfertige ZIP-Datei wurde gelöscht.</string>
+    <string name="zip_export_partial_left">Die ZIP-Datei, die gerade geschrieben wurde, ist unvollständig und konnte nicht gelöscht werden. Lösch sie selbst; sie ist kein brauchbarer Export.</string>
+    <string name="zip_import_cancelled">Der Import wurde nach %1$d von %2$d Memos gestoppt. Die bereits importierten Memos bleiben erhalten.</string>
     <string name="zip_import_failed">Der Import wurde nicht abgeschlossen: %1$s</string>
     <string name="error_write_file">Datei konnte nicht geschrieben werden</string>
     <plurals name="zip_exported">

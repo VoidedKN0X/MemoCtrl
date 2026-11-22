@@ -60,6 +60,10 @@
     <string name="lock_forgot">Forgot PIN?</string>
     <string name="lock_forgot_title">Forgot your PIN?</string>
     <string name="lock_forgot_body">The PIN can\'t be recovered, because it encrypts your server login. MemoCtrl will sign out of every account and delete the memos, pictures and drafts kept on this phone. Everything on your Memos server stays. Changes that haven\'t synced yet are lost.</string>
+    <string name="lock_forgot_screen_lock">Your phone\'s screen lock is asked for first, so only you can reset it.</string>
+    <string name="lock_reset_prompt_title">Reset MemoCtrl\'s app lock</string>
+    <string name="lock_reset_prompt_subtitle">Use your phone\'s screen lock to confirm it\'s you</string>
+    <string name="lock_reset_prompt_failed">Couldn\'t show the screen lock prompt</string>
     <string name="lock_forgot_body_local">Memos kept only on this phone (\"On this phone\") are deleted for good too, because they aren\'t on any server.</string>
     <string name="lock_forgot_confirm">Sign out and reset</string>
     <string name="lock_choose_title">Choose an app PIN</string>
@@ -280,13 +284,7 @@
     <string name="visibility_space_short">members of your space</string>
 
     <!-- Location -->
-    <string name="location_gps_off">Turn on location (GPS) in your phone\'s settings, or type the coordinates.</string>
-    <string name="location_no_fix">Couldn\'t get a GPS fix. Go outside or near a window, or type the coordinates.</string>
-    <string name="location_denied">Location access was denied. You can still type the coordinates.</string>
     <string name="location_title">Location</string>
-    <string name="location_finding">Finding you…</string>
-    <string name="location_use_current">Use current location</string>
-    <string name="location_settings">Location settings</string>
     <string name="location_place">Place name</string>
     <string name="location_latitude">Latitude</string>
     <string name="location_latitude_range">−90 to 90</string>
